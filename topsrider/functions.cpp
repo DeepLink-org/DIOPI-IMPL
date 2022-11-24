@@ -465,6 +465,12 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
                                        diopiSize_t kernel_size,
                                        diopiSize_t stride, diopiSize_t padding,
                                        diopiSize_t dilation, bool ceil_mode) {
+  if (ceil_mode) {
+    impl::tops::set_last_error_string("not support ceil_mode at %s:%s", __FILE__,
+                                      __LINE__);
+    return diopiErrorOccurred;
+  }
+
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -484,10 +490,6 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
   int outsize = 0;
   auto trIn = impl::tops::makeTensor(input);
   auto trOut = impl::tops::makeTensor(out);
-
-  int dimA_padded[4];
-  int strideA_padded[4];
-  int outstrideA_padded[4];
 
   const float alpha = 1.f;
   const float beta = 0.f;
@@ -527,13 +529,8 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
   DIOPI_CALLTOPSDNN(topsdnnSetTensor4dDescriptor(
       h_desc.get(), TOPSDNN_TENSOR_NHWC, topsdnnType, outN, outC, outH, outW));
 
-  int outdimA_padded[4] = {outN, outC, outH, outW};
-  for (int i = 0; i < 4; i++) {
-    dimA_padded[i] = trIn.shape().data[i];
-  }
-  insize = dimA_padded[0] * dimA_padded[1] * dimA_padded[2] * dimA_padded[3];
-  outsize = outdimA_padded[0] * outdimA_padded[1] * outdimA_padded[2] *
-            outdimA_padded[3];
+  insize = n * c * h * w;
+  outsize = outN * outC * outH * outW;
 
   // to-do: support other dtype
   float* dtuDevPtrI = NULL;
@@ -544,10 +541,9 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrO),
                        sizeof(float) * outsize));
 
-  DIOPI_CALL(impl::tops::topsTranspose(
-      handle.get(), (void*)trIn.data(), (void*)dtuDevPtrI, dimA_padded[0],
-      dimA_padded[1], dimA_padded[2], dimA_padded[3], topsdnnType,
-      TOPSDNN_TENSOR_NCHW));
+  DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)trIn.data(),
+                                       (void*)dtuDevPtrI, n, c, h, w,
+                                       topsdnnType, TOPSDNN_TENSOR_NCHW));
 
   // Pooling forward
   DIOPI_CALLTOPSDNN(
@@ -559,10 +555,128 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
                             &beta,               // beta scaling factor
                             h_desc.get(),        // output tensor descriptor
                             dtuDevPtrO));        // output data pointer
-  DIOPI_CALL(impl::tops::topsTranspose(
-      handle.get(), (void*)dtuDevPtrO, (void*)trOut.data(), outdimA_padded[0],
-      outdimA_padded[1], outdimA_padded[2], outdimA_padded[3], topsdnnType,
-      TOPSDNN_TENSOR_NHWC));
+  DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
+                                       (void*)trOut.data(), outN, outC, outH,
+                                       outW, topsdnnType, TOPSDNN_TENSOR_NHWC));
+
+  DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
+  DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
+  return diopiSuccess;
+}
+
+extern "C" diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx,
+                                       diopiTensorHandle_t out,
+                                       diopiConstTensorHandle_t input,
+                                       diopiSize_t kernel_size,
+                                       diopiSize_t stride, diopiSize_t padding,
+                                       bool ceil_mode, bool count_include_pad,
+                                       const int64_t* divisor_override) {
+  if (ceil_mode) {
+    impl::tops::set_last_error_string("not support ceil_mode at %s:%s",
+                                      __FILE__, __LINE__);
+    return diopiErrorOccurred;
+  }
+
+  if (divisor_override != nullptr) {
+    impl::tops::set_last_error_string("not support divisor_override at %s:%s",
+                                      __FILE__, __LINE__);
+    return diopiErrorOccurred;
+  }
+
+  impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
+                                   topsdnnDestroy>
+      handle;
+  impl::tops::TopsdnnResourceGuard<topsdnnTensorDescriptor_t,
+                                   topsdnnCreateTensorDescriptor,
+                                   topsdnnDestroyTensorDescriptor>
+      x_desc;
+  impl::tops::TopsdnnResourceGuard<topsdnnTensorDescriptor_t,
+                                   topsdnnCreateTensorDescriptor,
+                                   topsdnnDestroyTensorDescriptor>
+      h_desc;
+  impl::tops::TopsdnnResourceGuard<topsdnnPoolingDescriptor_t,
+                                   topsdnnCreatePoolingDescriptor,
+                                   topsdnnDestroyPoolingDescriptor>
+      pooling_desc;
+  int insize = 0;
+  int outsize = 0;
+  auto trIn = impl::tops::makeTensor(input);
+  auto trOut = impl::tops::makeTensor(out);
+
+  const float alpha = 1.f;
+  const float beta = 0.f;
+  int window_w = kernel_size.data[0];
+  int window_h = kernel_size.data[1];
+  int v_padding = padding.data[0];
+  int h_padding = padding.data[1];
+  int v_stride = stride.data[0];
+  int h_stride = stride.data[1];
+
+  int n = trIn.shape().data[0];
+  int c = trIn.shape().data[1];
+  int h = trIn.shape().data[2];
+  int w = trIn.shape().data[3];
+
+  topsdnnDataType_t topsdnnType;
+  topsdnnPoolingMode_t pooling_mode;
+  DIOPI_CALL(convertType(&topsdnnType, trIn.dtype()));
+
+  if (count_include_pad) {
+    pooling_mode = TOPSDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
+  } else {
+    pooling_mode = TOPSDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
+  }
+
+  DIOPI_CALLTOPSDNN(topsdnnSetPooling2dDescriptor(
+      pooling_desc.get(),     // descriptor handle
+      pooling_mode,           // mode - max pooling
+      TOPSDNN_PROPAGATE_NAN,  // NaN propagation mode
+      window_h,               // window height
+      window_w,               // window width
+      v_padding,              // vertical padding
+      h_padding,              // horizontal padding
+      v_stride,               // vertical stride
+      h_stride));             // horizontal stride
+
+  DIOPI_CALLTOPSDNN(topsdnnSetTensor4dDescriptor(
+      x_desc.get(), TOPSDNN_TENSOR_NHWC, topsdnnType, n, c, h, w));
+
+  int outN = 1, outC = 1, outH = 1, outW = 1;
+  DIOPI_CALLTOPSDNN(topsdnnGetPooling2dForwardOutputDim(
+      pooling_desc.get(), x_desc.get(), &outN, &outC, &outH, &outW));
+
+  DIOPI_CALLTOPSDNN(topsdnnSetTensor4dDescriptor(
+      h_desc.get(), TOPSDNN_TENSOR_NHWC, topsdnnType, outN, outC, outH, outW));
+
+  insize = n * c * h * w;
+  outsize = outN * outC * outH * outW;
+
+  // to-do: support other dtype
+  float* dtuDevPtrI = NULL;
+  float* dtuDevPtrO = NULL;
+  // Allocate device memory
+  DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrI),
+                            sizeof(float) * insize));
+  DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrO),
+                            sizeof(float) * outsize));
+
+  DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)trIn.data(),
+                                       (void*)dtuDevPtrI, n, c, h, w,
+                                       topsdnnType, TOPSDNN_TENSOR_NCHW));
+
+  // Pooling forward
+  DIOPI_CALLTOPSDNN(
+      topsdnnPoolingForward(handle.get(),        // context handle
+                            pooling_desc.get(),  // pooling descriptor
+                            &alpha,              // alpha scaling factor
+                            x_desc.get(),        // input tensor descriptor
+                            dtuDevPtrI,          // input data pointer
+                            &beta,               // beta scaling factor
+                            h_desc.get(),        // output tensor descriptor
+                            dtuDevPtrO));        // output data pointer
+  DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
+                                       (void*)trOut.data(), outN, outC, outH,
+                                       outW, topsdnnType, TOPSDNN_TENSOR_NHWC));
 
   DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
