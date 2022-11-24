@@ -762,3 +762,59 @@ extern "C" diopiError_t diopiLinear(diopiContextHandle_t ctx,
   }
   return diopiSuccess;
 }
+
+extern "C" diopiError_t diopiAdd(diopiContextHandle_t ctx,
+                                 diopiTensorHandle_t out,
+                                 diopiConstTensorHandle_t input,
+                                 diopiConstTensorHandle_t other,
+                                 const diopiScalar_t* alpha) {
+  impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
+                                   topsdnnDestroy>
+      handle;
+
+  topsdnnOpTensorOp_t op = TOPSDNN_OP_TENSOR_ADD;
+
+  auto trIn = impl::tops::makeTensor(input);
+  auto trOther = impl::tops::makeTensor(other);
+  auto trOut = impl::tops::makeTensor(out);
+
+  // to-do: get alpha value
+  float alpha1 = 1.0f;
+  float alpha2 = 1.0f;
+  float beta = 0.0f;
+
+  impl::tops::TopsdnnResourceGuard<topsdnnTensorDescriptor_t,
+                                   topsdnnCreateTensorDescriptor,
+                                   topsdnnDestroyTensorDescriptor>
+      aDesc;
+  impl::tops::TopsdnnResourceGuard<topsdnnTensorDescriptor_t,
+                                   topsdnnCreateTensorDescriptor,
+                                   topsdnnDestroyTensorDescriptor>
+      bDesc;
+  impl::tops::TopsdnnResourceGuard<topsdnnTensorDescriptor_t,
+                                   topsdnnCreateTensorDescriptor,
+                                   topsdnnDestroyTensorDescriptor>
+      cDesc;
+
+  impl::tops::TopsdnnResourceGuard<topsdnnOpTensorDescriptor_t,
+                                   topsdnnCreateOpTensorDescriptor,
+                                   topsdnnDestroyOpTensorDescriptor>
+      opDesc;
+
+  DIOPI_CALL(impl::tops::setTensorDesc(trIn.dtype(), trIn.shape(),
+                                       trIn.stride(), aDesc.get()));
+  DIOPI_CALL(impl::tops::setTensorDesc(trOther.dtype(), trOther.shape(),
+                                       trOther.stride(), bDesc.get()));
+  DIOPI_CALL(impl::tops::setTensorDesc(trOut.dtype(), trOut.shape(),
+                                       trOut.stride(), cDesc.get()));
+
+  DIOPI_CALLTOPSDNN(topsdnnSetOpTensorDescriptor(
+      opDesc.get(), op, TOPSDNN_DATA_FLOAT, TOPSDNN_NOT_PROPAGATE_NAN));
+
+  DIOPI_CALLTOPSDNN(topsdnnOpTensor(handle.get(), opDesc.get(), &alpha1,
+                                    aDesc.get(), (void*)trIn.data(), &alpha2,
+                                    bDesc.get(), (void*)trOther.data(), &beta,
+                                    cDesc.get(), (void*)trOut.data()));
+
+  return diopiSuccess;
+}
