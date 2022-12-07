@@ -8,6 +8,8 @@
 
 #include <diopi/diopirt.h>
 #include <tops_runtime.h>
+#include <mutex>
+#include "error.h"
 
 #define DIOPI_CALL(Expr)       \
   {                            \
@@ -118,8 +120,6 @@ inline topsStream_t getStream(diopiContextHandle_t ctx) {
   diopiGetStream(ctx, &stream_handle);
   return static_cast<topsStream_t>(stream_handle);
 }
-
-void _set_last_error_string(const char* err);
 
 template <typename... Types>
 void set_last_error_string(const char* szFmt, Types&&... args) {

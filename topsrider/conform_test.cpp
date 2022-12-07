@@ -72,18 +72,6 @@ int32_t tops_memcpy_d2d_async(diopiStreamHandle_t stream_handle, void* dst,
   return diopiSuccess;
 }
 
-static char strLastError[8192] = {0};
-static char strLastErrorOther[4096] = {0};
-static std::mutex mtxLastError;
-
-const char* tops_get_last_error_string() {
-  topsError_t error = topsSuccess;  // topsGetLastError();
-  std::lock_guard<std::mutex> lock(mtxLastError);
-  sprintf(strLastError, "tops error: %s; other error: %s",
-          "topsGetErrorString(error)", strLastErrorOther);
-  return strLastError;
-}
-
 int32_t initLibrary() {
   diopiRegisterDeviceMallocFunc(tops_malloc);
   diopiRegisterDevMemFreeFunc(tops_free);
@@ -101,16 +89,3 @@ int32_t initLibrary() {
 int32_t finalizeLibrary() { return diopiSuccess; }
 
 }  // extern "C"
-
-namespace impl {
-
-namespace tops {
-
-void _set_last_error_string(const char* err) {
-  std::lock_guard<std::mutex> lock(mtxLastError);
-  sprintf(strLastErrorOther, "%s", err);
-}
-
-}  // namespace tops
-
-}  // namespace impl

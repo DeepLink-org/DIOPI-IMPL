@@ -10,7 +10,7 @@ include_directories(
     /usr/include/dtu/3_0/runtime
 )
 
-set(IMPL_SRC conform_test.cpp functions.cpp)
+set(IMPL_SRC conform_test.cpp functions.cpp error.cpp)
 
 add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
 set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")
