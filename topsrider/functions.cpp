@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "helper.hpp"
-#define DIOPI_CALLTOPS(Expr)                                                   \
+#define DIOPI_CALLTOPS(Expr)                                              \
   {                                                                       \
     topsError_t ret = Expr;                                               \
     if (ret != topsSuccess) {                                             \
@@ -175,10 +175,26 @@ diopiError_t topsTranspose(topsdnnHandle_t handle, void* input, void* output,
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiSoftmax(diopiContextHandle_t ctx,
-                                     diopiTensorHandle_t out,
-                                     diopiConstTensorHandle_t input,
-                                     int64_t dim, diopiDtype_t dtype) {
+extern "C" {
+
+static const char* name = "GcuDevice";
+static char version[1024] = {0};
+
+const char* diopiGetVendorName() { return name; }
+
+const char* diopiGetImplVersion() {
+  int rt_version = 2009;
+  if (strlen(version) == 0) {
+    const char* diopiVersion = diopiGetVersion();
+    sprintf(version, "TopsRt Version: %d; Topsdnn Version: %d; %s", rt_version,
+            TOPSDNN_VERSION, diopiVersion);
+  }
+  return version;
+}
+
+diopiError_t diopiSoftmax(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                          diopiConstTensorHandle_t input, int64_t dim,
+                          diopiDtype_t dtype) {
   if (dim > 1) {
     impl::tops::set_last_error_string("unkown dim error dim=%d at %s:%s", dim,
                                       __FILE__, __LINE__);
@@ -237,9 +253,8 @@ extern "C" diopiError_t diopiSoftmax(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiRelu(diopiContextHandle_t ctx,
-                                  diopiTensorHandle_t out,
-                                  diopiConstTensorHandle_t input) {
+diopiError_t diopiRelu(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                       diopiConstTensorHandle_t input) {
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -277,8 +292,7 @@ extern "C" diopiError_t diopiRelu(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiReluInp(diopiContextHandle_t ctx,
-                                     diopiTensorHandle_t input) {
+diopiError_t diopiReluInp(diopiContextHandle_t ctx, diopiTensorHandle_t input) {
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -315,11 +329,13 @@ extern "C" diopiError_t diopiReluInp(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiConvolution2d(
-    diopiContextHandle_t ctx, diopiTensorHandle_t out,
-    diopiConstTensorHandle_t input, diopiConstTensorHandle_t weight,
-    diopiConstTensorHandle_t bias, diopiSize_t stride, diopiSize_t padding,
-    diopiSize_t dilation, int64_t groups) {
+diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
+                                diopiTensorHandle_t out,
+                                diopiConstTensorHandle_t input,
+                                diopiConstTensorHandle_t weight,
+                                diopiConstTensorHandle_t bias,
+                                diopiSize_t stride, diopiSize_t padding,
+                                diopiSize_t dilation, int64_t groups) {
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -402,15 +418,15 @@ extern "C" diopiError_t diopiConvolution2d(
 
   // Allocate device memory
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrI),
-                       sizeof(float) * trIn.shape().data[0] *
-                           trIn.shape().data[1] * trIn.shape().data[2] *
-                           trIn.shape().data[3]));
+                            sizeof(float) * trIn.shape().data[0] *
+                                trIn.shape().data[1] * trIn.shape().data[2] *
+                                trIn.shape().data[3]));
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrF),
-                       sizeof(float) * trW.shape().data[0] *
-                           trW.shape().data[1] * trW.shape().data[2] *
-                           trW.shape().data[3]));
+                            sizeof(float) * trW.shape().data[0] *
+                                trW.shape().data[1] * trW.shape().data[2] *
+                                trW.shape().data[3]));
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrO),
-                       sizeof(float) * out_n * out_c * out_h * out_w));
+                            sizeof(float) * out_n * out_c * out_h * out_w));
   DIOPI_CALL(impl::tops::topsTranspose(
       handle.get(), (void*)trIn.data(), (void*)dtuDevPtrI, trIn.shape().data[0],
       trIn.shape().data[1], trIn.shape().data[2], trIn.shape().data[3],
@@ -459,15 +475,14 @@ extern "C" diopiError_t diopiConvolution2d(
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
-                                       diopiTensorHandle_t out,
-                                       diopiConstTensorHandle_t input,
-                                       diopiSize_t kernel_size,
-                                       diopiSize_t stride, diopiSize_t padding,
-                                       diopiSize_t dilation, bool ceil_mode) {
+diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                            diopiConstTensorHandle_t input,
+                            diopiSize_t kernel_size, diopiSize_t stride,
+                            diopiSize_t padding, diopiSize_t dilation,
+                            bool ceil_mode) {
   if (ceil_mode) {
-    impl::tops::set_last_error_string("not support ceil_mode at %s:%s", __FILE__,
-                                      __LINE__);
+    impl::tops::set_last_error_string("not support ceil_mode at %s:%s",
+                                      __FILE__, __LINE__);
     return diopiErrorOccurred;
   }
 
@@ -537,9 +552,9 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
   float* dtuDevPtrO = NULL;
   // Allocate device memory
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrI),
-                       sizeof(float) * insize));
+                            sizeof(float) * insize));
   DIOPI_CALLTOPS(topsMalloc(reinterpret_cast<void**>(&dtuDevPtrO),
-                       sizeof(float) * outsize));
+                            sizeof(float) * outsize));
 
   DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)trIn.data(),
                                        (void*)dtuDevPtrI, n, c, h, w,
@@ -564,13 +579,12 @@ extern "C" diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx,
-                                       diopiTensorHandle_t out,
-                                       diopiConstTensorHandle_t input,
-                                       diopiSize_t kernel_size,
-                                       diopiSize_t stride, diopiSize_t padding,
-                                       bool ceil_mode, bool count_include_pad,
-                                       const int64_t* divisor_override) {
+diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                            diopiConstTensorHandle_t input,
+                            diopiSize_t kernel_size, diopiSize_t stride,
+                            diopiSize_t padding, bool ceil_mode,
+                            bool count_include_pad,
+                            const int64_t* divisor_override) {
   if (ceil_mode) {
     impl::tops::set_last_error_string("not support ceil_mode at %s:%s",
                                       __FILE__, __LINE__);
@@ -683,11 +697,10 @@ extern "C" diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiLinear(diopiContextHandle_t ctx,
-                                    diopiTensorHandle_t out,
-                                    diopiConstTensorHandle_t input,
-                                    diopiConstTensorHandle_t weight,
-                                    diopiConstTensorHandle_t bias) {
+diopiError_t diopiLinear(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                         diopiConstTensorHandle_t input,
+                         diopiConstTensorHandle_t weight,
+                         diopiConstTensorHandle_t bias) {
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -763,11 +776,10 @@ extern "C" diopiError_t diopiLinear(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiAdd(diopiContextHandle_t ctx,
-                                 diopiTensorHandle_t out,
-                                 diopiConstTensorHandle_t input,
-                                 diopiConstTensorHandle_t other,
-                                 const diopiScalar_t* alpha) {
+diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
+                      diopiConstTensorHandle_t input,
+                      diopiConstTensorHandle_t other,
+                      const diopiScalar_t* alpha) {
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
@@ -818,3 +830,5 @@ extern "C" diopiError_t diopiAdd(diopiContextHandle_t ctx,
 
   return diopiSuccess;
 }
+
+}  // extern "C"
