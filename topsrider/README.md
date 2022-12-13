@@ -13,6 +13,13 @@
 
 ## 更新历史
 
+**2022.12.13**
+1. 新增支持diopiBatchNorm,diopiAddmm,diopiAdaptiveAvgPool2d
+2. 限制：
++ diopiBatchNorm仅仅支持training=false
++ diopiAdaptiveAvgPool2d只支持4D tensor且输出size最好是（1,1）
++ diopiAddmm只支持2D tensor
+
 **2022.11.24**
 1. 新增支持diopiAdd, diopiAvgPool2d，已完成fp32算子的一致性测试。
 
