@@ -308,7 +308,7 @@ diopiError_t diopiSoftmax(diopiContextHandle_t ctx, diopiTensorHandle_t out,
       handle.get(), TOPSDNN_SOFTMAX_ACCURATE, TOPSDNN_SOFTMAX_MODE_CHANNEL,
       alpha.data(), desc.get(), trIn.data(), beta.data(), desc.get(),
       trOut.data()));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -347,7 +347,7 @@ diopiError_t diopiRelu(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALLTOPSDNN(topsdnnActivationForward(
       handle.get(), descAct.get(), alpha.data(), desc.get(), trIn.data(),
       beta.data(), desc.get(), trOut.data()));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -384,7 +384,7 @@ diopiError_t diopiReluInp(diopiContextHandle_t ctx, diopiTensorHandle_t input) {
   DIOPI_CALLTOPSDNN(topsdnnActivationForward(
       handle.get(), descAct.get(), alpha.data(), desc.get(), trIn.data(),
       beta.data(), desc.get(), trIn.data()));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -510,6 +510,7 @@ diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                        (void*)trB.data(), &beta, h_desc.get(),
                                        (void*)trOut.data()));
   }
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   DIOPI_CALLTOPS(topsFree(fwd_workspace));
   return diopiSuccess;
 }
@@ -612,7 +613,7 @@ diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
                                        (void*)trOut.data(), outN, outC, outH,
                                        outW, topsdnnType, TOPSDNN_TENSOR_NHWC));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
   return diopiSuccess;
@@ -711,6 +712,7 @@ diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                             &beta,                  // beta scaling factor
                             h_desc.get(),           // output tensor descriptor
                             (void*)trOut.data()));  // output data pointer
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -799,6 +801,7 @@ diopiError_t diopiAdaptiveAvgPool2d(diopiContextHandle_t ctx,
                             &beta,                  // beta scaling factor
                             h_desc.get(),           // output tensor descriptor
                             (void*)trOut.data()));  // output data pointer
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -858,6 +861,7 @@ diopiError_t diopiLinear(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                        (void*)trB.data(), &beta, cDesc.get(),
                                        (void*)trOut.data()));
   }
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -912,7 +916,7 @@ diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                     aDesc.get(), (void*)trIn.data(), &alpha2,
                                     bDesc.get(), (void*)trOther.data(), &beta,
                                     cDesc.get(), (void*)trOut.data()));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -981,6 +985,7 @@ diopiError_t diopiAddmm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALLTOPSDNN(topsdnnAddTensor(handle.get(), &beta_val, inDesc.get(),
                                      (void*)trIn.data(), &alpha_val,
                                      outDesc.get(), (void*)trOut.data()));
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   return diopiSuccess;
 }
 
@@ -1072,7 +1077,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
                                        (void*)trOut.data(), n, c, h, w,
                                        topsdnnType, TOPSDNN_TENSOR_NHWC));
-
+  DIOPI_CALLTOPS(topsDeviceSynchronize());
   DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
   return diopiSuccess;
