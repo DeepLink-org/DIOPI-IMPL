@@ -944,8 +944,10 @@ diopiError_t diopiAddmm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   float dnn_alpha2 = 1.0f;
   float dnn_beta = 0.0f;
 
-  float beta_val = beta->fval;
-  float alpha_val = alpha->fval;
+  float beta_val =
+      (beta->stype == diopi_dtype_float64) ? beta->fval : beta->ival;
+  float alpha_val =
+      (alpha->stype == diopi_dtype_float64) ? alpha->fval : alpha->ival;
 
   topsdnnDataType_t topsdnnType;
   DIOPI_CALL(convertType(&topsdnnType, trIn.dtype()));
