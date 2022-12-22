@@ -270,7 +270,7 @@ diopiError_t diopiSoftmax(diopiContextHandle_t ctx, diopiTensorHandle_t out,
 
   auto trIn = impl::tops::makeTensor(input);
   auto trOut = impl::tops::makeTensor(out);
-  // auto stream = impl::tops::getStream(ctx);
+  auto stream = impl::tops::getStream(ctx);
   if (0 == dim) {
     diopiSize_t oldShape = trIn.shape();
     diopiSize_t oldStride = trIn.stride();
@@ -303,12 +303,12 @@ diopiError_t diopiSoftmax(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     alpha.reset<float>(1.f);
     beta.reset<float>(0.f);
   }
-  // DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
   DIOPI_CALLTOPSDNN(topsdnnSoftmaxForward(
       handle.get(), TOPSDNN_SOFTMAX_ACCURATE, TOPSDNN_SOFTMAX_MODE_CHANNEL,
       alpha.data(), desc.get(), trIn.data(), beta.data(), desc.get(),
       trOut.data()));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -328,7 +328,7 @@ diopiError_t diopiRelu(diopiContextHandle_t ctx, diopiTensorHandle_t out,
 
   auto trIn = impl::tops::makeTensor(input);
   auto trOut = impl::tops::makeTensor(out);
-  // auto stream = impl::tops::getStream(ctx);
+  auto stream = impl::tops::getStream(ctx);
 
   DIOPI_CALL(impl::tops::setTensorDesc(trIn.dtype(), trIn.shape(),
                                        trIn.stride(), desc.get()));
@@ -343,11 +343,11 @@ diopiError_t diopiRelu(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     alpha.reset<float>(1.f);
     beta.reset<float>(0.f);
   }
-  // DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
   DIOPI_CALLTOPSDNN(topsdnnActivationForward(
       handle.get(), descAct.get(), alpha.data(), desc.get(), trIn.data(),
       beta.data(), desc.get(), trOut.data()));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -365,7 +365,7 @@ diopiError_t diopiReluInp(diopiContextHandle_t ctx, diopiTensorHandle_t input) {
       descAct;
 
   auto trIn = impl::tops::makeTensor(input);
-  //   auto stream = impl::tops::getStream(ctx);
+  auto stream = impl::tops::getStream(ctx);
 
   DIOPI_CALL(impl::tops::setTensorDesc(trIn.dtype(), trIn.shape(),
                                        trIn.stride(), desc.get()));
@@ -380,11 +380,11 @@ diopiError_t diopiReluInp(diopiContextHandle_t ctx, diopiTensorHandle_t input) {
     alpha.reset<float>(1.f);
     beta.reset<float>(0.f);
   }
-  // DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
   DIOPI_CALLTOPSDNN(topsdnnActivationForward(
       handle.get(), descAct.get(), alpha.data(), desc.get(), trIn.data(),
       beta.data(), desc.get(), trIn.data()));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -415,6 +415,10 @@ diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                    topsdnnDestroyConvolutionDescriptor>
       descConv;
   topsdnnConvolutionMode_t mode = TOPSDNN_CROSS_CORRELATION;
+
+  auto stream = impl::tops::getStream(ctx);
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
+
   float alpha = 1.f;
   float beta = 0.f;
   int out_h, out_w, out_c, out_n;
@@ -510,7 +514,7 @@ diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                        (void*)trB.data(), &beta, h_desc.get(),
                                        (void*)trOut.data()));
   }
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   DIOPI_CALLTOPS(topsFree(fwd_workspace));
   return diopiSuccess;
 }
@@ -541,6 +545,9 @@ diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                    topsdnnCreatePoolingDescriptor,
                                    topsdnnDestroyPoolingDescriptor>
       pooling_desc;
+  auto stream = impl::tops::getStream(ctx);
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
+
   int insize = 0;
   int outsize = 0;
   auto trIn = impl::tops::makeTensor(input);
@@ -613,7 +620,7 @@ diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
                                        (void*)trOut.data(), outN, outC, outH,
                                        outW, topsdnnType, TOPSDNN_TENSOR_NHWC));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
   return diopiSuccess;
@@ -636,6 +643,7 @@ diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                       __FILE__, __LINE__);
     return diopiErrorOccurred;
   }
+  auto stream = impl::tops::getStream(ctx);
 
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
@@ -681,6 +689,7 @@ diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     pooling_mode = TOPSDNN_POOLING_AVERAGE_COUNT_EXCLUDE_PADDING;
   }
 
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
   DIOPI_CALLTOPSDNN(topsdnnSetPooling2dDescriptor(
       pooling_desc.get(),     // descriptor handle
       pooling_mode,           // mode - max pooling
@@ -712,7 +721,7 @@ diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                             &beta,                  // beta scaling factor
                             h_desc.get(),           // output tensor descriptor
                             (void*)trOut.data()));  // output data pointer
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -735,6 +744,8 @@ diopiError_t diopiAdaptiveAvgPool2d(diopiContextHandle_t ctx,
                                    topsdnnCreatePoolingDescriptor,
                                    topsdnnDestroyPoolingDescriptor>
       pooling_desc;
+  auto stream = impl::tops::getStream(ctx);
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
 
   auto trIn = impl::tops::makeTensor(input);
   auto trOut = impl::tops::makeTensor(out);
@@ -801,7 +812,7 @@ diopiError_t diopiAdaptiveAvgPool2d(diopiContextHandle_t ctx,
                             &beta,                  // beta scaling factor
                             h_desc.get(),           // output tensor descriptor
                             (void*)trOut.data()));  // output data pointer
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -812,11 +823,13 @@ diopiError_t diopiLinear(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
-
+  auto stream = impl::tops::getStream(ctx);
   auto trIn = impl::tops::makeTensor(input);
   auto trW = impl::tops::makeTensor(weight);
   auto trB = impl::tops::makeTensor(bias);
   auto trOut = impl::tops::makeTensor(out);
+
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
 
   if (trIn.shape().len != 2) {
     impl::tops::set_last_error_string("Only 2D tensors are supported. at %s:%d",
@@ -861,7 +874,7 @@ diopiError_t diopiLinear(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                        (void*)trB.data(), &beta, cDesc.get(),
                                        (void*)trOut.data()));
   }
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -874,10 +887,12 @@ diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
       handle;
 
   topsdnnOpTensorOp_t op = TOPSDNN_OP_TENSOR_ADD;
-
+  auto stream = impl::tops::getStream(ctx);
   auto trIn = impl::tops::makeTensor(input);
   auto trOther = impl::tops::makeTensor(other);
   auto trOut = impl::tops::makeTensor(out);
+
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
 
   // to-do: get alpha value
   float alpha1 = 1.0f;
@@ -916,7 +931,7 @@ diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                     aDesc.get(), (void*)trIn.data(), &alpha2,
                                     bDesc.get(), (void*)trOther.data(), &beta,
                                     cDesc.get(), (void*)trOut.data()));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -928,11 +943,13 @@ diopiError_t diopiAddmm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   impl::tops::TopsdnnResourceGuard<topsdnnHandle_t, topsdnnCreate,
                                    topsdnnDestroy>
       handle;
-
+  auto stream = impl::tops::getStream(ctx);
   auto trIn = impl::tops::makeTensor(input);
   auto trMat1 = impl::tops::makeTensor(mat1);
   auto trMat2 = impl::tops::makeTensor(mat2);
   auto trOut = impl::tops::makeTensor(out);
+
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
 
   if (trMat1.shape().len != 2) {
     impl::tops::set_last_error_string("Only 2D tensors are supported. at %s:%d",
@@ -987,7 +1004,7 @@ diopiError_t diopiAddmm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALLTOPSDNN(topsdnnAddTensor(handle.get(), &beta_val, inDesc.get(),
                                      (void*)trIn.data(), &alpha_val,
                                      outDesc.get(), (void*)trOut.data()));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   return diopiSuccess;
 }
 
@@ -1005,7 +1022,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                                       __FILE__, __LINE__);
     return diopiErrorOccurred;
   }
-
+  auto stream = impl::tops::getStream(ctx);
   auto trIn = impl::tops::makeTensor(input);
   auto trGamma = impl::tops::makeTensor(weight);
   auto trBeta = impl::tops::makeTensor(bias);
@@ -1050,6 +1067,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   topsdnnDataType_t topsdnnType;
   DIOPI_CALL(convertType(&topsdnnType, trIn.dtype()));
 
+  DIOPI_CALLTOPSDNN(topsdnnSetStream(handle.get(), stream));
   // Set descriptors
   DIOPI_CALLTOPSDNN(topsdnnSetTensorNdDescriptor(inDesc.get(), topsdnnType, 4,
                                                  dims, strides));
@@ -1079,7 +1097,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
   DIOPI_CALL(impl::tops::topsTranspose(handle.get(), (void*)dtuDevPtrO,
                                        (void*)trOut.data(), n, c, h, w,
                                        topsdnnType, TOPSDNN_TENSOR_NHWC));
-  DIOPI_CALLTOPS(topsDeviceSynchronize());
+  DIOPI_CALLTOPS(topsStreamSynchronize(stream));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrI));
   DIOPI_CALLTOPS(topsFree(dtuDevPtrO));
   return diopiSuccess;
