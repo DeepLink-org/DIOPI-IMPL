@@ -8,6 +8,8 @@
 
 #include <diopi/diopirt.h>
 #include <tops_runtime.h>
+#include <topsdnn.h>
+#include <iostream>
 #include <mutex>
 #include "error.h"
 
@@ -127,6 +129,52 @@ void set_last_error_string(const char* szFmt, Types&&... args) {
   sprintf(szBuf, szFmt, std::forward<Types>(args)...);
   _set_last_error_string(szBuf);
 }
+
+class SingleDNN;
+class SafeDeletor {
+ public:
+  void operator()(SingleDNN* sf) { delete sf; }
+};
+class SingleDNN {
+ private:
+  SingleDNN() {
+    auto status = topsdnnCreate(&handle);
+    if (status != TOPSDNN_STATUS_SUCCESS) {
+      throw std::runtime_error("topsdnnHandle_t create failed!");
+    }
+  }
+  ~SingleDNN() {
+    auto status = topsdnnDestroy(handle);
+    if (status != TOPSDNN_STATUS_SUCCESS) {
+      throw std::runtime_error("topsdnnHandle_t destroy failed!");
+    }
+  }
+
+  SingleDNN(const SingleDNN&) = delete;
+  SingleDNN& operator=(const SingleDNN&) = delete;
+  friend class SafeDeletor;
+  topsdnnHandle_t handle;
+
+ public:
+  static std::shared_ptr<SingleDNN> GetInst() {
+    if (single != nullptr) {
+      return single;
+    }
+    s_mutex.lock();
+    if (single != nullptr) {
+      s_mutex.unlock();
+      return single;
+    }
+    single = std::shared_ptr<SingleDNN>(new SingleDNN, SafeDeletor());
+    s_mutex.unlock();
+    return single;
+  }
+  topsdnnHandle_t getHandle() { return handle; };
+
+ private:
+  static std::shared_ptr<SingleDNN> single;
+  static std::mutex s_mutex;
+};
 
 }  // namespace tops
 
