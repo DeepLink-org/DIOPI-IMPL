@@ -64,6 +64,8 @@ set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")
 
 if (RUNTIME)
     target_link_libraries(${DEVICEIMPL} ${DIOPIRT})
+    # Change the name of so which has been loaded before by the main program to ensure that two so will be loaded
+    # For parrots on camb, you need change the name of libc10.so and libtorch.so
     target_link_libraries(${REALIMPL} ${DIOPIRT} ${TORCH_LIBRARIES} ${TORCH_MLU_LIBRARIES})
 else()
     target_link_libraries(${REALIMPL} ${TORCH_LIBRARIES} ${TORCH_MLU_LIBRARIES})
