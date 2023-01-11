@@ -120,6 +120,26 @@ diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out,
 }
 
 /**
+ * @brief
+ * @param rounding_mode supported in pytorch>=1.8
+ */
+diopiError_t diopiDivInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        diopiConstTensorHandle_t other, diopiRoundMode_t rounding_mode) {
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atInput = impl::aten::buildATen(input);
+    at::Tensor atOther = impl::aten::buildATen(other);
+#if TORCH_MM_VERSION < TORCH_1_8_MM_VERSION
+    at::Tensor atOut = at::div(atInput, atOther, atAlpha);
+    impl::aten::updateATen2Tensor(ctx, atOut, input);
+#else
+    auto roundingMode = impl::aten::getRoundingMode(rounding_mode);
+    at::Tensor atOut = at::div(atInput, atOther, atAlpha);
+    impl::aten::updateATen2Tensor(ctx, atOut, input);
+#endif
+    return diopiSuccess;
+}
+
+/**
  * @brief 
  * @param rounding_mode supported in pytorch>=1.8.0
  */
@@ -136,6 +156,27 @@ diopiError_t diopiDivScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     auto roundingMode = impl::aten::getRoundingMode(rounding_mode);
     auto atOut = at::div(atInput, atOther);
     impl::aten::updateATen2Tensor(ctx, atOut, out);
+#endif
+    return diopiSuccess;
+}
+
+/**
+ * @brief 
+ * @param rounding_mode supported in pytorch>=1.8.0
+ */
+diopiError_t diopiDivInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        const diopiScalar_t* other, diopiRoundMode_t rounding_mode) {
+    impl::aten::setCurCtx(ctx);
+    auto atInput = impl::aten::buildATen(input);
+    auto atOther = impl::aten::buildAtScalar(other);
+#if TORCH_MM_VERSION < TORCH_1_8_MM_VERSION
+    impl::aten::invokeATenFuncRet
+        <at::Tensor (*)(at::Tensor const&, c10::Scalar)>
+        (ctx, at::div, input, atInput, atOther);
+#else
+    auto roundingMode = impl::aten::getRoundingMode(rounding_mode);
+    auto atOut = at::div(atInput, atOther);
+    impl::aten::updateATen2Tensor(ctx, atOut, input);
 #endif
     return diopiSuccess;
 }
@@ -830,8 +871,8 @@ diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
     at::Tensor atInput = impl::aten::buildATen(input);
     at::Tensor atOther = impl::aten::buildATen(other);
     at::Scalar atAlpha = impl::aten::buildAtScalar(alpha);
-    at::Tensor atOut = at::add_out(atInput, atInput, atOther, atAlpha);
-    // impl::aten::updateATen2Tensor(ctx, atOut, input);
+    at::Tensor atOut = at::add(atInput, atOther, atAlpha);
+    impl::aten::updateATen2Tensor(ctx, atOut, input);
     return diopiSuccess;
 }
 
