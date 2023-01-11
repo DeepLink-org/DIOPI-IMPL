@@ -830,8 +830,8 @@ diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
     at::Tensor atInput = impl::aten::buildATen(input);
     at::Tensor atOther = impl::aten::buildATen(other);
     at::Scalar atAlpha = impl::aten::buildAtScalar(alpha);
-    at::Tensor atOut = at::add(atInput, atOther, atAlpha);
-    impl::aten::updateATen2Tensor(ctx, atOut, input);
+    at::Tensor atOut = at::add_out(atInput, atInput, atOther, atAlpha);
+    // impl::aten::updateATen2Tensor(ctx, atOut, input);
     return diopiSuccess;
 }
 
