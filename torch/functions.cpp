@@ -825,7 +825,7 @@ diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
 }
 
 diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
-                                diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
+        diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
     at::Tensor atOther = impl::aten::buildATen(other);
@@ -845,7 +845,7 @@ diopiError_t diopiAddScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiAddScalarInp(diopiContextHandle_t ctx,
+diopiError_t diopiAddInpScalar(diopiContextHandle_t ctx,
         diopiTensorHandle_t input, const diopiScalar_t* other, const diopiScalar_t* alpha) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -887,7 +887,7 @@ diopiError_t diopiSubScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiSubScalarInp(diopiContextHandle_t ctx,
+diopiError_t diopiSubInpScalar(diopiContextHandle_t ctx,
         diopiTensorHandle_t input, const diopiScalar_t* other, const diopiScalar_t* alpha) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -926,7 +926,7 @@ diopiError_t diopiMulScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiMulScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiMulInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
          const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -964,7 +964,7 @@ diopiError_t diopiGeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiGeScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiGeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1002,7 +1002,7 @@ diopiError_t diopiGtScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiGtScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiGtInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1040,7 +1040,7 @@ diopiError_t diopiLeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiLeScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiLeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1078,7 +1078,7 @@ diopiError_t diopiLtScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiLtScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiLtInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1116,7 +1116,7 @@ diopiError_t diopiEqScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiEqScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiEqInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1154,7 +1154,7 @@ diopiError_t diopiNeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
-diopiError_t diopiNeScalarInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+diopiError_t diopiNeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
         const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
@@ -1175,6 +1175,17 @@ diopiError_t diopiBitwiseAnd(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
+diopiError_t diopiBitwiseAndInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        diopiConstTensorHandle_t other) {
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atTmpInput = impl::aten::buildATen(input);
+    at::Tensor atTmpOther = impl::aten::buildATen(other);
+    at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
+    at::Tensor atOther = atTmpOther.to(at::ScalarType::Bool);
+    at::bitwise_and(atInput, atOther);
+    return diopiSuccess;
+}
+
 
 diopiError_t diopiBitwiseAndScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
         diopiConstTensorHandle_t input, const diopiScalar_t* other) {
@@ -1185,6 +1196,17 @@ diopiError_t diopiBitwiseAndScalar(diopiContextHandle_t ctx, diopiTensorHandle_t
     at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
     at::Tensor atOut = impl::aten::buildATen(out);
     at::bitwise_and_out(atOut, atInput, atOther);
+    return diopiSuccess;
+}
+
+diopiError_t diopiBitwiseAndInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        const diopiScalar_t* other) {
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atTmpInput = impl::aten::buildATen(input);
+    at::Scalar atTmpOther = impl::aten::buildAtScalar(other);
+    at::Scalar atOther = atTmpOther.to<bool>();
+    at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
+    at::bitwise_and(atInput, atOther);
     return diopiSuccess;
 }
 
@@ -1200,6 +1222,17 @@ diopiError_t diopiBitwiseOr(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     return diopiSuccess;
 }
 
+diopiError_t diopiBitwiseOrInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        diopiConstTensorHandle_t other) {
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atTmpInput = impl::aten::buildATen(input);
+    at::Tensor atTmpOther = impl::aten::buildATen(other);
+    at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
+    at::Tensor atOther = atTmpOther.to(at::ScalarType::Bool);
+    at::bitwise_or(atInput, atOther);
+    return diopiSuccess;
+}
+
 diopiError_t diopiBitwiseOrScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out,
         diopiConstTensorHandle_t input, const diopiScalar_t* other) {
     impl::aten::setCurCtx(ctx);
@@ -1209,6 +1242,17 @@ diopiError_t diopiBitwiseOrScalar(diopiContextHandle_t ctx, diopiTensorHandle_t 
     at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
     at::Tensor atOut = impl::aten::buildATen(out);
     at::bitwise_or_out(atOut, atInput, atOther);
+    return diopiSuccess;
+}
+
+diopiError_t diopiBitwiseOrInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+        const diopiScalar_t* other) {
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atTmpInput = impl::aten::buildATen(input);
+    at::Scalar atTmpOther = impl::aten::buildAtScalar(other);
+    at::Scalar atOther = atTmpOther.to<bool>();
+    at::Tensor atInput = atTmpInput.to(at::ScalarType::Bool);
+    at::bitwise_or(atInput, atOther);
     return diopiSuccess;
 }
 
