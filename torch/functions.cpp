@@ -129,11 +129,11 @@ diopiError_t diopiDivInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
     at::Tensor atInput = impl::aten::buildATen(input);
     at::Tensor atOther = impl::aten::buildATen(other);
 #if TORCH_MM_VERSION < TORCH_1_8_MM_VERSION
-    at::Tensor atOut = at::div(atInput, atOther, atAlpha);
+    at::Tensor atOut = at::div(atInput, atOther);
     impl::aten::updateATen2Tensor(ctx, atOut, input);
 #else
     auto roundingMode = impl::aten::getRoundingMode(rounding_mode);
-    at::Tensor atOut = at::div(atInput, atOther, atAlpha);
+    at::Tensor atOut = at::div(atInput, atOther);
     impl::aten::updateATen2Tensor(ctx, atOut, input);
 #endif
     return diopiSuccess;
@@ -3276,3 +3276,4 @@ diopiError_t diopiCol2Im(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
 }
 
 }  // extern "C"
+                  
