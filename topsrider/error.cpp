@@ -12,10 +12,10 @@ static char strLastErrorOther[2048] = {0};
 static std::mutex mtxLastError;
 
 const char* tops_get_last_error_string() {
-  topsError_t error = topsSuccess; // topsGetLastError();
+  topsError_t error = topsGetLastError();
   std::lock_guard<std::mutex> lock(mtxLastError);
   sprintf(strLastError, "tops error: %s; other error: %s",
-          "topsGetErrorString(error)", strLastErrorOther);
+          topsGetErrorString(error), strLastErrorOther);
   return strLastError;
 }
 

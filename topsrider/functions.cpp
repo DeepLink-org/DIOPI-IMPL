@@ -245,7 +245,7 @@ static char version[1024] = {0};
 const char* diopiGetVendorName() { return name; }
 
 const char* diopiGetImplVersion() {
-  int rt_version = 2009;
+  int rt_version = 2100;
   if (strlen(version) == 0) {
     const char* diopiVersion = diopiGetVersion();
     sprintf(version, "TopsRt Version: %d; Topsdnn Version: %d; %s", rt_version,
