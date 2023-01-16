@@ -3249,4 +3249,3 @@ diopiError_t diopiCol2Im(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
 }
 
 }  // extern "C"
-                  
