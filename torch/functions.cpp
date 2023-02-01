@@ -7,6 +7,10 @@
 #include <cuda_runtime_api.h>
 #include <cudnn.h>
 
+#ifdef USE_HIP
+#include <miopen/version.h>
+#endif
+
 #define FLT_MIN  __FLT_MIN__
 
 static thread_local diopiContextHandle_t context = nullptr;
@@ -24,8 +28,15 @@ const char* diopiGetVendorName() {
 
 const char* diopiGetImplVersion() {
     if (strlen(version) == 0) {
-        sprintf(version, "DIOPI Version: %d.%d.%d",
+#ifdef USE_HIP
+        sprintf(version, "HIP Version: %d; MIOPEN Version: %d.%d.%d; DIOPI Version: %d.%d.%d",
+                HIP_VERSION, MIOPEN_VERSION_MAJOR, MIOPEN_VERSION_MINOR, MIOPEN_VERSION_PATCH, \
                 DIOPI_VER_MAJOR, DIOPI_VER_MINOR, DIOPI_VER_PATCH);
+
+#else
+        sprintf(version, "Cuda Version: %d; Cudnn Version: %d; DIOPI Version: %d.%d.%d",
+                CUDART_VERSION, CUDNN_VERSION, DIOPI_VER_MAJOR, DIOPI_VER_MINOR, DIOPI_VER_PATCH);
+#endif
     }
     return version;
 }
