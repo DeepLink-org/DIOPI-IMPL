@@ -71,8 +71,8 @@ if (DYLOAD)
         add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
         target_link_libraries(${DEVICEIMPL} -ldl ${CUDA_LIBRARIES})
     endif()
-        add_dependencies(${DEVICEIMPL} code_gen) # make sure to recompile once code_gen.py changed
-        target_link_libraries(${REALIMPL} ${TORCH_LIBRARIES})
+    add_dependencies(${DEVICEIMPL} code_gen) # make sure to recompile once code_gen.py changed
+    target_link_libraries(${REALIMPL} ${TORCH_LIBRARIES})
 
 else ()
     if(USE_HIP)
