@@ -46,16 +46,18 @@ endif()
 
 if(HIP)
     include(../cmake/LoadHIP.cmake)
-    if(USE_HIP)
-        add_definitions(-DUSE_HIP)
-        message(STATUS "=================hip==============")
-        execute_process(
-            COMMAND bash ${HIP_PATH}/bin/hipconvertinplace-perl.sh ${CMAKE_CURRENT_SOURCE_DIR}
-        )
-        execute_process(
-            COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/hipify-amend.sh
-        )
-    endif()
+endif()
+
+if(USE_HIP)
+    add_definitions(-DUSE_HIP)
+    # hipify-perl
+    execute_process(
+        COMMAND bash ${HIP_PATH}/bin/hipconvertinplace-perl.sh ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+    # hipify-amend
+    execute_process(
+        COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/hipify-amend.sh
+    )
 endif()
 
 if (DYLOAD)
