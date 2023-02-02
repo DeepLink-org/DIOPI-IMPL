@@ -4,7 +4,7 @@
 #include <c10/cuda/CUDAGuard.h>
 #include <torch/library.h>
 
-#include "cuda_helpers.h"
+#include "torch/cuda_helpers.h"
 
 namespace vision {
 namespace ops {
@@ -163,5 +163,5 @@ at::Tensor nms_kernel(
 }
 
 
-} // namespace ops
-} // namespace vision
+}  // namespace ops
+}  // namespace vision
