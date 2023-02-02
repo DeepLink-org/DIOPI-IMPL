@@ -10,7 +10,7 @@
 
 #include <cstdio>
 
-#include "torch/error.hpp"
+#include "error.hpp"
 
 extern "C" {
 

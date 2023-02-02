@@ -11,7 +11,7 @@
 #include <iostream>
 #include <exception>
 
-#include "camb_pytorch/error.hpp"
+#include "error.hpp"
 
 
 template<typename...Types>

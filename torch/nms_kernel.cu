@@ -4,7 +4,7 @@
 #include <c10/cuda/CUDAGuard.h>
 #include <torch/library.h>
 
-#include "torch/cuda_helpers.h"
+#include "cuda_helpers.h"
 
 namespace vision {
 namespace ops {
