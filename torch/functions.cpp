@@ -13,8 +13,8 @@
 #define FLT_MIN  __FLT_MIN__
 
 static thread_local diopiContextHandle_t context = nullptr;
-#include "torch/helper.hpp"
-#include "torch/vision_kernel.h"
+#include "helper.hpp"
+#include "vision_kernel.h"
 
 extern "C" {
 

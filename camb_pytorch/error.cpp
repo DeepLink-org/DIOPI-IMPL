@@ -1,7 +1,7 @@
 #include <cnrt.h>
 #include <mutex>
 
-#include "camb_pytorch/error.hpp"
+#include "error.hpp"
 
 static char strLastError[4096] = {0};
 static char strLastErrorOther[2048] = {0};

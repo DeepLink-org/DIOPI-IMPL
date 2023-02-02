@@ -5,7 +5,7 @@
 #include <THC/THCAtomics.cuh>
 
 
-#include "torch/cuda_helpers.h"
+#include "cuda_helpers.h"
 
 namespace vision {
 namespace ops {

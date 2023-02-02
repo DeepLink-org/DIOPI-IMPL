@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <mutex>
 
-#include "cuda/helper.hpp"
+#include "helper.hpp"
 
 
 extern "C" {

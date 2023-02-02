@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "camb_pytorch/helper.hpp"
+#include "helper.hpp"
 
 #define DIOPI_CALLCNNL(Expr) { \
         ::cnnlStatus_t ret = Expr; \

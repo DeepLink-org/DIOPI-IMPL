@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <mutex>
 
-#include "torch/error.hpp"
+#include "error.hpp"
 
 static char strLastError[4096] = {0};
 static char strLastErrorOther[2048] = {0};

@@ -10,7 +10,7 @@
 #include <utility>
 #include <iostream>
 
-#include "torch/error.hpp"
+#include "error.hpp"
 
 #define TORCH_MM_VERSION (TORCH_VERSION_MAJOR * 1000 + TORCH_VERSION_MINOR * 10)
 #define TORCH_1_7_MM_VERSION 1070

@@ -6,7 +6,7 @@
 #include <cstring>
 
 static thread_local diopiContextHandle_t context = nullptr;
-#include "camb_pytorch/aten_helper.hpp"
+#include "aten_helper.hpp"
 
 #define FLT_MIN  __FLT_MIN__
 

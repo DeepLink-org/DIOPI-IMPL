@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <vector>
 
-#include "torch/helper.hpp"
+#include "helper.hpp"
 
 
 #define dispatch_dtype(fun, dtype, gridSize, blockSize, stream, ...)                             \

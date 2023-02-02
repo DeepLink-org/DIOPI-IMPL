@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "cuda/helper.hpp"
+#include "helper.hpp"
 
 
 #define DIOPI_CALLCUDNN(Expr) {                                                         \

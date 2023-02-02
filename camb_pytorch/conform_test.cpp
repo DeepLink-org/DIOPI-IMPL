@@ -12,7 +12,7 @@
 #include <cstdio>
 #include <mutex>
 
-#include "camb_pytorch/error.hpp"
+#include "error.hpp"
 
 extern "C" {
 
