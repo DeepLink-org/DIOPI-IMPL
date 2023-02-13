@@ -2420,4 +2420,26 @@ diopiError_t diopiScatterScalar(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     return diopiSuccess;
 }
 
+diopiError_t diopiUnique(diopiContextHandle_t ctx, diopiTensorHandle_t* out, diopiConstTensorHandle_t input, int64_t* dim,
+                         bool sorted, bool return_counts, diopiTensorHandle_t indices, diopiTensorHandle_t* counts) {
+    camb::aten::setCurCtx(ctx);
+    auto atInput = camb::aten::buildATen(input);
+    bool return_inverse = indices ? true : false;
+    std::tuple<at::Tensor, at::Tensor, at::Tensor> atOuts;
+
+    if (!dim) {
+        atOuts = at::_unique2(atInput, sorted, return_inverse, return_counts);
+    } else {
+        atOuts = at::unique_dim(atInput, *dim, sorted, return_inverse, return_counts);
+    }
+    camb::aten::buildDiopiTensor(ctx, std::get<0>(atOuts), out);
+    if (return_inverse) {
+        camb::aten::updateATen2Tensor(ctx, std::get<1>(atOuts), indices);
+    }
+    if (return_counts) {
+        camb::aten::buildDiopiTensor(ctx, std::get<2>(atOuts), counts);
+    }
+    return diopiSuccess;
+}
+
 }  // extern "C"
