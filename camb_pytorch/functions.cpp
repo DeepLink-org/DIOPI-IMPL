@@ -2452,4 +2452,14 @@ diopiError_t diopiPad(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
+diopiError_t diopiPermute(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiSize_t dims) {
+    camb::aten::setCurCtx(ctx);
+    at::Tensor atInput = camb::aten::buildATen(input);
+    auto atDims = camb::aten::buildAtIntArray(dims);
+    camb::aten::invokeATenFuncRet(ctx, at::native::permute, out, atInput, atDims);
+    
+    return diopiSuccess;
+}
+
+
 }  // extern "C"
