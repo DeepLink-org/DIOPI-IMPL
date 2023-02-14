@@ -2436,7 +2436,7 @@ diopiError_t diopiPad(diopiContextHandle_t ctx,
     } else if (strcmp(mode, "reflect") == 0) {
         pad_mode = torch::kReflect;
     } else if (strcmp(mode, "replicate") == 0) {
-        if (3 == atInput.dim()){
+        if (3 == atInput.dim()) {
             NOT_SUPPORTED("MLU doesn't support replication_pad1d for 3D tensors currently");
             return diopiErrorOccurred;
         }
@@ -2457,7 +2457,7 @@ diopiError_t diopiPermute(diopiContextHandle_t ctx, diopiTensorHandle_t out, dio
     at::Tensor atInput = camb::aten::buildATen(input);
     auto atDims = camb::aten::buildAtIntArray(dims);
     camb::aten::invokeATenFuncRet(ctx, at::native::permute, out, atInput, atDims);
-    
+
     return diopiSuccess;
 }
 
