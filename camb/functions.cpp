@@ -130,5 +130,111 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
     return diopiSuccess;
 }
 
+DIOPI_API diopiError_t diopiBitwiseAnd(diopiContextHandle_t ctx, diopiTensorHandle_t out, 
+        diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    auto stream  = impl::camb::getStream(ctx);
 
+
+    diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
+    diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
+
+    auto trInput = impl::camb::makeTensor(input_);
+    auto trOther = impl::camb::makeTensor(other_);
+    auto trOut = impl::camb::makeTensor(out);
+
+    
+
+    CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
+    cnnlHandle_t handle = CnnlHandle.get();
+    DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
+
+    CnnlResourceGuard<cnnlTensorDescriptor_t,
+        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> InputCnnlDesc;
+    cnnlTensorDescriptor_t input_desc = InputCnnlDesc.get();
+    CnnlResourceGuard<cnnlTensorDescriptor_t,
+        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> OtherCnnlDesc;
+    cnnlTensorDescriptor_t other_desc = OtherCnnlDesc.get();
+    CnnlResourceGuard<cnnlTensorDescriptor_t,
+        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> OutCnnlDesc;
+    cnnlTensorDescriptor_t out_desc = OutCnnlDesc.get();
+
+    cnnlTensorLayout_t input_layout = CNNL_LAYOUT_ARRAY;
+    cnnlDataType_t input_dtype;
+    DIOPI_CALL(convertType(&input_dtype, trInput.dtype()));
+    diopiSize_t input_shape = trInput.shape();
+    int input_dimNb = input_shape.len;
+    std::vector<int> input_dimSize(input_dimNb);
+    std::vector<int> input_dimStrides(input_dimNb, 1);
+    diopiSize_t input_stride = trInput.stride();
+    if (input_dimNb == 0) {
+        input_dimNb = 1;
+        input_dimSize.push_back(1);
+        input_dimStrides.push_back(1);
+    } else {
+        for (int i = 0; i < input_dimNb; ++i) {
+            input_dimSize[i] = input_shape.data[i];
+        }
+        if (input_dimNb > 0) {
+            for (int i = 0; i < input_dimNb; ++i) {
+                input_dimStrides[i] = input_stride.data[i];
+            }
+        }
+    }
+
+    cnnlTensorLayout_t other_layout = CNNL_LAYOUT_ARRAY;
+    cnnlDataType_t other_dtype;
+    DIOPI_CALL(convertType(&other_dtype, trOther.dtype()));
+    diopiSize_t other_shape = trOther.shape();
+    int other_dimNb = other_shape.len;
+    std::vector<int> other_dimSize(other_dimNb);
+    std::vector<int> other_dimStrides(other_dimNb, 1);
+    diopiSize_t other_stride = trOther.stride();
+    if (other_dimNb == 0) {
+        other_dimNb = 1;
+        other_dimSize.push_back(1);
+        other_dimStrides.push_back(1);
+    } else {
+        for (int i = 0; i < other_dimNb; ++i) {
+            other_dimSize[i] = other_shape.data[i];
+        }
+        if (other_dimNb > 0) {
+            for (int i = 0; i < other_dimNb; ++i) {
+                other_dimStrides[i] = other_stride.data[i];
+            }
+        }
+    }
+
+    cnnlTensorLayout_t out_layout = CNNL_LAYOUT_ARRAY;
+    cnnlDataType_t out_dtype;
+    DIOPI_CALL(convertType(&out_dtype, trOut.dtype()));
+    diopiSize_t out_shape = trOut.shape();
+    int out_dimNb = out_shape.len;
+    std::vector<int> out_dimSize(out_dimNb);
+    std::vector<int> out_dimStrides(out_dimNb, 1);
+    diopiSize_t out_stride = trOut.stride();
+    if (out_dimNb == 0) {
+        out_dimNb = 1;
+        out_dimSize.push_back(1);
+        out_dimStrides.push_back(1);
+    } else {
+        for (int i = 0; i < out_dimNb; ++i) {
+            out_dimSize[i] = out_shape.data[i];
+        }
+        if (out_dimNb > 0) {
+            for (int i = 0; i < out_dimNb; ++i) {
+                out_dimStrides[i] = out_stride.data[i];
+            }
+        }
+    }
+   
+    cnnlSetTensorDescriptorEx(input_desc, input_layout, input_dtype, input_dimNb, input_dimSize.data(), input_dimStrides.data());
+    cnnlSetTensorDescriptorEx(other_desc, other_layout, other_dtype, other_dimNb, other_dimSize.data(), other_dimStrides.data());
+    cnnlSetTensorDescriptorEx(out_desc, out_layout, out_dtype, out_dimNb, out_dimSize.data(), out_dimStrides.data());
+
+    size_t workspace_size = 0;
+    DIOPI_CALLCNNL(cnnlGetLogicOpWorkspaceSize(handle, input_desc, other_desc, out_desc, &workspace_size));
+    cnnlLogicOp_t logic_op_and = CNNL_LOGIC_OP_AND;
+    DIOPI_CALLCNNL(cnnlLogicOp(handle, logic_op_and, input_desc, trInput.data(), other_desc, trOther.data(), 
+        handle, workspace_size, out_desc, trOut.data()));  
+}
 }  // extern "C"
