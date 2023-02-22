@@ -1047,8 +1047,8 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out,
                             diopiConstTensorHandle_t input,
                             diopiConstTensorHandle_t weight,
                             diopiConstTensorHandle_t bias,
-                            diopiConstTensorHandle_t running_mean,
-                            diopiConstTensorHandle_t running_var, bool training,
+                            diopiTensorHandle_t running_mean,
+                            diopiTensorHandle_t running_var, bool training,
                             double momentum, double eps) {
   if (training) {
     impl::tops::set_last_error_string("only support inference at %s:%d",
