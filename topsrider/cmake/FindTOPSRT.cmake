@@ -1,9 +1,9 @@
 include(FindPackageHandleStandardArgs)
 
 find_path(TOPSRT_INCLUDE_DIR
-    NAMES tops_common.h
-    HINTS /usr/include/tops/ /usr/include/ /usr/include/dtu/ /usr/include/dtu/logging /usr/include/dtu/tops
-    /usr/include/dtu/3_0/runtime /usr/include/dtu/util/
+    NAMES tops_runtime.h
+    HINTS /usr/include/tops/ /usr/include/ /usr/include/dtu/ /usr/include/dtu/tops
+    /usr/include/dtu/3_0/runtime
 )
 
 find_library(TOPSRT_LIBRARIES
