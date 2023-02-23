@@ -190,11 +190,11 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
         Beta = tmp;
     }
 
-    
+
     std::cout<<"other: "<<trOther.data()<<std::endl;
     // std::cout<<"alpha: "<<(*alpha)<<std::endl;
     std::cout<<"input: "<<trInput.data()<<std::endl;
-    
+
     // std::cout<<"Alpha: "<<*Alpha<<std::endl;
     // std::cout<<"Beta: "<<*Beta<<std::endl;
 
