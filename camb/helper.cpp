@@ -7,7 +7,6 @@
 #include <diopi/diopirt.h>
 #include <diopi_register.h>
 #include <cnnl.h>
-#include <cnmlrt.h>
 
 #include <cstdio>
 #include <mutex>
@@ -26,7 +25,7 @@ extern "C" {
 
 void* camb_malloc(uint64_t bytes) {
     void* ptr;
-    CALL_CAMB(::cnrtMalloc(&ptr, bytes));
+    CALL_CAMB(cnrtMalloc(&ptr, bytes));
     return ptr;
 }
 
@@ -36,20 +35,20 @@ void camb_free(void* ptr) {
 
 int32_t camb_make_stream(diopiStreamHandle_t* stream_handle_ptr) {
     cnrtQueue_t phStream;
-    CALL_CAMB(cnrtCreateQueue(&phStream));
+    CALL_CAMB(cnrtQueueCreate(&phStream));
     *stream_handle_ptr = (diopiStreamHandle_t)phStream;
     return diopiSuccess;
 }
 
 int32_t camb_destroy_stream(diopiStreamHandle_t stream_handle) {
     cnrtQueue_t phStream = (cnrtQueue_t)stream_handle;
-    CALL_CAMB(cnrtDestroyQueue(phStream));
+    CALL_CAMB(cnrtQueueDestroy(phStream));
     return diopiSuccess;
 }
 
 int32_t camb_synchronize_stream(diopiStreamHandle_t stream_handle) {
     cnrtQueue_t phStream = (cnrtQueue_t)stream_handle;
-    CALL_CAMB(cnrtSyncQueue(phStream));
+    CALL_CAMB(cnrtQueueSync(phStream));
     return diopiSuccess;
 }
 

@@ -23,9 +23,10 @@ else()
     message(FATAL_ERROR "No Cambricon Neuware toolkit found.")
 endif()
 
-set(IMPL_SRC conform_test.cpp functions.cpp)
+file (GLOB IMPL_SRC kernels/*.cpp)
+list (APPEND IMPL_SRC helper.cpp)
 
 add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
 set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")
 target_link_libraries(${DEVICEIMPL} ${DIOPIRT})
-target_link_libraries(${DEVICEIMPL} cndev cnrt cnnl cnmlrt)
+target_link_libraries(${DEVICEIMPL} cndev cnrt cnnl)
