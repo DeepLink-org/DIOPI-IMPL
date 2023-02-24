@@ -219,6 +219,7 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     std::cout<<"success"<<std::endl;
     return diopiSuccess;
 
+
 }
 
 // DIOPI_API diopiError_t diopiReluInp(diopiContextHandle_t ctx, diopiTensorHandle_t input);
