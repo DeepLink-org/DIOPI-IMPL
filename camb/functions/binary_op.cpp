@@ -30,6 +30,11 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     CnnlResourceGuard<cnnlTensorDescriptor_t,
         cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescOther;
     cnnlTensorDescriptor_t descOther = CnnlDescOther.get();
+
+     CnnlResourceGuard<cnnlTensorDescriptor_t,
+        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescOut;
+    cnnlTensorDescriptor_t descOut = CnnlDescOut.get();
+
     diopiSize_t shape = trInput.shape();
     int dimNb = shape.len;
     std::vector<int> dimSize(dimNb);
@@ -89,7 +94,20 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     // std::vector<void*> inputs = {trInput, trInput2};
     uint32_t input_num = 2;
     // std::cout<<333<<std::endl;
-    DIOPI_CALLCNNL(cnnlAddN(handle, input_descs, inputs, input_num, descInput, trOutput.data()));
+    int dimNbOut = trOutput.shape().len;
+
+    std::vector<int> dimSizeOut(dimNbOut);
+    if (dimNbOut == 0) {
+        dimNbOut = 1;
+        dimSizeOut.push_back(1);
+    } else {
+        for (int i = 0; i < dimNbOut; ++i) {
+            dimSizeOut[i] = trOutput.shape().data[i];
+        }
+    }
+    std::cout << "dimSizeInput: " << dimNb << "\t dimSizeOther: " << dimNbOther << "\t dimSizeOut: " <<  dimNbOut << std::endl;
+    DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descOut, layout, dtype, dimNbOut, dimSizeOut.data()));
+    DIOPI_CALLCNNL(cnnlAddN(handle, input_descs, inputs, input_num, descOut, trOutput.data()));
     std::cout<<"success"<<std::endl;
     cnrtQueueSync(stream);
     return diopiSuccess;
