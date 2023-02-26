@@ -24,7 +24,7 @@ else()
 endif()
 
 file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions/*.cpp)
-list(APPEND IMPL_SRC cnnl_helper.cpp diopi_helper.cpp conform_test.cpp)
+list(APPEND IMPL_SRC cnnl_helper.cpp conform_test.cpp)
 
 add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
 set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")

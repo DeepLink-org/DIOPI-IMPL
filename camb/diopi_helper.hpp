@@ -125,7 +125,7 @@ inline cnrtQueue_t getStream(diopiContextHandle_t ctx) {
 void _set_last_error_string(const char *err);
 
 template<typename...Types>
-void set_last_error_string(const char* szFmt, Types&&...args){
+inline void set_last_error_string(const char* szFmt, Types&&...args){
     char szBuf[4096] = {0};
     sprintf(szBuf, szFmt, std::forward<Types>(args)...);
     _set_last_error_string(szBuf);
