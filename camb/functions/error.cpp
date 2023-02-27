@@ -1,3 +1,4 @@
+#include <diopi/functions.h>
 #include "../error.hpp"
 
 namespace impl{

@@ -3,6 +3,7 @@
 
 #include <cnnl.h>
 #include "diopi_helper.hpp"
+#include "error.hpp"
 
 #define DIOPI_CHECK(cond, str)                                             \
     do {                                                                   \
