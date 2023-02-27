@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <mutex>
 
+#include "error.hpp"
 
 #define CALL_CNRT(Expr)   {                                                         \
     ::cnrtRet_t ret = Expr;                                                         \
@@ -70,18 +71,6 @@ int32_t camb_memcpy_d2d_async(diopiStreamHandle_t stream_handle,
     return diopiSuccess;
 }
 
-static char strLastError[8192] = {0};
-static char strLastErrorOther[4096] = {0};
-static std::mutex mtxLastError;
-
-const char* camb_get_last_error_string() {
-    // consider cnrt version cnrtGetLastErr or cnrtGetLastError
-    ::cnrtRet_t err = ::cnrtGetLastError();
-    std::lock_guard<std::mutex> lock(mtxLastError);
-    sprintf(strLastError, "camb error: %s; other error: %s",
-            ::cnrtGetErrorStr(err), strLastErrorOther);
-    return strLastError;
-}
 
 int32_t initLibrary() {
     diopiRegisterDeviceMallocFunc(camb_malloc);
@@ -92,7 +81,7 @@ int32_t initLibrary() {
     diopiRegisterMemcpyD2HAsyncFunc(camb_memcpy_d2h_async);
     diopiRegisterMemcpyD2DAsyncFunc(camb_memcpy_d2d_async);
     diopiRegisterMemcpyH2DAsyncFunc(camb_memcpy_h2d_async);
-    diopiRegisterGetLastErrorFunc(camb_get_last_error_string);
+    diopiRegisterGetLastErrorFunc(impl::camb::camb_get_last_error_string);
 
     return diopiSuccess;
 }
@@ -102,16 +91,3 @@ int32_t finalizeLibrary() {
 }
 
 }  // extern "C"
-
-namespace impl {
-
-namespace camb {
-
-void _set_last_error_string(const char *err) {
-    std::lock_guard<std::mutex> lock(mtxLastError);
-    sprintf(strLastErrorOther, "%s", err);
-}
-
-}  // namespace camb
-
-}  // namespace impl

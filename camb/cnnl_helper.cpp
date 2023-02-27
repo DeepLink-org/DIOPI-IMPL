@@ -1,4 +1,5 @@
 #include "cnnl_helper.hpp"
+#include "error.hpp"
 
 diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type) {
     switch (type) {
@@ -33,7 +34,7 @@ diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type) {
         *cnnlType = CNNL_DTYPE_INT64;
         break;
     default:
-        impl::camb::set_last_error_string("unkown diopitype error %d at %s:%s", type, __FILE__, __LINE__);
+        impl::camb::set_last_error_string("unkown diopitype error %d at %s:%d", type, __FILE__, __LINE__);
         return diopiDtypeNotSupported;
     }
     return diopiSuccess;
