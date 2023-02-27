@@ -20,11 +20,12 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     cnnlHandle_t handle = CnnlHandle.get();
     DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
 
-    CnnlResourceGuard<cnnlTensorDescriptor_t,
-        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescInput;
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
     cnnlDataType_t dtype;
     DIOPI_CALL(convertType(&dtype, trInput.dtype()));
+
+    CnnlResourceGuard<cnnlTensorDescriptor_t,
+        cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescInput;
     cnnlTensorDescriptor_t descInput = CnnlDescInput.get();
 
     CnnlResourceGuard<cnnlTensorDescriptor_t,
@@ -35,43 +36,19 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
         cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescOut;
     cnnlTensorDescriptor_t descOut = CnnlDescOut.get();
 
-    diopiSize_t shape = trInput.shape();
-    int dimNb = shape.len;
-    std::vector<int> dimSize(dimNb);
-
-    if (dimNb == 0) {
-        dimNb = 1;
-        dimSize.push_back(1);
+    int dimNbInput =trInput.shape().len;
+    std::vector<int> dimSizeInput(dimNbInput);
+    if (dimNbInput == 0) {
+        dimNbInput = 1;
+        dimSizeInput.push_back(1);
     } else {
-        for (int i = 0; i < dimNb; ++i) {
-            dimSize[i] = shape.data[i];
+        for (int i = 0; i < dimNbInput; ++i) {
+            dimSizeInput[i] = trInput.shape().data[i];
         }
     }
 
-    float alphaIn;
-    float betaIn = 0.0f;
-    if (alpha->stype < 7){
-        alphaIn = (float)(int32_t)alpha->ival;
-    }
-    else{
-        alphaIn = (float)alpha->fval;
-    }
-
-    // std::cout<<"other: "<<trOther.data()<<std::endl;
-    // std::cout<<"input: "<<trInput.data()<<std::endl;
-
-    // std::cout<<"Alpha: "<<*Alpha<<std::endl;
-    // std::cout<<"Beta: "<<*Beta<<std::endl;
-
-    // auto output = impl::camb::makeTensor(out);
-    DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descInput, layout, dtype, dimNb, dimSize.data()));
-    // std::cout<<"000"<<std::endl;
-    DIOPI_CALLCNNL(cnnlTransform(handle, &alphaIn, descInput, trOther.data(), &betaIn, trOutput.data()));
-
-    // std::cout<<"111"<<std::endl;
-
+    diopiSize_t shapeOther = trInput.shape();
     int dimNbOther = trOther.shape().len;
-
     std::vector<int> dimSizeOther(dimNbOther);
     if (dimNbOther == 0) {
         dimNbOther = 1;
@@ -81,18 +58,8 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
             dimSizeOther[i] = trOther.shape().data[i];
         }
     }
-    DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descOther, layout, dtype, dimNbOther, dimSizeOther.data()));
-    const cnnlTensorDescriptor_t input_descs[2] = {descInput, descOther};
-    // std::vector<impl::camb::DiopiTensor<diopiTensorHandle_t>> inputs = {trInput, trInput2};
-    const void* inputs[2] = {trInput.data(),trOther.data()};
-    // inputs.push_back(trInput.data());
-    // inputs.push_back(trInput2.data());
-    // std::cout<<222<<std::endl;
-    // std::vector<void*> inputs = {trInput, trInput2};
-    uint32_t input_num = 2;
-    // std::cout<<333<<std::endl;
-    int dimNbOut = trOutput.shape().len;
 
+    int dimNbOut = trOutput.shape().len;
     std::vector<int> dimSizeOut(dimNbOut);
     if (dimNbOut == 0) {
         dimNbOut = 1;
@@ -102,15 +69,47 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
             dimSizeOut[i] = trOutput.shape().data[i];
         }
     }
-    std::cout << "dimSizeInput: " << dimNb << "\t dimSizeOther: " << dimNbOther << "\t dimSizeOut: " <<  dimNbOut << std::endl;
+
+    void *pAlphaIn = (void*)malloc(4);
+    void *pBetaIn = (void*)malloc(4);
+    if (dtype >= 3 && dtype <= 13){
+        *(int32_t*)pBetaIn = 0;
+        if(alpha->stype < 7){
+            *(int32_t*)pAlphaIn = (int32_t)alpha->ival;
+        }
+        else{
+            *(int32_t*)pAlphaIn = (int32_t)(float)alpha->fval;
+        }
+    }
+    else{
+        *(float*)pBetaIn = 0.0f;
+        if(alpha->stype < 7){
+            *(float*)pAlphaIn = (float)(int32_t)alpha->ival;
+        }
+        else{
+            *(float*)pAlphaIn = (float)alpha->fval;
+        }
+    }
+
+    DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descInput, layout, dtype, dimNbInput, dimSizeInput.data()));
+    DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descOther, layout, dtype, dimNbOther, dimSizeOther.data()));
     DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descOut, layout, dtype, dimNbOut, dimSizeOut.data()));
+
+    DIOPI_CALLCNNL(cnnlTransform(handle, pAlphaIn, descOther, trOther.data(), pBetaIn, trOutput.data())); 
+    free(pAlphaIn);
+    free(pBetaIn);  
+    const cnnlTensorDescriptor_t input_descs[2] = {descInput, descOther};
+    const void* inputs[2] = {trInput.data(),trOther.data()};
+    uint32_t input_num = 2;
+    
+    std::cout << "dimSizeInput: " << dimNbInput << "\t dimSizeOther: " << dimNbOther << "\t dimSizeOut: " <<  dimNbOut << std::endl;
     DIOPI_CALLCNNL(cnnlAddN(handle, input_descs, inputs, input_num, descOut, trOutput.data()));
-    std::cout<<"success"<<std::endl;
-    cnrtQueueSync(stream);
     return diopiSuccess;
 
 
 }
+
+
 
 
 }  // extern "C"
