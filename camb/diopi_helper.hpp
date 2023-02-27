@@ -16,6 +16,7 @@
 
 #include <cstdio>
 #include <cnrt.h>
+#include <cassert>
 
 #define DIOPI_CALL(Expr)           \
     do {                           \
@@ -76,38 +77,38 @@ class DiopiTensor final {
 public:
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {}
 
-    // TODO: 询问能否获取context（需要改header），这样contiguous就不用传ctx了
-    // diopiContextHandle_t context() const {
-    //     diopiContextHandle_t context;
-    //     _diopiTensorGetCtxHandle(tensor_, &context);
-    //     return context;
-    // }
     diopiDevice_t device() const {
+        assert(this->defined());
         diopiDevice_t device;
         diopiGetTensorDevice(tensor_, &device);
         return device;
     }
     diopiDtype_t dtype() const {
+        assert(this->defined());
         diopiDtype_t dtype;
         diopiGetTensorDtype(tensor_, &dtype);
         return dtype;
     }
 
     const diopiSize_t& shape() {
+        assert(this->defined());
         diopiGetTensorShape(tensor_, &shape_);
         return shape_;
     }
     const diopiSize_t& stride() {
+        assert(this->defined());
         diopiGetTensorStride(tensor_, &stride_);
         return stride_;
     }
 
     int64_t numel() const {
+        assert(this->defined());
         int64_t numel;
         diopiGetTensorNumel(tensor_, &numel);
         return numel;
     }
     int64_t elemsize() const {
+        assert(this->defined());
         int64_t elemsize;
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;
@@ -116,7 +117,7 @@ public:
         return this->shape().len;
     }
     bool defined() const {
-        return this->numel() != 0;
+        return tensor_ != nullptr;
     }
 
     DiopiTensor unsqueeze(int dim) {
