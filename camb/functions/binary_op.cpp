@@ -48,19 +48,16 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
         }
     }
 
-    void *pAlphaIn = (void*)malloc(4);
-    void *pBetaIn = (void*)malloc(4);
+    float alphaIn;
+    float betaIn = 0.0f;
     if (alpha->stype < 7){
-        *(float*)pAlphaIn = (float)(int32_t)alpha->ival;
+        alphaIn = (float)(int32_t)alpha->ival;
     }
     else{
-        *(float*)pAlphaIn = (float)alpha->fval;
+        alphaIn = (float)alpha->fval;
     }
-    *(float*)pBetaIn = 0.0f;
-
 
     // std::cout<<"other: "<<trOther.data()<<std::endl;
-    std::cout<<"alphaIn: "<<(*(int32_t*)pAlphaIn)<<std::endl;
     // std::cout<<"input: "<<trInput.data()<<std::endl;
 
     // std::cout<<"Alpha: "<<*Alpha<<std::endl;
@@ -69,7 +66,7 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     // auto output = impl::camb::makeTensor(out);
     DIOPI_CALLCNNL(cnnlSetTensorDescriptor(descInput, layout, dtype, dimNb, dimSize.data()));
     // std::cout<<"000"<<std::endl;
-    DIOPI_CALLCNNL(cnnlTransform(handle, pAlphaIn, descInput, trOther.data(), pBetaIn, trOutput.data()));
+    DIOPI_CALLCNNL(cnnlTransform(handle, &alphaIn, descInput, trOther.data(), &betaIn, trOutput.data()));
 
     // std::cout<<"111"<<std::endl;
 
