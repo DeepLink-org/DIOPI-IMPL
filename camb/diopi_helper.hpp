@@ -8,19 +8,11 @@
 #ifndef IMPL_CAMB_DIOPI_HELPER_HPP_
 #define IMPL_CAMB_DIOPI_HELPER_HPP_
 
-<<<<<<< HEAD:camb/diopi_helper.hpp
-#include<utility>
-#include <cstdio>
-
-#include <diopi/diopirt.h>
-#include <cnrt.h>
-=======
 #include <cnrt.h>
 #include <diopi/diopirt.h>
 
 #include <cstdio>
 #include <utility>
->>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb:camb/diopi_helper.hpp
 
 #define DIOPI_CALL(Expr)           \
     do {                           \
@@ -48,19 +40,11 @@ struct DataType<diopiTensorHandle_t> {
     }
 };
 
-<<<<<<< HEAD:camb/diopi_helper.hpp
-template<>
-struct DataType<const diopiTensorHandle_t> {
-    using type = void*;
-    static const void* data(diopiConstTensorHandle_t tensor) {
-        const void *data;
-=======
 template <>
 struct DataType<diopiConstTensorHandle_t> {
     using type = const void*;
     static const void* data(diopiConstTensorHandle_t& tensor) {
         const void* data;
->>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb:camb/diopi_helper.hpp
         diopiGetTensorDataConst(&tensor, &data);
         return data;
     }
@@ -111,11 +95,7 @@ protected:
     diopiSize_t stride_;
 };
 
-<<<<<<< HEAD:camb/diopi_helper.hpp
-template<typename TensorType>
-=======
 template <typename TensorType>
->>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb:camb/diopi_helper.hpp
 inline auto makeTensor(TensorType& tensor) -> DiopiTensor<TensorType> {
     return DiopiTensor<TensorType>(tensor);
 }
@@ -138,18 +118,6 @@ inline cnrtQueue_t getStream(diopiContextHandle_t ctx) {
     return static_cast<cnrtQueue_t>(stream_handle);
 }
 
-<<<<<<< HEAD:camb/diopi_helper.hpp
-void _set_last_error_string(const char *err);
-
-template<typename...Types>
-inline void set_last_error_string(const char* szFmt, Types&&...args){
-    char szBuf[4096] = {0};
-    sprintf(szBuf, szFmt, std::forward<Types>(args)...);
-    _set_last_error_string(szBuf);
-};
-
-=======
->>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb:camb/diopi_helper.hpp
 }  // namespace camb
 
 }  // namespace impl
