@@ -6,6 +6,7 @@
 #include <cassert>
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "diopi_helper.hpp"
