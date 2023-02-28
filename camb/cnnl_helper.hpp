@@ -106,17 +106,4 @@ protected:
     cnnlTensorDescriptor_t desc{0};
 };
 
-// class CnnlHandle final {
-//    public:
-//     CnnlHandle(diopiContextHandle_t ctx) {
-//         auto stream = impl::camb::getStream(ctx);
-//         cnnlHandle_t handle_ = cnnlHandle_.get();
-//         DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
-//     }
-
-//    private:
-//     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> cnnlHandle_;
-//     cnnlHandle_t handle_
-// };
-
 #endif  // IMPL_CAMB_CNNL_HELPER_HPP_
