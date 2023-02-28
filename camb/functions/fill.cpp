@@ -1,21 +1,36 @@
+<<<<<<< HEAD
 #include <vector>
 
 #include <diopi/functions.h>
 
+=======
+#include <diopi/functions.h>
+
+#include <vector>
+
+>>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb
 #include "../cnnl_helper.hpp"
 
 extern "C" {
 
 diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* value) {
+<<<<<<< HEAD
     auto stream  = impl::camb::getStream(ctx);
+=======
+    auto stream = impl::camb::getStream(ctx);
+>>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb
     auto trInput = impl::camb::makeTensor(input);
 
     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
     cnnlHandle_t handle = CnnlHandle.get();
     DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
 
+<<<<<<< HEAD
     CnnlResourceGuard<cnnlTensorDescriptor_t,
         cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDesc;
+=======
+    CnnlResourceGuard<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDesc;
+>>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
     cnnlDataType_t dtype;
     DIOPI_CALL(convertType(&dtype, trInput.dtype()));
@@ -49,10 +64,18 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
         val = value->fval;
     }
 
+<<<<<<< HEAD
     DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(desc, layout, dtype, dimNb,
         dimSize.data(), dimStrides.data()));
+=======
+    DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(desc, layout, dtype, dimNb, dimSize.data(), dimStrides.data()));
+>>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb
     DIOPI_CALLCNNL(cnnlFill(handle, val, desc, trInput.data()));
     return diopiSuccess;
 }
 
+<<<<<<< HEAD
 }  // extern "C"
+=======
+}  // extern "C"
+>>>>>>> 3445db0fa9705c1c2c09ee67d1120f71558f38cb
