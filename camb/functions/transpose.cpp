@@ -2,7 +2,7 @@
 #include <numeric>
 #include "../cnnl_helper.hpp"
 
-std::vector<int> GetPerm(diopiConstTensorHandle_t tensor_handle,
+std::vector<int> getPerm(diopiConstTensorHandle_t tensor_handle,
                          int64_t dim0,
                          int64_t dim1) {
     auto tensor = impl::camb::makeTensor(tensor_handle);
@@ -47,7 +47,7 @@ DIOPI_API diopiError_t diopiTranspose(diopiContextHandle_t ctx,
                       cnnlDestroyTransposeDescriptor>
         CnnlTransposeDesc;
     cnnlTransposeDescriptor_t transpose_desc = CnnlTransposeDesc.get();
-    std::vector<int> perms = GetPerm(input, dim0, dim1);
+    std::vector<int> perms = getPerm(input, dim0, dim1);
     DIOPI_CALLCNNL(
         cnnlSetTransposeDescriptor(transpose_desc, perms.size(), perms.data()));
 
