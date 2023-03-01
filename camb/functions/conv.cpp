@@ -6,7 +6,7 @@
 
 extern "C" {
 
-static diopiError_t diopiTransposeNCHW2NHWC(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out) {
+static diopiError_t TransposeNCHW2NHWC(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out) {
     auto stream = impl::camb::getStream(ctx);
     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
     cnnlHandle_t handle = CnnlHandle.get();
@@ -56,7 +56,7 @@ static diopiError_t diopiTransposeNCHW2NHWC(diopiContextHandle_t ctx, diopiConst
     return diopiSuccess;
 }
 
-static diopiError_t diopiTransposeNHWC2NCHW(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out) {
+static diopiError_t TransposeNHWC2NCHW(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out) {
     auto stream = impl::camb::getStream(ctx);
     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
     cnnlHandle_t handle = CnnlHandle.get();
@@ -106,7 +106,7 @@ static diopiError_t diopiTransposeNHWC2NCHW(diopiContextHandle_t ctx, diopiConst
     return diopiSuccess;
 }
 
-static diopiTensorHandle_t diopiRequireNCHW2NHWC(diopiContextHandle_t ctx, diopiConstTensorHandle_t input) {
+static diopiTensorHandle_t RequireNCHW2NHWC(diopiContextHandle_t ctx, diopiConstTensorHandle_t input) {
     diopiDtype_t dtype;
     diopiGetTensorDtype(input, &dtype);
     diopiSize_t nchw_shape;
@@ -119,11 +119,11 @@ static diopiTensorHandle_t diopiRequireNCHW2NHWC(diopiContextHandle_t ctx, diopi
     diopiSize_t nhwc_shape(shape.data(), 4);
     diopiTensorHandle_t out = nullptr;
     diopiRequireTensor(ctx, &out, &nhwc_shape, nullptr, dtype, diopi_device);
-    diopiTransposeNCHW2NHWC(ctx, input, out);
+    TransposeNCHW2NHWC(ctx, input, out);
     return out;
 }
 
-static diopiError_t diopiPrepareConv2dDesc(
+static diopiError_t PrepareConv2dDesc(
     cnnlConvolutionDescriptor_t desc, diopiConstTensorHandle_t input, diopiSize_t stride, diopiSize_t padding, diopiSize_t dilation, int64_t groups) {
     std::vector<int> conv_padding(4);
     if (4 == padding.len) {
@@ -159,10 +159,10 @@ static diopiError_t diopiPrepareConv2dDesc(
     return diopiSuccess;
 }
 
-static diopiTensorHandle_t diopiRequireNCHWConv2dOut(diopiContextHandle_t ctx,
-                                                     cnnlConvolutionDescriptor_t conv_desc,
-                                                     diopiConstTensorHandle_t input,
-                                                     diopiConstTensorHandle_t weight) {
+static diopiTensorHandle_t RequireNCHWConv2dOut(diopiContextHandle_t ctx,
+                                                cnnlConvolutionDescriptor_t conv_desc,
+                                                diopiConstTensorHandle_t input,
+                                                diopiConstTensorHandle_t weight) {
     auto at_input = impl::camb::makeTensor(input);
     auto at_weight = impl::camb::makeTensor(weight);
     CnnlTensorDesc input_desc(at_input, CNNL_LAYOUT_NHWC);
@@ -199,11 +199,11 @@ diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
 
     CnnlResourceGuard<cnnlConvolutionDescriptor_t, cnnlCreateConvolutionDescriptor, cnnlDestroyConvolutionDescriptor> convDesc;
     cnnlConvolutionDescriptor_t conv_desc = convDesc.get();
-    diopiPrepareConv2dDesc(conv_desc, input, stride, padding, dilation, groups);
+    PrepareConv2dDesc(conv_desc, input, stride, padding, dilation, groups);
 
-    diopiConstTensorHandle_t nhwc_input = diopiRequireNCHW2NHWC(ctx, input);
-    diopiConstTensorHandle_t nhwc_weight = diopiRequireNCHW2NHWC(ctx, weight);
-    diopiTensorHandle_t nhwc_out = diopiRequireNCHWConv2dOut(ctx, conv_desc, nhwc_input, nhwc_weight);
+    diopiConstTensorHandle_t nhwc_input = RequireNCHW2NHWC(ctx, input);
+    diopiConstTensorHandle_t nhwc_weight = RequireNCHW2NHWC(ctx, weight);
+    diopiTensorHandle_t nhwc_out = RequireNCHWConv2dOut(ctx, conv_desc, nhwc_input, nhwc_weight);
     auto at_nhwc_input = impl::camb::makeTensor(nhwc_input);
     auto at_nhwc_weight = impl::camb::makeTensor(nhwc_weight);
     auto at_nhwc_out = impl::camb::makeTensor(nhwc_out);
@@ -254,7 +254,7 @@ diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                           nullptr,
                                           out_desc.get(),
                                           out_data));
-    diopiTransposeNHWC2NCHW(ctx, nhwc_out, out);
+    TransposeNHWC2NCHW(ctx, nhwc_out, out);
     return diopiSuccess;
 }
 
