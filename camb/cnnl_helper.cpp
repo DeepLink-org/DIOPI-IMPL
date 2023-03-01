@@ -2,6 +2,8 @@
 
 #include "error.hpp"
 
+#include <vector>
+
 diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type) {
     switch (type) {
         case diopi_dtype_int8:
@@ -45,3 +47,17 @@ diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type) {
 }
 
 CnnlHandlePool cnnlHandlePool;
+
+bool broadcast(diopiContextHandle_t ctx, diopiTensorHandle_t tensor1, diopiTensorHandle_t tensor2, void* buffer /*out*/){
+
+    std::vector<int32_t> * pLarge;
+    std::vector<int32_t> * pSmall;
+    // if(shape1.len > shape2.len){
+    //     pLarge = &shape1;
+    //     pSmall = &shape2;
+    // }
+    // int64_t num_bytes = std::accumulate(pLarge->begin(), pLarge->end(), 1, std::multiplies);
+
+    // diopiRequireBuffer(ctx, buffer, int64_t num_bytes, diopiDevice_t device);
+    // diopiRequireBuffer()
+}
