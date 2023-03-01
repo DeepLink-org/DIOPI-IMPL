@@ -55,7 +55,6 @@ template <typename TensorType>
 class DiopiTensor final {
 public:
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {
-
         diopiSize_t diopiShape;
         diopiSize_t diopiStride;
         diopiGetTensorShape(tensor_, &diopiShape);
@@ -77,12 +76,8 @@ public:
         return dtype;
     }
 
-    const std::vector<int32_t>& shape() {
-        return shape_;
-    }
-    const std::vector<int32_t>& stride() {
-        return stride_;
-    }
+    const std::vector<int32_t>& shape() { return shape_; }
+    const std::vector<int32_t>& stride() { return stride_; }
 
     int64_t numel() const {
         int64_t numel;
