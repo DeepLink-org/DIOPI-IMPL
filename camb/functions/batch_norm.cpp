@@ -27,11 +27,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     DIOPI_CHECK(input_tr.dim() >= 4 && input_tr.dim() <=4, "Input dim is out of range");
     DIOPI_CHECK(input_tr.dim() == output_tr.dim(), "Input dim != out dim");
 
-    /* Get current handle*/
-    auto stream = impl::camb::getStream(ctx);
-    CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
-    cnnlHandle_t handle = CnnlHandle.get();
-    DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     /* Transpose NCHW to NHWC */
     auto memory_format = impl::camb::MemoryFormat::ChannelsLast;
@@ -112,9 +108,7 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
                                               diopiTensorHandle_t grad_bias, diopiConstTensorHandle_t grad_output, diopiConstTensorHandle_t input, diopiConstTensorHandle_t weight,
                                               diopiConstTensorHandle_t running_mean, diopiConstTensorHandle_t running_var, diopiConstTensorHandle_t save_mean,
                                               diopiConstTensorHandle_t save_invstd, bool training, double eps){
-    /* Generate diopi Stream, Tensors and Handle*/
-    auto stream  = impl::camb::getStream(ctx);
-
+    /* Generate diopi Tensors and Handle*/
     auto grad_input_tr = impl::camb::makeTensor(grad_input);
     auto grad_weight_tr = impl::camb::makeTensor(grad_weight);
     auto grad_bias_tr = impl::camb::makeTensor(grad_bias);
@@ -127,9 +121,7 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
 
     auto grad_output_tr = impl::camb::makeTensor(grad_output);
 
-    CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
-    cnnlHandle_t handle = CnnlHandle.get();
-    DIOPI_CALLCNNL(cnnlSetQueue(handle, stream));
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     /* Some basic check */
     if (running_mean_tr.defined() && running_var_tr.defined()) {

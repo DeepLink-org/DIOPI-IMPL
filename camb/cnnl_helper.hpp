@@ -230,7 +230,6 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, T& 
     return diopiSuccess;
 }
 
-#endif  // CNNL_HELPER_HPP_
 extern CnnlHandlePool cnnlHandlePool;
 
 #endif  // IMPL_CAMB_CNNL_HELPER_HPP_
