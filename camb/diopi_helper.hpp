@@ -17,6 +17,22 @@
 #include <cstdio>
 #include <cnrt.h>
 #include <cassert>
+#include "error.hpp"
+
+#define DIOPI_CHECK(cond, str)                                                         \
+    do {                                                                               \
+        if (!(cond)) {                                                                 \
+            impl::camb::set_last_error_string("%s at %s:%d", str, __FILE__, __LINE__); \
+            return diopiErrorOccurred;                                                 \
+        }                                                                              \
+    } while (false);
+
+#define DIOPI_CHECK_NULLPTR(variable)     \
+    do {                                  \
+        if (variable == nullptr) {                                                                 \
+            throw std::runtime_error("The variable `" #variable "` is not defined");     \
+        }                                                                 \
+    } while (false);
 
 #define DIOPI_CALL(Expr)           \
     do {                           \
@@ -67,37 +83,37 @@ public:
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {}
 
     diopiDevice_t device() const {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         diopiDevice_t device;
         diopiGetTensorDevice(tensor_, &device);
         return device;
     }
     diopiDtype_t dtype() const {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         diopiDtype_t dtype;
         diopiGetTensorDtype(tensor_, &dtype);
         return dtype;
     }
 
     const diopiSize_t& shape() {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         diopiGetTensorShape(tensor_, &shape_);
         return shape_;
     }
     const diopiSize_t& stride() {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         diopiGetTensorStride(tensor_, &stride_);
         return stride_;
     }
 
     int64_t numel() const {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         int64_t numel;
         diopiGetTensorNumel(tensor_, &numel);
         return numel;
     }
     int64_t elemsize() const {
-        assert(this->defined());
+        DIOPI_CHECK_NULLPTR(tensor_);
         int64_t elemsize;
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;

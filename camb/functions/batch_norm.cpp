@@ -36,10 +36,10 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     auto output_channel_last = output_tr.contiguous(ctx, memory_format);
     // cnnl_transpose(ctx, handle, output_tr, output_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
 
-    CnnlTensorDescriptor weight_bias_mean_var_desc(weight_tr, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc weight_bias_mean_var_desc(weight_tr, CNNL_LAYOUT_ARRAY);
     cnnlTensorLayout_t layout = CNNL_LAYOUT_NHWC;
-    CnnlTensorDescriptor input_channel_last_desc(input_channel_last, layout);
-    CnnlTensorDescriptor output_channel_last_desc(output_channel_last, layout);
+    CnnlTensorDesc input_channel_last_desc(input_channel_last, layout);
+    CnnlTensorDesc output_channel_last_desc(output_channel_last, layout);
 
     if (training) {
         //get workspace
@@ -140,10 +140,10 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
 
     /* Generate description */
     cnnlTensorLayout_t layout = CNNL_LAYOUT_NHWC;
-    CnnlTensorDescriptor input_desc(input_channel_last, layout);
-    CnnlTensorDescriptor grad_output_desc(grad_output_channel_last, layout);
-    CnnlTensorDescriptor grad_input_desc(grad_input_channel_last, layout);
-    CnnlTensorDescriptor weight_bias_mean_var_desc(weight_tr, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc input_desc(input_channel_last, layout);
+    CnnlTensorDesc grad_output_desc(grad_output_channel_last, layout);
+    CnnlTensorDesc grad_input_desc(grad_input_channel_last, layout);
+    CnnlTensorDesc weight_bias_mean_var_desc(weight_tr, CNNL_LAYOUT_ARRAY);
 
     // set activition part
     cnnlBatchNormMode_t mode = CNNL_BATCHNORM_SPATIAL;
