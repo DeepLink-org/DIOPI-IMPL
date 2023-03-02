@@ -131,38 +131,6 @@ public:
     int64_t dim() {
         return this->shape().size();
     }
-
-    DiopiTensor unsqueeze(int dim) {
-        // TODO(ywt)
-        return *this;
-    }
-    DiopiTensor squeeze(int dim) {
-        // TODO(ywt)
-        return *this;
-    }
-    bool is_contiguous(impl::camb::MemoryFormat format = impl::camb::MemoryFormat::Contiguous) {
-        int64_t stride = 1;
-        int64_t dim = this->dim();
-        auto strides = this->stride().data;
-        auto shape = this->shape().data;
-
-        if (format == impl::camb::MemoryFormat::Contiguous) {
-            for (int i = dim - 1; i >= 0; i--) {
-                if (strides[i] != stride) {
-                    return false;
-                }
-                stride *= shape[i];
-            }
-        } else if (format == impl::camb::MemoryFormat::ChannelsLast) {
-            for (auto i : {1, 3, 2, 0}) {
-                if (strides[i] != stride) {
-                    return false;
-                }
-                stride *= shape[i];
-            }
-        }
-        return true;
-    }
     DiopiTensor<diopiTensorHandle_t> contiguous(diopiContextHandle_t ctx, impl::camb::MemoryFormat format) {
         /* Returns a new Tensor in new memory format, without data copy */
         int64_t dim = this->dim();
@@ -189,18 +157,6 @@ public:
         diopiTensorHandle_t tensor;
         diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, this->dtype(), this->device());
         return DiopiTensor<diopiTensorHandle_t>(tensor);
-    }
-    void _print_str() {
-        int dim = this->dim();
-        std::cout << "DiopiTensor: dim " << dim << ", shape: [";
-        for (size_t i = 0; i < dim; i++) {
-            std::cout << this->shape().data[i] << ", ";
-        }
-        std::cout << "], stride: [";
-        for (size_t i = 0; i < dim; i++) {
-            std::cout << this->stride().data[i] << ", ";
-        }
-        std::cout << "] pointer address: " << this->data() << std::endl;
     }
     bool defined() const {
         if (tensor_ == nullptr) return false;

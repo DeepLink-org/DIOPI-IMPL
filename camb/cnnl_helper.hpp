@@ -175,9 +175,6 @@ public:
     }
 };
 
-
-diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type);
-
 template<typename T>
 diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
                             cnnlHandle_t& handle, T& in,
