@@ -7,7 +7,7 @@ std::vector<int> getAxis(diopiConstTensorHandle_t input, diopiSize_t dim) {
     std::vector<int> axis;
     if (dim.len > 0) {
         for (int i = 0; i < dim.len; i++) {
-          axis.push_back(static_cast<int>(dim.data[i]));
+            axis.push_back(static_cast<int>(dim.data[i]));
         }
     } else {
         auto input_tensor = impl::camb::makeTensor(input);
@@ -16,15 +16,14 @@ std::vector<int> getAxis(diopiConstTensorHandle_t input, diopiSize_t dim) {
             axis.push_back(i);
         }
     }
-    
+
     return axis;
 }
-} // namespace
+}  // namespace
 
 extern "C" {
 
-DIOPI_API diopiError_t diopiMean(diopiContextHandle_t ctx, diopiTensorHandle_t out,
-                                 diopiConstTensorHandle_t input, diopiSize_t dim, diopiDtype_t dtype) {
+DIOPI_API diopiError_t diopiMean(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiSize_t dim, diopiDtype_t dtype) {
     auto stream = impl::camb::getStream(ctx);
     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
     cnnlHandle_t handle = CnnlHandle.get();
@@ -47,25 +46,21 @@ DIOPI_API diopiError_t diopiMean(diopiContextHandle_t ctx, diopiTensorHandle_t o
     const void* input_ptr = input_tensor.data();
     void* out_ptr = out_tensor.data();
 
-    CnnlResourceGuard<cnnlReduceDescriptor_t,
-                      cnnlCreateReduceDescriptor,
-                      cnnlDestroyReduceDescriptor>
-        CnnlReduceDesc;
+    CnnlResourceGuard<cnnlReduceDescriptor_t, cnnlCreateReduceDescriptor, cnnlDestroyReduceDescriptor> CnnlReduceDesc;
     cnnlReduceDescriptor_t reduce_desc = CnnlReduceDesc.get();
     cnnlDataType_t cnnl_dtype;
     DIOPI_CALL(convertType(&cnnl_dtype, dtype));
     std::vector<int> axis = getAxis(input, dim);
-    DIOPI_CALLCNNL(cnnlSetReduceDescriptor(reduce_desc, axis.data(), axis.size(), CNNL_REDUCE_AVG,
-                                           cnnl_dtype, CNNL_NOT_PROPAGATE_NAN, CNNL_REDUCE_NO_INDICES, CNNL_32BIT_INDICES));
+    DIOPI_CALLCNNL(cnnlSetReduceDescriptor(
+        reduce_desc, axis.data(), axis.size(), CNNL_REDUCE_AVG, cnnl_dtype, CNNL_NOT_PROPAGATE_NAN, CNNL_REDUCE_NO_INDICES, CNNL_32BIT_INDICES));
     size_t workspace_size = 0;
     DIOPI_CALLCNNL(cnnlGetReduceOpWorkspaceSize(handle, input_desc.get(), out_desc.get(), reduce_desc, &workspace_size));
-    void *workspace = nullptr;
+    void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = impl::camb::requiresBuffer(ctx, workspace_size).data();
     }
 
-    DIOPI_CALLCNNL(cnnlReduce(handle, reduce_desc, workspace, workspace_size,
-                              nullptr, input_desc.get(), input_ptr, 0,
-                              nullptr, nullptr, out_desc.get(), out_ptr));
+    DIOPI_CALLCNNL(
+        cnnlReduce(handle, reduce_desc, workspace, workspace_size, nullptr, input_desc.get(), input_ptr, 0, nullptr, nullptr, out_desc.get(), out_ptr));
 }
 }
