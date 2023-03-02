@@ -5,17 +5,17 @@
  *
  *************************************************************************************************/
 
-#ifndef IMPL_CAMB_HELPER_HPP_
-#define IMPL_CAMB_HELPER_HPP_
+#ifndef IMPL_CAMB_DIOPI_HELPER_HPP_
+#define IMPL_CAMB_DIOPI_HELPER_HPP_
 
 #include <diopi/diopirt.h>
 #include <cnnl.h>
+#include <cnrt.h>
+#include <cstdio>
+
 #include <utility>
 #include <vector>
 #include <iostream>
-
-#include <cstdio>
-#include <cnrt.h>
 
 #include "error.hpp"
 
@@ -30,7 +30,7 @@
 #define DIOPI_CHECK_NULLPTR_ABORT(variable)     \
     do {                                  \
         if (variable == nullptr) {                                                                 \
-            printf("The variable `" #variable "` is not defined at %s:%d", __FILE__, __LINE__);     \
+            printf("The variable `" #variable "` is not defined at %s:%d ", __FILE__, __LINE__);     \
             abort(); \
         }                                                                 \
     } while (false);
@@ -120,16 +120,13 @@ public:
     int64_t dim() {
         return shape_.size();
     }
-    bool defined() const {
-        return tensor_ != nullptr;
-    }
 
     DiopiTensor unsqueeze(int dim) {
-        // TODO
+        // TODO(ywt)
         return *this;
     }
     DiopiTensor squeeze(int dim) {
-        // TODO
+        // TODO(ywt)
         return *this;
     }
     bool is_contiguous(impl::camb::MemoryFormat format = impl::camb::MemoryFormat::Contiguous) {
@@ -160,37 +157,36 @@ public:
         int64_t dim = this->dim();
         std::vector<int64_t> strides(dim);
         int64_t stride = 1;
-        auto shapes = this->shape().data;
         if (format == impl::camb::MemoryFormat::Contiguous) {
             for (size_t i = dim; i > 0; --i) {
                 strides[i - 1] = stride;
-                if (shapes[i - 1] == 0) continue;
-                if (shapes[i - 1] == -1) stride = -1;
-                if (stride != -1) stride *= shapes[i - 1];
+                if (shape_[i - 1] == 0) continue;
+                if (shape_[i - 1] == -1) stride = -1;
+                if (stride != -1) stride *= shape_[i - 1];
             }
         } else if (format == impl::camb::MemoryFormat::ChannelsLast) {
             for (auto k : {1, 3, 2, 0}) {
                 strides[k] = stride;
-                if (shapes[k] == 0) continue;
-                if (shapes[k] == -1) stride = -1;
-                if (stride != -1) stride *= shapes[k];
+                if (shape_[k] == 0) continue;
+                if (shape_[k] == -1) stride = -1;
+                if (stride != -1) stride *= shape_[k];
             }
-        } 
+        }
         diopiSize_t diopi_stride(strides.data(), static_cast<int64_t>(strides.size()));
+        diopiSize_t diopi_shape;
+        diopiGetTensorShape(tensor_, &diopi_shape);
         diopiTensorHandle_t tensor;
-        diopiRequireTensor(ctx, &tensor, &this->shape(), &diopi_stride, this->dtype(), this->device());
+        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, this->dtype(), this->device());
         return DiopiTensor<diopiTensorHandle_t>(tensor);
     }
     void _print_str() {
         int dim = this->dim();
         std::cout << "DiopiTensor: dim " << dim << ", shape: [";
-        for (size_t i = 0; i < dim; i++)
-        {
+        for (size_t i = 0; i < dim; i++) {
             std::cout << this->shape().data[i] << ", ";
         }
         std::cout << "], stride: [";
-        for (size_t i = 0; i < dim; i++)
-        {
+        for (size_t i = 0; i < dim; i++) {
             std::cout << this->stride().data[i] << ", ";
         }
         std::cout << "] pointer address: " << this->data() << std::endl;

@@ -179,8 +179,11 @@ public:
 diopiError_t convertType(cnnlDataType_t *cnnlType, diopiDtype_t type);
 
 template<typename T>
-diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, T& in, impl::camb::DiopiTensor<diopiTensorHandle_t>& out, cnnlTensorLayout_t layoutIn,
-                          cnnlTensorLayout_t layoutOut){
+diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
+                            cnnlHandle_t& handle, T& in,
+                            impl::camb::DiopiTensor<diopiTensorHandle_t>& out,
+                            cnnlTensorLayout_t layoutIn,
+                            cnnlTensorLayout_t layoutOut) {
     std::vector<int> order;
     if (layoutIn == CNNL_LAYOUT_NHWC && layoutOut == CNNL_LAYOUT_HWCN) {
         order = {1, 2, 3, 0};
@@ -195,7 +198,8 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, T& 
     } else if (layoutIn == CNNL_LAYOUT_HWCN && layoutOut == CNNL_LAYOUT_NCHW) {
         order = {3, 2, 0, 1};
     } else {
-        impl::camb::set_last_error_string("unkown layout error, layout should be in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s", __FILE__, __LINE__);
+        impl::camb::set_last_error_string("unkown layout error, layout should be"
+        "in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s", __FILE__, __LINE__);
         return diopiDtypeNotSupported;
     }
     CnnlTensorDesc inDesc(in, layoutIn);

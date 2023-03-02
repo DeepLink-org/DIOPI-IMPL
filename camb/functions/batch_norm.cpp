@@ -23,7 +23,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     if (running_mean_tr.defined() && running_var_tr.defined()) {
         DIOPI_CHECK(running_mean_tr.dtype() ==  running_var_tr.dtype(), "running_mean and running_var need to have the same data types");
     }
-    // TODO: 2,3,5 dim support
+    // TODO(ywt): 2,3,5 dim support
     DIOPI_CHECK(input_tr.dim() >= 4 && input_tr.dim() <=4, "Input dim is out of range");
     DIOPI_CHECK(input_tr.dim() == output_tr.dim(), "Input dim != out dim");
 
@@ -42,7 +42,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     CnnlTensorDesc output_channel_last_desc(output_channel_last, layout);
 
     if (training) {
-        //get workspace
+        // get workspace
         size_t workspace_size = 0;
         DIOPI_CHECKCNNL(cnnlGetBatchNormForwardWorkspaceSize(handle, input_channel_last_desc.get(), &workspace_size));
 
@@ -51,7 +51,7 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
         // set activition part to default
         cnnlActivationMode_t active_mode = CNNL_ACTIVATION_IDENTITY;
         cnnlActivationDescriptor_t activation_desc = nullptr;
-        cnnlCreateActivationDescriptor (&activation_desc);
+        cnnlCreateActivationDescriptor(&activation_desc);
         cnnlSetActivationDescriptor_v5(activation_desc, active_mode, CNNL_ACTIVATION_HIGH_PRECISION,
                                                             CNNL_NOT_PROPAGATE_NAN, 1.0, -1, 1.0, 1.0, false);
         DIOPI_CALLCNNL(cnnlBatchNormForwardTraining_v2(
@@ -104,10 +104,18 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     return diopiSuccess;
 }
 
-diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input, diopiTensorHandle_t grad_weight,
-                                              diopiTensorHandle_t grad_bias, diopiConstTensorHandle_t grad_output, diopiConstTensorHandle_t input, diopiConstTensorHandle_t weight,
-                                              diopiConstTensorHandle_t running_mean, diopiConstTensorHandle_t running_var, diopiConstTensorHandle_t save_mean,
-                                              diopiConstTensorHandle_t save_invstd, bool training, double eps){
+diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx,
+                                    diopiTensorHandle_t grad_input,
+                                    diopiTensorHandle_t grad_weight,
+                                    diopiTensorHandle_t grad_bias,
+                                    diopiConstTensorHandle_t grad_output,
+                                    diopiConstTensorHandle_t input,
+                                    diopiConstTensorHandle_t weight,
+                                    diopiConstTensorHandle_t running_mean,
+                                    diopiConstTensorHandle_t running_var,
+                                    diopiConstTensorHandle_t save_mean,
+                                    diopiConstTensorHandle_t save_invstd,
+                                    bool training, double eps) {
     /* Generate diopi Tensors and Handle*/
     auto grad_input_tr = impl::camb::makeTensor(grad_input);
     auto grad_weight_tr = impl::camb::makeTensor(grad_weight);
@@ -127,7 +135,7 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
     if (running_mean_tr.defined() && running_var_tr.defined()) {
         DIOPI_CHECK(running_mean_tr.dtype() ==  running_var_tr.dtype(), "running_mean and running_var need to have the same data types");
     }
-    // TODO: 2,3,5 dim support
+    // TODO(ywt): 2,3,5 dim support
     DIOPI_CHECK(input_tr.dim() >= 4 && input_tr.dim() <=4, "Input dim is out of range");
 
     /* Transpose */
@@ -151,12 +159,12 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
     cnnlActivationMode_t active_mode = CNNL_ACTIVATION_IDENTITY;
 
     cnnlActivationDescriptor_t activation_desc = nullptr;
-    cnnlCreateActivationDescriptor (&activation_desc);
+    cnnlCreateActivationDescriptor(&activation_desc);
     cnnlSetActivationDescriptor_v5(activation_desc, active_mode, CNNL_ACTIVATION_HIGH_PRECISION,
                                                         CNNL_NOT_PROPAGATE_NAN, 1.0, -1, 1.0, 1.0, false);
 
     if (training) {
-        //get workspace
+        // get workspace
         size_t workspace_size = 0;
         DIOPI_CHECKCNNL(cnnlGetBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
 
@@ -194,7 +202,6 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx, diopiTensorHandle_
             /* reservespace */ NULL,
             /* reservespace_size*/ 0));
     } else {
-
         size_t workspace_size = 0;
         DIOPI_CHECKCNNL(cnnlGetFrozenBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
 
