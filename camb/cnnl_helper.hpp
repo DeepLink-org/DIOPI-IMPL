@@ -3,6 +3,10 @@
 
 #include <cnnl.h>
 
+#include <cassert>
+#include <mutex>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include "diopi_helper.hpp"
@@ -77,12 +81,7 @@ public:
 
     template <typename T>
     diopiError_t set(T& t, cnnlTensorLayout_t layout) {
-        int dimNb = t.shape().len;
-        auto dimSize = t.shape().data;
-        std::vector<int> shape(dimNb);
-        for (size_t i = 0; i < dimNb; ++i) {
-            shape[i] = dimSize[i];
-        }
+        const std::vector<int32_t>& shape = t.shape();
         DIOPI_CALL(set(t, layout, shape));
         return diopiSuccess;
     }
@@ -100,5 +99,39 @@ public:
 protected:
     cnnlTensorDescriptor_t desc{0};
 };
+
+class CnnlHandlePool final {
+public:
+    cnnlHandle_t insert(cnrtQueue_t queue) {
+        assert((cnnlHandlePool_.find(queue) == cnnlHandlePool_.end()) && "The queue inserted exists in the pool");
+        std::lock_guard<std::mutex> gurad(mutex_);
+        cnnlHandle_t cnnlHandle;
+        cnnlCreate(&cnnlHandle);
+        cnnlSetQueue(cnnlHandle, queue);
+        cnnlHandlePool_.emplace(std::make_pair(queue, cnnlHandle));
+        return cnnlHandle;
+    }
+
+    cnnlHandle_t get(cnrtQueue_t queue) {
+        mutex_.lock();
+        auto it = cnnlHandlePool_.find(queue);
+        mutex_.unlock();
+        if (it != cnnlHandlePool_.end()) {
+            return it->second;
+        } else {
+            return insert(queue);
+        }
+    }
+    cnnlHandle_t get(diopiContextHandle_t ctx) {
+        cnrtQueue_t queue = impl::camb::getStream(ctx);
+        return get(queue);
+    }
+
+private:
+    std::unordered_map<cnrtQueue_t, cnnlHandle_t> cnnlHandlePool_;
+    std::mutex mutex_;
+};
+
+extern CnnlHandlePool cnnlHandlePool;
 
 #endif  // IMPL_CAMB_CNNL_HELPER_HPP_
