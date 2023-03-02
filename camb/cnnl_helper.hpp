@@ -73,26 +73,26 @@ public:
 
     template <typename T>
     diopiError_t set(T& t, cnnlTensorLayout_t layout) {
-        const std::vector<int32_t>& dims = t.shape();
-        int dim = dims.size();
+        const std::vector<int32_t>& dimSize = t.shape();
+        int dim = dimSize.size();
         std::vector<int32_t> shape(dim);
 
         if (layout == CNNL_LAYOUT_NHWC || layout == CNNL_LAYOUT_NDHWC
                 || layout == CNNL_LAYOUT_NLC) {
-            shape[0] = dims[0];
+            shape[0] = dimSize[0];
             for (size_t i = 0; i < dim - 1; ++i) {
-                shape[i+1] = dims[(i + 1) % (dim - 1) + 1];
+                shape[i+1] = dimSize[(i + 1) % (dim - 1) + 1];
             }
         } else if (layout == CNNL_LAYOUT_HWCN) {
             // HWCN is only used by depthwise conv now, and the dim is 4
             DIOPI_CHECK(dim == 4, "depthwise convolution input's dim must be 4!");
-            shape[0] = dims[2];
-            shape[1] = dims[3];
-            shape[2] = dims[1];
-            shape[3] = dims[0];
+            shape[0] = dimSize[2];
+            shape[1] = dimSize[3];
+            shape[2] = dimSize[1];
+            shape[3] = dimSize[0];
         } else {
             for (size_t i = 0; i < dim; ++i) {
-                shape[i] = dims[i];
+                shape[i] = dimSize[i];
             }
         }
 
