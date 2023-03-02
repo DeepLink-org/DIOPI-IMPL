@@ -1,5 +1,5 @@
-#include "diopi/functions.h"
 #include "../cnnl_helper.hpp"
+#include "diopi/functions.h"
 
 DIOPI_API diopiError_t diopiExpand(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiSize_t size) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -35,5 +35,4 @@ DIOPI_API diopiError_t diopiExpand(diopiContextHandle_t ctx, diopiTensorHandle_t
     CnnlTensorDesc outDesc(trOut, CNNL_LAYOUT_ARRAY);
     DIOPI_CALLCNNL(cnnlExpand(handle, inputDesc.get(), trInput.data(), outDesc.get(), trOut.data()));
     return diopiSuccess;
-
 }
