@@ -77,7 +77,10 @@ DIOPI_API diopiError_t diopiAddmm(diopiContextHandle_t ctx,
                                               &heuristicResult,
                                               &returnAlgoCount));
     DIOPI_CALLCNNL(cnnlGetMatMulHeuristicResult(heuristicResult, matmul_algo, &workspace_size));
-    void* workspace = workspace_size == 0 ? impl::camb::requiresBuffer(ctx, workspace_size).data() : nullptr;
+    void *workspace = nullptr;
+    if (0 != workspace_size) {
+        workspace = impl::camb::requiresBuffer(ctx, workspace_size).data();
+    }
 
     float alpha_;
     if (alpha->stype <= 7) {
@@ -116,7 +119,10 @@ DIOPI_API diopiError_t diopiAddmm(diopiContextHandle_t ctx,
     cnnlOpTensorDescriptor_t optensor_desc = CnnlOpTensorDesc.get();
     size_t workspace_size_ = 0;
     DIOPI_CALLCNNL(cnnlGetOpTensorWorkspaceSize(handle, mm_result_desc.get(), input_desc.get(), out_desc.get(), &workspace_size_));
-    void* workspace_ = workspace_size_ == 0 ? impl::camb::requiresBuffer(ctx, workspace_size_).data() : nullptr;
+    void *workspace_ = nullptr;
+    if (0 != workspace_size_) {
+        workspace_ = impl::camb::requiresBuffer(ctx, workspace_size_).data();
+    }
 
     DIOPI_CALLCNNL(cnnlOpTensor(handle,
                                 optensor_desc,
