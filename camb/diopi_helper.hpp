@@ -8,12 +8,32 @@
 #ifndef IMPL_CAMB_DIOPI_HELPER_HPP_
 #define IMPL_CAMB_DIOPI_HELPER_HPP_
 
-#include <cnrt.h>
 #include <diopi/diopirt.h>
-
+#include <cnnl.h>
+#include <cnrt.h>
 #include <cstdio>
+
 #include <utility>
 #include <vector>
+#include <iostream>
+
+#include "error.hpp"
+
+#define DIOPI_CHECK(cond, str)                                                         \
+    do {                                                                               \
+        if (!(cond)) {                                                                 \
+            impl::camb::set_last_error_string("%s at %s:%d", str, __FILE__, __LINE__); \
+            return diopiErrorOccurred;                                                 \
+        }                                                                              \
+    } while (false);
+
+#define DIOPI_CHECK_NULLPTR_ABORT(variable)     \
+    do {                                  \
+        if (variable == nullptr) {                                                                 \
+            printf("The variable `" #variable "` is not defined at %s:%d ", __FILE__, __LINE__);     \
+            abort(); \
+        }                                                                 \
+    } while (false);
 
 #define DIOPI_CALL(Expr)           \
     do {                           \
@@ -27,7 +47,14 @@ namespace impl {
 
 namespace camb {
 
-template <typename TensorType>
+enum class MemoryFormat : size_t {
+    Contiguous      = 0,
+    ChannelsLast    = 1,
+    ChannelsLast3d  = 2,
+    Preserve        = 3
+};
+
+template<typename TensorType>
 struct DataType;
 
 template <>
@@ -51,43 +78,89 @@ struct DataType<diopiConstTensorHandle_t> {
     }
 };
 
-template <typename TensorType>
+template<typename TensorType>
 class DiopiTensor final {
 public:
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {
-        diopiSize_t diopiShape;
-        diopiSize_t diopiStride;
-        diopiGetTensorShape(tensor_, &diopiShape);
-        std::vector<int32_t> shapeTmp(diopiShape.data, diopiShape.data + diopiShape.len);
-        diopiGetTensorStride(tensor_, &diopiStride);
-        std::vector<int32_t> strideTmp(diopiStride.data, diopiStride.data + diopiStride.len);
-        shape_ = std::move(shapeTmp);
-        stride_ = std::move(strideTmp);
+        if (tensor_ != nullptr) {
+            diopiSize_t diopiShape;
+            diopiSize_t diopiStride;
+            diopiGetTensorShape(tensor_, &diopiShape);
+            std::vector<int32_t> shapeTmp(diopiShape.data, diopiShape.data + diopiShape.len);
+            diopiGetTensorStride(tensor_, &diopiStride);
+            std::vector<int32_t> strideTmp(diopiStride.data, diopiStride.data + diopiStride.len);
+            shape_ = std::move(shapeTmp);
+            stride_ = std::move(strideTmp);
+        }
     }
 
     diopiDevice_t device() const {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         diopiDevice_t device;
         diopiGetTensorDevice(tensor_, &device);
         return device;
     }
     diopiDtype_t dtype() const {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         diopiDtype_t dtype;
         diopiGetTensorDtype(tensor_, &dtype);
         return dtype;
     }
 
-    const std::vector<int32_t>& shape() { return shape_; }
-    const std::vector<int32_t>& stride() { return stride_; }
+    const std::vector<int32_t>& shape() {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
+        return shape_;
+    }
+    const std::vector<int32_t>& stride() {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
+        return stride_;
+    }
 
     int64_t numel() const {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         int64_t numel;
         diopiGetTensorNumel(tensor_, &numel);
         return numel;
     }
     int64_t elemsize() const {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         int64_t elemsize;
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;
+    }
+    int64_t dim() {
+        return this->shape().size();
+    }
+    DiopiTensor<diopiTensorHandle_t> contiguous(diopiContextHandle_t ctx, impl::camb::MemoryFormat format) {
+        /* Returns a new Tensor in new memory format, without data copy */
+        int64_t dim = this->dim();
+        std::vector<int64_t> strides(dim);
+        int64_t stride = 1;
+        if (format == impl::camb::MemoryFormat::Contiguous) {
+            for (size_t i = dim; i > 0; --i) {
+                strides[i - 1] = stride;
+                if (shape_[i - 1] == 0) continue;
+                if (shape_[i - 1] == -1) stride = -1;
+                if (stride != -1) stride *= shape_[i - 1];
+            }
+        } else if (format == impl::camb::MemoryFormat::ChannelsLast) {
+            for (auto k : {1, 3, 2, 0}) {
+                strides[k] = stride;
+                if (shape_[k] == 0) continue;
+                if (shape_[k] == -1) stride = -1;
+                if (stride != -1) stride *= shape_[k];
+            }
+        }
+        diopiSize_t diopi_stride(strides.data(), static_cast<int64_t>(strides.size()));
+        diopiSize_t diopi_shape;
+        diopiGetTensorShape(tensor_, &diopi_shape);
+        diopiTensorHandle_t tensor;
+        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, this->dtype(), this->device());
+        return DiopiTensor<diopiTensorHandle_t>(tensor);
+    }
+    bool defined() const {
+        if (tensor_ == nullptr) return false;
+        return this->numel() != 0;
     }
 
     typename DataType<TensorType>::type data() { return DataType<TensorType>::data(tensor_); }
