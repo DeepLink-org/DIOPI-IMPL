@@ -41,10 +41,6 @@ DIOPI_API diopiError_t diopiAddmm(diopiContextHandle_t ctx,
     diopiRequireTensor(ctx, &tmpc, &out_shape, nullptr, out_tensor.dtype(), diopi_device);
     auto tmpc_tensor = impl::camb::makeTensor(tmpc);
 
-    if (mat1_tensor.dtype() == diopi_dtype_float64) {
-        return diopiDtypeNotSupported;
-    }
-
     CnnlTensorDesc tmpc_desc(tmpc_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc mm_result_desc(mm_result_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc mat1_desc(mat1_tensor, CNNL_LAYOUT_ARRAY);
