@@ -6,8 +6,7 @@ std::vector<int> getPerm(diopiConstTensorHandle_t tensor_handle,
                          int64_t dim0,
                          int64_t dim1) {
     auto tensor = impl::camb::makeTensor(tensor_handle);
-    diopiSize_t shape = tensor.shape();
-    int input_size_ = shape.len;
+    int input_size_ = tensor.shape().size();
 
     int dim0_ = 0;
     dim0_ = static_cast<int>(dim0);
@@ -64,10 +63,10 @@ DIOPI_API diopiError_t diopiTranspose(diopiContextHandle_t ctx,
     size_t workspace_size = 0;
     DIOPI_CALLCNNL(cnnlGetTransposeWorkspaceSize(
         handle, input_desc.get(), transpose_desc, &workspace_size));
-    void* workspace =
-        workspace_size == 0
-            ? impl::camb::requiresBuffer(ctx, workspace_size).data()
-            : nullptr;
+    void *workspace = nullptr;
+    if (0 != workspace_size) {
+        workspace = impl::camb::requiresBuffer(ctx, workspace_size).data();
+    }
     DIOPI_CALLCNNL(cnnlTranspose_v2(handle,
                                     transpose_desc,
                                     input_desc.get(),
