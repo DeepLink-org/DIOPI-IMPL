@@ -11,12 +11,14 @@
 
 #include "diopi_helper.hpp"
 
+namespace impl {
+namespace camb {
 
 #define DIOPI_CALLCNNL(Expr)                                                                                                      \
     do {                                                                                                                          \
         ::cnnlStatus_t ret = Expr;                                                                                                \
         if (ret != ::CNNL_STATUS_SUCCESS) {                                                                                       \
-            impl::camb::set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
+            set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
             return diopiErrorOccurred;                                                                                            \
         }                                                                                                                         \
     } while (false);
@@ -25,7 +27,7 @@
     do {                                                                                                                          \
         ::cnnlStatus_t ret = Expr;                                                                                                \
         if (ret != ::CNNL_STATUS_SUCCESS) {                                                                                       \
-            impl::camb::set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
+            set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
         }                                                                                                                         \
     } while (false);
 
@@ -57,7 +59,7 @@ public:
     CnnlTensorDesc(auto& t, cnnlTensorLayout_t layout) {
         diopiError_t status = set(t, layout);
         if (status != diopiSuccess) {
-            impl::camb::set_last_error_string("failed to cnnlSetTensorDescriptor %d at %s:%d", status, __FILE__, __LINE__);
+            set_last_error_string("failed to cnnlSetTensorDescriptor %d at %s:%d", status, __FILE__, __LINE__);
         }
     }
 
@@ -65,7 +67,7 @@ public:
         if (desc != nullptr) {
             cnnlStatus_t ret = cnnlDestroyTensorDescriptor(desc);
             if (ret != CNNL_STATUS_SUCCESS) {
-                impl::camb::set_last_error_string("failed to cnnlDestroyTensorDescriptor %d at %s:%d", ret, __FILE__, __LINE__);
+                set_last_error_string("failed to cnnlDestroyTensorDescriptor %d at %s:%d", ret, __FILE__, __LINE__);
             }
         }
     }
@@ -136,7 +138,7 @@ public:
         }
     }
     cnnlHandle_t get(diopiContextHandle_t ctx) {
-        cnrtQueue_t queue = impl::camb::getStream(ctx);
+        cnrtQueue_t queue = getStream(ctx);
         return get(queue);
     }
 
@@ -177,7 +179,7 @@ public:
 template<typename T>
 diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
                             cnnlHandle_t& handle, T& in,
-                            impl::camb::DiopiTensor<diopiTensorHandle_t>& out,
+                            DiopiTensor<diopiTensorHandle_t>& out,
                             cnnlTensorLayout_t layoutIn,
                             cnnlTensorLayout_t layoutOut) {
     std::vector<int> order;
@@ -194,7 +196,7 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
     } else if (layoutIn == CNNL_LAYOUT_HWCN && layoutOut == CNNL_LAYOUT_NCHW) {
         order = {3, 2, 0, 1};
     } else {
-        impl::camb::set_last_error_string("unkown layout error, layout should be"
+        set_last_error_string("unkown layout error, layout should be"
         "in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s", __FILE__, __LINE__);
         return diopiDtypeNotSupported;
     }
@@ -204,7 +206,7 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
     size_t workspace_size = 0;
     DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
 
-    void* workspace_ptr = workspace_size== 0 ? impl::camb::requiresBuffer(ctx, workspace_size).data() : nullptr;
+    void* workspace_ptr = workspace_size== 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
     DIOPI_CALLCNNL(cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(),
                                       in.data(), outDesc.get(), out.data(),
                                       workspace_ptr, workspace_size));
@@ -212,5 +214,9 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
 }
 
 extern CnnlHandlePool cnnlHandlePool;
+
+}  // namespace camb
+
+}  // namespace impl
 
 #endif  // IMPL_CAMB_CNNL_HELPER_HPP_
