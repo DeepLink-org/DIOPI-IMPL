@@ -23,7 +23,7 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
     cnnlDataType_t dtype;
-    DIOPI_CALL(convertType(&dtype, trInput.dtype()));
+    DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, trInput.dtype()));
 
     CnnlTensorDesc descInput(trInput,layout);
     CnnlTensorDesc descOther(trOther,layout);
