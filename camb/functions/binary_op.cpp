@@ -7,6 +7,8 @@
 
 #include "../cnnl_helper.hpp"
 
+namespace impl {
+namespace camb {
 
 extern "C" {
 
@@ -14,9 +16,9 @@ DIOPI_API diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t ou
                                      diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
     diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
     diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
-    auto trInput = impl::camb::makeTensor(input_);
-    auto trOther = impl::camb::makeTensor(other_);
-    auto trOut = impl::camb::makeTensor(out);
+    auto trInput = makeTensor(input_);
+    auto trOther = makeTensor(other_);
+    auto trOut = makeTensor(out);
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
@@ -90,10 +92,10 @@ DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t
 
 // DIOPI_API diopiError_t
 // diopiAddScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other, const diopiScalar_t* alpha) {
-//     auto stream = impl::camb::getStream(ctx);
+//     auto stream = getStream(ctx);
 //     diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
-//     auto trInput = impl::camb::makeTensor(input_);
-//     auto trOutput = impl::camb::makeTensor(out);
+//     auto trInput = makeTensor(input_);
+//     auto trOutput = makeTensor(out);
 
 //     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
 //     cnnlHandle_t handle = CnnlHandle.get();
@@ -101,7 +103,7 @@ DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t
 
 //     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
 //     cnnlDataType_t dtype;
-//     DIOPI_CALL(convertType(&dtype, trInput.dtype()));
+//     DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, trInput.dtype()));
 
 //     CnnlResourceGuard<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescInput;
 //     cnnlTensorDescriptor_t descInput = CnnlDescInput.get();
@@ -161,11 +163,11 @@ DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t
 // }
 
 // DIOPI_API diopiError_t diopiAddInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other, const diopiScalar_t* alpha) {
-//     auto stream = impl::camb::getStream(ctx);
+//     auto stream = getStream(ctx);
 //     diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
 //     diopiTensorHandle_t other_ = diopiTensorHandle_t(input);
-//     auto trInput = impl::camb::makeTensor(input_);
-//     auto trOther = impl::camb::makeTensor(other_);
+//     auto trInput = makeTensor(input_);
+//     auto trOther = makeTensor(other_);
 
 //     CnnlResourceGuard<cnnlHandle_t, cnnlCreate, cnnlDestroy> CnnlHandle;
 //     cnnlHandle_t handle = CnnlHandle.get();
@@ -173,7 +175,7 @@ DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t
 
 //     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
 //     cnnlDataType_t dtype;
-//     DIOPI_CALL(convertType(&dtype, trInput.dtype()));
+//     DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, trInput.dtype()));
 
 //     CnnlResourceGuard<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> CnnlDescInput;
 //     cnnlTensorDescriptor_t descInput = CnnlDescInput.get();
@@ -222,3 +224,6 @@ DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t
 // }
 
 }  // extern "C"
+
+}  // namespace camb
+}  // namespace impl
