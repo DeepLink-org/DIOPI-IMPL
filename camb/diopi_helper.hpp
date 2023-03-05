@@ -8,34 +8,43 @@
 #ifndef IMPL_CAMB_DIOPI_HELPER_HPP_
 #define IMPL_CAMB_DIOPI_HELPER_HPP_
 
-#include <diopi/diopirt.h>
 #include <cnnl.h>
 #include <cnrt.h>
-#include <cstdio>
+#include <diopi/diopirt.h>
+#include <diopi/functions.h>
 
+#include <cstdio>
+#include <iostream>
 #include <utility>
 #include <vector>
-#include <iostream>
 
 #include "error.hpp"
 
 namespace impl {
 namespace camb {
 
-#define DIOPI_CHECK(cond, str)                                                         \
-    do {                                                                               \
-        if (!(cond)) {                                                                 \
+#define DIOPI_CHECK(cond, str)                                             \
+    do {                                                                   \
+        if (!(cond)) {                                                     \
             set_last_error_string("%s at %s:%d", str, __FILE__, __LINE__); \
-            return diopiErrorOccurred;                                                 \
-        }                                                                              \
+            return diopiErrorOccurred;                                     \
+        }                                                                  \
     } while (false);
 
-#define DIOPI_CHECK_NULLPTR_ABORT(variable)     \
-    do {                                  \
-        if (variable == nullptr) {                                                                 \
-            printf("The variable `" #variable "` is not defined at %s:%d ", __FILE__, __LINE__);     \
-            abort(); \
-        }                                                                 \
+#define DIOPI_CHECK_NULLPTR_ABORT(variable)                                                      \
+    do {                                                                                         \
+        if (variable == nullptr) {                                                               \
+            printf("The variable `" #variable "` is not defined at %s:%d ", __FILE__, __LINE__); \
+            abort();                                                                             \
+        }                                                                                        \
+    } while (false);
+
+#define DIOPI_CHECK_ABORT(condation)                                                  \
+    do {                                                                              \
+        if (condition) {                                                              \
+            printf("" #condation "` is not satisfied at %s:%d ", __FILE__, __LINE__); \
+            abort();                                                                  \
+        }                                                                             \
     } while (false);
 
 #define DIOPI_CALL(Expr)           \
@@ -46,15 +55,9 @@ namespace camb {
         }                          \
     } while (false);
 
+enum class MemoryFormat : size_t { Contiguous = 0, ChannelsLast = 1, ChannelsLast3d = 2, Preserve = 3 };
 
-enum class MemoryFormat : size_t {
-    Contiguous      = 0,
-    ChannelsLast    = 1,
-    ChannelsLast3d  = 2,
-    Preserve        = 3
-};
-
-template<typename TensorType>
+template <typename TensorType>
 struct DataType;
 
 template <>
@@ -78,7 +81,12 @@ struct DataType<diopiConstTensorHandle_t> {
     }
 };
 
-template<typename TensorType>
+class DiopiDataType final {
+public:
+    static bool isInteger(diopiDtype_t dtype) { return dtype < 8; }
+    static bool isFloatPoint(diopiDtype_t dtype) { return dtype <= 10 && dtype >= 8 || dtype == 12 || dtype == 13; }
+};
+template <typename TensorType>
 class DiopiTensor final {
 public:
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {
@@ -115,7 +123,12 @@ public:
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return stride_;
     }
-
+    void* data_ptr() {
+        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
+        void* p = 0;
+        diopiGetTensorData(&tensor_, &p);
+        return p;
+    }
     int64_t numel() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         int64_t numel;
@@ -128,9 +141,7 @@ public:
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;
     }
-    int64_t dim() {
-        return this->shape().size();
-    }
+    int64_t dim() { return this->shape().size(); }
     DiopiTensor<diopiTensorHandle_t> contiguous(diopiContextHandle_t ctx, MemoryFormat format) {
         /* Returns a new Tensor in new memory format, without data copy */
         int64_t dim = this->dim();
@@ -174,6 +185,15 @@ protected:
 template <typename TensorType>
 inline auto makeTensor(TensorType& tensor) -> DiopiTensor<TensorType> {
     return DiopiTensor<TensorType>(tensor);
+}
+
+template <typename TensorType>
+inline auto makeTensor(diopiContextHandle_t ctx, const diopiScalar_t* pScalar) -> DiopiTensor<TensorType> {
+    diopiTensorHandle_t tensor;
+    std::vector<int32_t> shape{1};
+    diopiSize_t size(shape.data(), 1);
+    diopiRequireTensor(ctx, &tensor, &size, nullptr, pScalar->stype, diopi_device);
+    return makeTensor(tensor);
 }
 
 inline DiopiTensor<diopiTensorHandle_t> requiresTensor(diopiContextHandle_t ctx, const diopiSize_t& size, diopiDtype_t dtype) {
