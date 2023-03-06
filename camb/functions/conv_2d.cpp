@@ -199,10 +199,6 @@ extern "C" diopiError_t diopiConvolution2dBackward(diopiContextHandle_t ctx,
                                                  weight_grad_desc.get(),
                                                  grad_weight_tensor_t.data()));
 
-    CnnlResourceGuard<cnnlDeconvolutionDescriptor_t, cnnlCreateDeconvolutionDescriptor, cnnlDestroyDeconvolutionDescriptor> deconv_desc;
-
-    cnnlSetDeconvolutionDescriptor(deconv_desc.get(), 4, padding_, stride_, dilation_, groups, input_type);
-
     size_t workspace_size_input;
     DIOPI_CALLCNNL(cnnlGetConvolutionBackwardDataWorkspaceSize(handle,
                                                                weight_desc.get(),
