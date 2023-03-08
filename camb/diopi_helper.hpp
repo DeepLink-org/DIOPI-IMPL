@@ -63,7 +63,7 @@ struct DataType<diopiTensorHandle_t> {
 
     static void* data(diopiTensorHandle_t& tensor) {
         void* data;
-        diopiGetTensorData(&tensor, &data);
+        diopiGetTensorData(tensor, &data);
         return data;
     }
 };
@@ -73,7 +73,7 @@ struct DataType<diopiConstTensorHandle_t> {
     using type = const void*;
     static const void* data(diopiConstTensorHandle_t& tensor) {
         const void* data;
-        diopiGetTensorDataConst(&tensor, &data);
+        diopiGetTensorDataConst(tensor, &data);
         return data;
     }
 };
@@ -193,21 +193,6 @@ public:
         if (tensor_ == nullptr) return false;
         return this->numel() != 0;
     }
-
-    void print_str() {
-        int dim = this->dim();
-        std::cout << "DiopiTensor: dim " << dim << ", dtype: " << this->dtype() << ", shape: [";
-        for (size_t i = 0; i < dim; i++) {
-            std::cout << this->shape()[i] << ", ";
-        }
-        std::cout << "], stride: [";
-        for (size_t i = 0; i < dim; i++) {
-            std::cout << this->stride()[i] << ", ";
-        }
-        std::cout << "], is_contiguous: " << this->is_contiguous();
-        std::cout << ", pointer address: " << this->data() << std::endl;
-    }
-
 
     typename DataType<TensorType>::type data() { return DataType<TensorType>::data(tensor_); }
 
