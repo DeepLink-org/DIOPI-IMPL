@@ -107,7 +107,7 @@ public:
         return dtype;
     }
 
-    const std::vector<int32_t>& shape() {
+    const std::vector<int32_t>& shape() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return shape_;
     }
