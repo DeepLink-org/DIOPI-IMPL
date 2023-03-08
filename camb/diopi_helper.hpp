@@ -131,10 +131,14 @@ public:
     int64_t dim() {
         return this->shape().size();
     }
-    DiopiTensor<diopiTensorHandle_t> contiguous(diopiContextHandle_t ctx, MemoryFormat format = MemoryFormat::Contiguous) {
+
+    DiopiTensor<TensorType> contiguous(diopiContextHandle_t ctx, MemoryFormat format = MemoryFormat::Contiguous) {
         /* Returns a new Tensor in new memory format, without data copy */
+        if (this->is_contiguous(format)) return *this;
+        MemoryFormat format_self;
         int64_t dim = this->dim();
         std::vector<int64_t> strides(dim);
+        std::vector<int64_t> permute_order;   // to permute the data in storage
         int64_t stride = 1;
         if (format == MemoryFormat::Contiguous) {
             for (size_t i = dim; i > 0; --i) {
@@ -151,12 +155,14 @@ public:
                 if (stride != -1) stride *= shape_[k];
             }
         }
-        diopiSize_t diopi_stride(strides.data(), static_cast<int64_t>(strides.size()));
-        diopiSize_t diopi_shape;
-        diopiGetTensorShape(tensor_, &diopi_shape);
+        diopiSize_t stride_diopi(strides.data(), static_cast<int64_t>(strides.size()));
+        diopiSize_t shape_diopi;
+        diopiGetTensorShape(tensor_, &shape_diopi);
         diopiTensorHandle_t tensor;
-        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, this->dtype(), this->device());
-        return DiopiTensor<diopiTensorHandle_t>(tensor);
+        diopiRequireTensor(ctx, &tensor, &shape_diopi, &stride_diopi, this->dtype(), this->device());
+
+        TensorType tensor_may_const = tensor;
+        return DiopiTensor<TensorType>(tensor_may_const);
     }
 
     bool is_contiguous(MemoryFormat format = MemoryFormat::Contiguous) {
@@ -187,6 +193,21 @@ public:
         if (tensor_ == nullptr) return false;
         return this->numel() != 0;
     }
+
+    void print_str() {
+        int dim = this->dim();
+        std::cout << "DiopiTensor: dim " << dim << ", dtype: " << this->dtype() << ", shape: [";
+        for (size_t i = 0; i < dim; i++) {
+            std::cout << this->shape()[i] << ", ";
+        }
+        std::cout << "], stride: [";
+        for (size_t i = 0; i < dim; i++) {
+            std::cout << this->stride()[i] << ", ";
+        }
+        std::cout << "], is_contiguous: " << this->is_contiguous();
+        std::cout << ", pointer address: " << this->data() << std::endl;
+    }
+
 
     typename DataType<TensorType>::type data() { return DataType<TensorType>::data(tensor_); }
 
