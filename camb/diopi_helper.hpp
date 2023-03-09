@@ -138,7 +138,6 @@ public:
         MemoryFormat format_self;
         int64_t dim = this->dim();
         std::vector<int64_t> strides(dim);
-        std::vector<int64_t> permute_order;   // to permute the data in storage
         int64_t stride = 1;
         if (format == MemoryFormat::Contiguous) {
             for (size_t i = dim; i > 0; --i) {

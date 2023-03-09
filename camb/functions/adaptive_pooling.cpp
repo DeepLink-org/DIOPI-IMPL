@@ -45,6 +45,38 @@ diopiError_t diopiAdaptiveAvgPool2dBackward(diopiContextHandle_t ctx,
                                             diopiTensorHandle_t grad_input,
                                             diopiConstTensorHandle_t grad_output,
                                             diopiConstTensorHandle_t input) {
+    /* Get handle and generate tensors */
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
+    auto input_tr = makeTensor(input);
+    auto grad_output_tr = makeTensor(grad_output);
+    auto grad_input_tr = makeTensor(grad_input);
+
+    /* Some basic check */
+    DIOPI_CHECK(input_tr.dim() == 3 || input_tr.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
+
+    auto memory_format = MemoryFormat::ChannelsLast;
+    auto grad_output_channel_last = grad_output_tr.contiguous(ctx, memory_format);
+    cnnl_transpose(ctx, handle, grad_output_tr, grad_output_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
+    auto grad_input_channel_last = grad_input_tr.contiguous(ctx, memory_format);
+
+    /* generate tensor desc */
+    cnnlTensorLayout_t layout = CNNL_LAYOUT_NHWC;
+    CnnlTensorDesc grad_output_desc(grad_output_channel_last, layout);
+    CnnlTensorDesc grad_input_desc(grad_input_channel_last, layout);
+
+    /* call adaptive pooling */
+    DIOPI_CALLCNNL(cnnlAdaptivePoolingBackward(handle,
+                                               grad_output_desc.get(),
+                                               grad_output_channel_last.data(),
+                                               nullptr,
+                                               nullptr,
+                                               CNNL_POOLING_AVERAGE_COUNT_INCLUDE_PADDING,
+                                               grad_input_desc.get(),
+                                               grad_input_channel_last.data()));
+
+    // NHWC -> NCHW
+    cnnl_transpose(ctx, handle, grad_input_channel_last, grad_input_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW);
+
     return diopiSuccess;
 }
 
