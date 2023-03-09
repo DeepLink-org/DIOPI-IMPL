@@ -91,6 +91,10 @@ inline void setCurCtx(diopiContextHandle_t ctx) {
     context = ctx;
 }
 
+inline void unsetCurCtx() {
+    context = nullptr;
+}
+
 inline void sync(diopiContextHandle_t ctx) {
     diopiStreamHandle_t stream_handle;
     diopiGetStream(ctx, &stream_handle);
@@ -132,8 +136,10 @@ caffe2::TypeMeta getATenType(diopiDtype_t dt) {
 
 diopiDtype_t getDIOPITensorType(at::Tensor& input) {
     switch (input.scalar_type()) {
-    case at::ScalarType::Char:
+    case at::ScalarType::Bool:
         return diopi_dtype_bool;
+    case at::ScalarType::Char:
+        return diopi_dtype_int8;
     case at::ScalarType::Byte:
         return diopi_dtype_uint8;
     case at::ScalarType::Short:
@@ -144,6 +150,8 @@ diopiDtype_t getDIOPITensorType(at::Tensor& input) {
         return diopi_dtype_int64;
     case at::ScalarType::Half:
         return diopi_dtype_float16;
+    case at::ScalarType::BFloat16:
+        return diopi_dtype_bfloat16;
     case at::ScalarType::Float:
         return diopi_dtype_float32;
     case at::ScalarType::Double:
@@ -192,7 +200,7 @@ at::Tensor buildATen(T tensor) {
     c10::DeviceType atDevice = getATenDevice(device);
 
     void* data = nullptr;
-    diopiGetTensorData(const_cast<diopiTensorHandle_t*>(&tensor), &data);
+    diopiGetTensorData(const_cast<diopiTensorHandle_t>(tensor), &data);
 
     diopiSize_t shape;
     diopiGetTensorShape(tensor, &shape);
