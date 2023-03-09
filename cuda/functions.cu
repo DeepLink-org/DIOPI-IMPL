@@ -9,9 +9,9 @@
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <vector>
+#include <cuda.h>
 
 #include "helper.hpp"
-
 
 #define dispatch_dtype(fun, dtype, gridSize, blockSize, stream, ...)                             \
     if (diopi_dtype_int32 == dtype) {                                                            \
@@ -213,4 +213,271 @@ extern "C" diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t 
     }
 
     return diopiSuccess;
+}
+
+
+#define CUDA_1D_KERNEL_LOOP(i, n)                              \
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); \
+       i += blockDim.x * gridDim.x)
+
+#define CUDA_2D_KERNEL_LOOP(i, n, j, m)                             \
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (n);   \
+       i += blockDim.x * gridDim.x)                                 \
+    for (size_t j = blockIdx.y * blockDim.y + threadIdx.y; j < (m); \
+         j += blockDim.y * gridDim.y)
+
+#define CUDA_2D_KERNEL_BLOCK_LOOP(i, n, j, m)          \
+  for (size_t i = blockIdx.x; i < (n); i += gridDim.x) \
+    for (size_t j = blockIdx.y; j < (m); j += gridDim.y)
+
+#define THREADS_PER_BLOCK 512
+
+inline int GET_BLOCKS(const int N, const int num_threads = THREADS_PER_BLOCK) {
+  int optimal_block_num = (N + num_threads - 1) / num_threads;
+  int max_block_num = 4096;
+  return min(optimal_block_num, max_block_num);
+}
+
+template <typename T>
+__device__ T bilinear_interpolate(const T* input, const int height,
+                                  const int width, T y, T x,
+                                  const int index /* index for debug only*/) {
+  // deal with cases that inverse elements are out of feature map boundary
+  if (y < -1.0 || y > height || x < -1.0 || x > width) return 0;
+
+  if (y <= 0) y = 0;
+  if (x <= 0) x = 0;
+
+  int y_low = (int)y;
+  int x_low = (int)x;
+  int y_high;
+  int x_high;
+
+  if (y_low >= height - 1) {
+    y_high = y_low = height - 1;
+    y = (T)y_low;
+  } else {
+    y_high = y_low + 1;
+  }
+
+  if (x_low >= width - 1) {
+    x_high = x_low = width - 1;
+    x = (T)x_low;
+  } else {
+    x_high = x_low + 1;
+  }
+
+  T ly = y - y_low;
+  T lx = x - x_low;
+  T hy = 1. - ly, hx = 1. - lx;
+  // do bilinear interpolation
+  T v1 = input[y_low * width + x_low];
+  T v2 = input[y_low * width + x_high];
+  T v3 = input[y_high * width + x_low];
+  T v4 = input[y_high * width + x_high];
+  T w1 = hy * hx, w2 = hy * lx, w3 = ly * hx, w4 = ly * lx;
+
+  T val = (w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4);
+
+  return val;
+}
+
+template <typename T>
+__device__ void bilinear_interpolate_gradient(
+    const int height, const int width, T y, T x, T& w1, T& w2, T& w3, T& w4,
+    int& x_low, int& x_high, int& y_low, int& y_high,
+    const int index /* index for debug only*/) {
+  // deal with cases that inverse elements are out of feature map boundary
+  if (y < -1.0 || y > height || x < -1.0 || x > width) {
+    // empty
+    w1 = w2 = w3 = w4 = 0.;
+    x_low = x_high = y_low = y_high = -1;
+    return;
+  }
+
+  if (y <= 0) y = 0;
+  if (x <= 0) x = 0;
+
+  y_low = (int)y;
+  x_low = (int)x;
+
+  if (y_low >= height - 1) {
+    y_high = y_low = height - 1;
+    y = (T)y_low;
+  } else {
+    y_high = y_low + 1;
+  }
+
+  if (x_low >= width - 1) {
+    x_high = x_low = width - 1;
+    x = (T)x_low;
+  } else {
+    x_high = x_low + 1;
+  }
+
+  T ly = y - y_low;
+  T lx = x - x_low;
+  T hy = 1. - ly, hx = 1. - lx;
+
+  // reference in forward
+  // T v1 = input[y_low * width + x_low];
+  // T v2 = input[y_low * width + x_high];
+  // T v3 = input[y_high * width + x_low];
+  // T v4 = input[y_high * width + x_high];
+  // T val = (w1 * v1 + w2 * v2 + w3 * v3 + w4 * v4);
+
+  w1 = hy * hx, w2 = hy * lx, w3 = ly * hx, w4 = ly * lx;
+
+  return;
+}
+
+#define MAX_SHARED_SCALAR_T 6144  // 49152 / 8 = 6144
+
+template <typename scalar_t>
+__global__ void chamfer_distance_forward_cuda_kernel(int b, int n,
+                                                     const scalar_t* xyz, int m,
+                                                     const scalar_t* xyz2,
+                                                     scalar_t* result,
+                                                     int* result_i) {
+  __shared__ scalar_t buf[MAX_SHARED_SCALAR_T];
+  for (int i = blockIdx.x; i < b; i += gridDim.x) {
+    for (int k2 = 0; k2 < m; k2 += THREADS_PER_BLOCK) {
+      int end_k = min(m, k2 + THREADS_PER_BLOCK) - k2;
+      for (int j = threadIdx.x; j < end_k * 2; j += blockDim.x) {
+        buf[j] = xyz2[(i * m + k2) * 2 + j];
+      }
+      __syncthreads();
+      for (int j = threadIdx.x; j < n; j += blockDim.x * gridDim.y) {
+        scalar_t x1 = xyz[(i * n + j) * 2 + 0];
+        scalar_t y1 = xyz[(i * n + j) * 2 + 1];
+        int best_i = 0;
+        scalar_t best = 1e10;
+        int end_ka = end_k & (~2);
+        if (end_ka == THREADS_PER_BLOCK) {
+          for (int k = 0; k < THREADS_PER_BLOCK; k += 4) {
+#pragma unroll
+            for (int j = 0; j < 4; ++j) {
+              scalar_t x2 = buf[(k + j) * 2] - x1;
+              scalar_t y2 = buf[(k + j) * 2 + 1] - y1;
+              scalar_t d = x2 * x2 + y2 * y2;
+              if (d < best) {
+                best = d;
+                best_i = k + k2 + j;
+              }
+            }
+          }
+        } else {
+          for (int k = 0; k < end_ka; k += 4) {
+#pragma unroll
+            for (int j = 0; j < 4; ++j) {
+              scalar_t x2 = buf[(k + j) * 2] - x1;
+              scalar_t y2 = buf[(k + j) * 2 + 1] - y1;
+              scalar_t d = x2 * x2 + y2 * y2;
+              if (d < best) {
+                best = d;
+                best_i = k + k2 + j;
+              }
+            }
+          }
+        }
+        for (int k = end_ka; k < end_k; k++) {
+          scalar_t x2 = buf[k * 2 + 0] - x1;
+          scalar_t y2 = buf[k * 2 + 1] - y1;
+          scalar_t d = x2 * x2 + y2 * y2;
+          if (k == 0 || d < best) {
+            best = d;
+            best_i = k + k2;
+          }
+        }
+        if (k2 == 0 || result[(i * n + j)] > best) {
+          result[(i * n + j)] = best;
+          result_i[(i * n + j)] = best_i;
+        }
+      }
+      __syncthreads();
+    }
+  }
+}
+
+template <typename scalar_t>
+__global__ void chamfer_distance_backward_cuda_kernel(
+    int b, int n, const scalar_t* xyz1, int m, const scalar_t* xyz2,
+    const scalar_t* grad_dist1, const int* idx1, scalar_t* grad_xyz1,
+    scalar_t* grad_xyz2) {
+  for (int i = blockIdx.x; i < b; i += gridDim.x) {
+    for (int j = threadIdx.x; j < n; j += blockDim.x * gridDim.y) {
+      scalar_t x1 = xyz1[(i * n + j) * 2 + 0];
+      scalar_t y1 = xyz1[(i * n + j) * 2 + 1];
+      int j2 = idx1[i * n + j];
+      scalar_t x2 = xyz2[(i * m + j2) * 2 + 0];
+      scalar_t y2 = xyz2[(i * m + j2) * 2 + 1];
+      scalar_t g = grad_dist1[i * n + j] * 2;
+      atomicAdd(&(grad_xyz1[(i * n + j) * 2 + 0]), g * (x1 - x2));
+      atomicAdd(&(grad_xyz1[(i * n + j) * 2 + 1]), g * (y1 - y2));
+      atomicAdd(&(grad_xyz2[(i * m + j2) * 2 + 0]), -(g * (x1 - x2)));
+      atomicAdd(&(grad_xyz2[(i * m + j2) * 2 + 1]), -(g * (y1 - y2)));
+    }
+  }
+}
+
+extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in,
+                     diopiConstTensorHandle_t xyz2_in, diopiTensorHandle_t dist1_out,
+                     diopiTensorHandle_t dist2_out, diopiTensorHandle_t idx1_out,
+                     diopiTensorHandle_t idx2_out) {
+  auto xyz1 = impl::cuda::makeTensor(xyz1_in);
+  auto xyz2 = impl::cuda::makeTensor(xyz2_in);
+  auto dist1 = impl::cuda::makeTensor(dist1_out);
+  auto dist2 = impl::cuda::makeTensor(dist2_out);
+  auto idx1 = impl::cuda::makeTensor(idx1_out);
+  auto idx2 = impl::cuda::makeTensor(idx2_out);
+  int batch_size = xyz1.shape(0);
+  int n = xyz1.shape(1);
+  int m = xyz2.shape(1);
+  // here: wait for dipu ready
+  // at::cuda::CUDAGuard device_guard(xyz1.device());
+  auto stream = impl::cuda::getStream(ctx);
+  dispatch_dtype(chamfer_distance_forward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * n), THREADS_PER_BLOCK, stream,
+                batch_size, n, xyz1.data(), m,
+                xyz2.data(), dist1.data(),
+                static_cast<int*>(idx2.data()));
+  dispatch_dtype(chamfer_distance_forward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK, stream,
+                batch_size, m, xyz2.data(), n,
+                xyz1.data(), dist2.data(),
+                static_cast<int*>(idx2.data()));
+  return diopiSuccess;
+}
+
+extern "C" diopiError_t diopiChamferDistanceBackward(
+    diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in,
+    diopiConstTensorHandle_t xyz2_in, diopiConstTensorHandle_t idx1_in,
+    diopiConstTensorHandle_t idx2_in, diopiConstTensorHandle_t grad_dist1_in,
+    diopiConstTensorHandle_t grad_dist2_in, diopiTensorHandle_t grad_xyz1_out,
+    diopiTensorHandle_t grad_xyz2_out) {
+  auto xyz1 = impl::cuda::makeTensor(xyz1_in);
+  auto xyz2 = impl::cuda::makeTensor(xyz2_in);
+  auto idx1 = impl::cuda::makeTensor(idx1_in);
+  auto idx2 = impl::cuda::makeTensor(idx2_in);
+  auto grad_dist1 = impl::cuda::makeTensor(grad_dist1_in);
+  auto grad_dist2 = impl::cuda::makeTensor(grad_dist2);
+  auto grad_xyz1 = impl::cuda::makeTensor(grad_xyz1_out);
+  auto grad_xyz2 = impl::cuda::makeTensor(grad_xyz2_out);
+  int batch_size = xyz1.shape(0);
+  int n = xyz1.shape(1);
+  int m = xyz2.shape(1);
+  // here: wait for dipu ready
+  // at::cuda::CUDAGuard device_guard(xyz1.device());
+  auto stream = impl::cuda::getStream(ctx);
+  dispatch_dtype(chamfer_distance_backward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * n), THREADS_PER_BLOCK / 2, stream,
+                batch_size, m, xyz1.data(), n,
+                xyz2.data(), grad_dist1.data(),
+                static_cast<int*>(idx1.data()),
+                grad_xyz1.data(),
+                grad_xyz2.data());
+  dispatch_dtype(chamfer_distance_backward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK / 2, stream,
+                batch_size, n, xyz2.data(), m,
+                xyz1.data(), grad_dist2.data(),
+                static_cast<int*>(idx2.data()),
+                grad_xyz2.data(),
+                grad_xyz1.data());
+  return diopiSuccess;
 }

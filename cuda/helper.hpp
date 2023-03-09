@@ -11,6 +11,7 @@
 #include <diopi/diopirt.h>
 #include <cuda_runtime.h>
 #include <utility>
+#include <assert.h>
 
 #define DIOPI_CALL(Expr) {                                                              \
     diopiError_t ret = Expr;                                                            \
@@ -68,6 +69,13 @@ public:
         diopiGetTensorShape(tensor_, &shape_);
         return shape_;
     }
+
+    int64_t shape(int i) {
+        assert(i < shape_.len) 
+        const int64_t* shape_p = shape_.data;
+        return *(shape_p + i);
+    }
+
     const diopiSize_t& stride() {
         diopiGetTensorStride(tensor_, &stride_);
         return stride_;
