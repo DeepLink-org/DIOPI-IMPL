@@ -18,17 +18,15 @@ diopiError_t diopiMaxAll(diopiContextHandle_t ctx, diopiTensorHandle_t max, diop
 
     cnnlDataType_t dtype;
     DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, input_tensor.dtype()));
-    diopiSize_t input_shape;
-    diopiGetTensorShape(input, &input_shape);
-    std::vector<int64_t> dims(input_shape.len);
-    for (int i = 0; i < input_shape.len; i++) {
+    std::vector<int64_t> dims(input_tensor.dim());
+    for (int i = 0; i < input_tensor.dim(); i++) {
         dims[i] = i;
     }
-    diopiSize_t dim = {dims.data(), input_shape.len};
+    diopiSize_t dim = {dims.data(), input_tensor.dim()};
     CnnlReduceDescriptor reduce_desc(input_tensor, dim, CNNL_REDUCE_MAX, dtype, CNNL_NOT_PROPAGATE_NAN, CNNL_REDUCE_NO_INDICES, CNNL_32BIT_INDICES);
 
     size_t workspace_size(0);
-    cnnlGetReduceOpWorkspaceSize(handle, input_desc.get(), output_desc.get(), reduce_desc.get(), &workspace_size);
+    DIOPI_CALLCNNL(cnnlGetReduceOpWorkspaceSize(handle, input_desc.get(), output_desc.get(), reduce_desc.get(), &workspace_size));
     void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
@@ -38,22 +36,18 @@ diopiError_t diopiMaxAll(diopiContextHandle_t ctx, diopiTensorHandle_t max, diop
     void* indices = nullptr;
     void* alpha = nullptr;
     void* beta = nullptr;
-    const void* input_ptr = nullptr;
-    diopiGetTensorDataConst(input, &input_ptr);
-    void* output_ptr = nullptr;
-    diopiGetTensorData(max, &output_ptr);
     DIOPI_CALLCNNL(cnnlReduce(handle,
                               reduce_desc.get(),
                               workspace,
                               workspace_size,
                               alpha,
                               input_desc.get(),
-                              input_ptr,
+                              input_tensor.data(),
                               indices_size_inbytes,
                               indices,
                               beta,
                               output_desc.get(),
-                              output_ptr));
+                              output_tensor.data()));
     return diopiSuccess;
 }
 

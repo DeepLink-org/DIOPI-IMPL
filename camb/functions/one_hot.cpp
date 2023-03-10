@@ -7,7 +7,7 @@ namespace camb {
 
 extern "C" {
 
-cnnlCastDataType_t GetCastDataType(diopiDtype_t source_dtype, diopiDtype_t dest_dtype) {
+cnnlCastDataType_t getCastDataType(diopiDtype_t source_dtype, diopiDtype_t dest_dtype) {
     switch (source_dtype) {
         case diopi_dtype_int8:
             switch (dest_dtype) {
@@ -131,11 +131,9 @@ cnnlCastDataType_t GetCastDataType(diopiDtype_t source_dtype, diopiDtype_t dest_
                     return CNNL_CAST_BOOL_TO_FLOAT;
             }
     }
-
-    // return CNNL_CAST_INT64_TO_INT32;
 }
 
-diopiError_t CastDataTypeOut(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out, diopiDtype_t dtype) {
+diopiError_t castDataTypeOut(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t out, diopiDtype_t dtype) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     auto input_tensor = makeTensor(input);
     auto out_tensor = makeTensor(out);
@@ -143,23 +141,23 @@ diopiError_t CastDataTypeOut(diopiContextHandle_t ctx, diopiConstTensorHandle_t 
     CnnlTensorDesc out_desc(out_tensor, CNNL_LAYOUT_ARRAY);
     diopiDtype_t input_dtype;
     diopiGetTensorDtype(input, &input_dtype);
-    cnnlCastDataType_t cast_dtype = GetCastDataType(input_dtype, dtype);
+    cnnlCastDataType_t cast_dtype = getCastDataType(input_dtype, dtype);
 
     DIOPI_CALLCNNL(cnnlCastDataType(handle, input_desc.get(), input_tensor.data(), cast_dtype, out_desc.get(), out_tensor.data()));
     return diopiSuccess;
 }
 
-diopiTensorHandle_t CastDataType(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiDtype_t dtype) {
+diopiTensorHandle_t castDataType(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiDtype_t dtype) {
     diopiTensorHandle_t out = nullptr;
     diopiSize_t size;
     diopiGetTensorShape(input, &size);
     diopiRequireTensor(ctx, &out, &size, nullptr, dtype, diopi_device);
 
-    CastDataTypeOut(ctx, input, out, dtype);
+    castDataTypeOut(ctx, input, out, dtype);
     return out;
 }
 
-int32_t MaxInt32(diopiContextHandle_t ctx, diopiConstTensorHandle_t input) {
+int32_t maxInt32(diopiContextHandle_t ctx, diopiConstTensorHandle_t input) {
     diopiTensorHandle_t max;
     std::vector<int64_t> dims(1, 1);
     diopiSize_t shape(dims.data(), 1);
@@ -190,7 +188,7 @@ diopiError_t diopiOneHot(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
     // input must be int32
     diopiTensorHandle_t input32;
     if (CNNL_DTYPE_INT32 != input_dtype) {
-        input32 = CastDataType(ctx, input, diopi_dtype_int32);
+        input32 = castDataType(ctx, input, diopi_dtype_int32);
     } else {
         input32 = (diopiTensorHandle_t)input;
     }
@@ -198,7 +196,7 @@ diopiError_t diopiOneHot(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
     CnnlTensorDesc input32_desc(input32_tensor, CNNL_LAYOUT_ARRAY);
 
     if (-1 == numClasses) {
-        numClasses = MaxInt32(ctx, input32) + 1;
+        numClasses = maxInt32(ctx, input32) + 1;
     }
 
     diopiTensorHandle_t on_value, off_value;
@@ -220,10 +218,10 @@ diopiError_t diopiOneHot(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
 
     // output must be int32, float16, float32
     if (CNNL_DTYPE_INT32 != out_dtype && CNNL_DTYPE_HALF != out_dtype && CNNL_DTYPE_FLOAT != out_dtype) {
-        diopiTensorHandle_t out32 = CastDataType(ctx, out, diopi_dtype_int32);
+        diopiTensorHandle_t out32 = castDataType(ctx, out, diopi_dtype_int32);
         auto out32_tensor = makeTensor(out32);
         DIOPI_CALLCNNL(cnnlOneHot(handle, input32_desc.get(), input32_tensor.data(), numClasses, on_ptr, off_ptr, axis, CNNL_DTYPE_INT32, out32_tensor.data()));
-        CastDataTypeOut(ctx, out32, out, out_tensor.dtype());
+        castDataTypeOut(ctx, out32, out, out_tensor.dtype());
         return diopiSuccess;
     }
 
