@@ -54,10 +54,16 @@ else()
     message(FATAL_ERROR "Not found CUDNN.")
 endif()
 
-set(IMPL_SRC conform_test.cpp functions.cpp functions.cu)
+set(IMPL_SRC functions.cpp functions.cu)
+
+if (RUNTIME)
+    set(IMPL_SRC ${IMPL_SRC} conform_test.cpp)
+endif()
 
 cuda_add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
 set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")
-target_link_libraries(${DEVICEIMPL} ${DIOPIRT})
+if (RUNTIME)
+    target_link_libraries(${DEVICEIMPL} ${DIOPIRT})
+endif()
 target_link_libraries(${DEVICEIMPL} ${CUDA_LIBRARIES})
 target_link_libraries(${DEVICEIMPL} ${CUDNN_LIBRARIES})

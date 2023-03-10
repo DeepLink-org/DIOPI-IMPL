@@ -38,6 +38,17 @@
         return diopiDtypeNotSupported;                                                           \
     }
 
+#define dispatch_float_types_and_half(fun, dtype, gridSize, blockSize, stream, ...)                             \
+    if (diopi_dtype_float32 == dtype) {                                                    \
+        fun<float><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                             \
+    } else if (diopi_dtype_float64 == dtype) {                                                    \
+        fun<double><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                            \
+    } else {                                                                                     \
+        fprintf(stderr, "%s:%s: %s<%s %d><<<%d,%d>>>(%s)", __FILE__, __FUNCTION__, #fun, #dtype, \
+                dtype, gridSize, blockSize, #__VA_ARGS__);                                       \
+        return diopiDtypeNotSupported;                                                           \
+    }
+
 template<typename T> __global__
 void vecAdd(const void* a, const void* b, void* c, const int numel, const T alpha) {
     int id = blockIdx.x * blockDim.x + threadIdx.x;
@@ -335,21 +346,23 @@ __device__ void bilinear_interpolate_gradient(
 
 template <typename scalar_t>
 __global__ void chamfer_distance_forward_cuda_kernel(int b, int n,
-                                                     const scalar_t* xyz, int m,
-                                                     const scalar_t* xyz2,
-                                                     scalar_t* result,
+                                                    const void* xyz, int m,
+                                                    const void* xyz2,
+                                                     void* result,
                                                      int* result_i) {
   __shared__ scalar_t buf[MAX_SHARED_SCALAR_T];
   for (int i = blockIdx.x; i < b; i += gridDim.x) {
     for (int k2 = 0; k2 < m; k2 += THREADS_PER_BLOCK) {
       int end_k = min(m, k2 + THREADS_PER_BLOCK) - k2;
+      const scalar_t* xyz2_ = static_cast<const scalar_t*>(xyz2);
       for (int j = threadIdx.x; j < end_k * 2; j += blockDim.x) {
-        buf[j] = xyz2[(i * m + k2) * 2 + j];
+        buf[j] = xyz2_[(i * m + k2) * 2 + j];
       }
       __syncthreads();
+      const scalar_t* xyz_ = static_cast<const scalar_t*>(xyz);
       for (int j = threadIdx.x; j < n; j += blockDim.x * gridDim.y) {
-        scalar_t x1 = xyz[(i * n + j) * 2 + 0];
-        scalar_t y1 = xyz[(i * n + j) * 2 + 1];
+        scalar_t x1 = xyz_[(i * n + j) * 2 + 0];
+        scalar_t y1 = xyz_[(i * n + j) * 2 + 1];
         int best_i = 0;
         scalar_t best = 1e10;
         int end_ka = end_k & (~2);
@@ -389,8 +402,9 @@ __global__ void chamfer_distance_forward_cuda_kernel(int b, int n,
             best_i = k + k2;
           }
         }
-        if (k2 == 0 || result[(i * n + j)] > best) {
-          result[(i * n + j)] = best;
+        scalar_t* result_ = static_cast<scalar_t*>(result);
+        if (k2 == 0 || result_[(i * n + j)] > best) {
+          result_[(i * n + j)] = best;
           result_i[(i * n + j)] = best_i;
         }
       }
@@ -401,21 +415,26 @@ __global__ void chamfer_distance_forward_cuda_kernel(int b, int n,
 
 template <typename scalar_t>
 __global__ void chamfer_distance_backward_cuda_kernel(
-    int b, int n, const scalar_t* xyz1, int m, const scalar_t* xyz2,
-    const scalar_t* grad_dist1, const int* idx1, scalar_t* grad_xyz1,
-    scalar_t* grad_xyz2) {
+    int b, int n, const void* xyz1, int m, const void* xyz2,
+    const void* grad_dist1, const int* idx1, void* grad_xyz1,
+    void* grad_xyz2) {
+  const scalar_t* xyz1_ = static_cast<const scalar_t*>(xyz1);
+  const scalar_t* xyz2_ = static_cast<const scalar_t*>(xyz2);
+  const scalar_t* grad_dist1_ = static_cast<const scalar_t*>(grad_dist1);
+  scalar_t* grad_xyz1_ = static_cast<scalar_t*>(grad_xyz1);
+  scalar_t* grad_xyz2_ = static_cast<scalar_t*>(grad_xyz2);
   for (int i = blockIdx.x; i < b; i += gridDim.x) {
     for (int j = threadIdx.x; j < n; j += blockDim.x * gridDim.y) {
-      scalar_t x1 = xyz1[(i * n + j) * 2 + 0];
-      scalar_t y1 = xyz1[(i * n + j) * 2 + 1];
+      scalar_t x1 = xyz1_[(i * n + j) * 2 + 0];
+      scalar_t y1 = xyz1_[(i * n + j) * 2 + 1];
       int j2 = idx1[i * n + j];
-      scalar_t x2 = xyz2[(i * m + j2) * 2 + 0];
-      scalar_t y2 = xyz2[(i * m + j2) * 2 + 1];
-      scalar_t g = grad_dist1[i * n + j] * 2;
-      atomicAdd(&(grad_xyz1[(i * n + j) * 2 + 0]), g * (x1 - x2));
-      atomicAdd(&(grad_xyz1[(i * n + j) * 2 + 1]), g * (y1 - y2));
-      atomicAdd(&(grad_xyz2[(i * m + j2) * 2 + 0]), -(g * (x1 - x2)));
-      atomicAdd(&(grad_xyz2[(i * m + j2) * 2 + 1]), -(g * (y1 - y2)));
+      scalar_t x2 = xyz2_[(i * m + j2) * 2 + 0];
+      scalar_t y2 = xyz2_[(i * m + j2) * 2 + 1];
+      scalar_t g = grad_dist1_[i * n + j] * 2;
+      atomicAdd(&(grad_xyz1_[(i * n + j) * 2 + 0]), g * (x1 - x2));
+      atomicAdd(&(grad_xyz1_[(i * n + j) * 2 + 1]), g * (y1 - y2));
+      atomicAdd(&(grad_xyz2_[(i * m + j2) * 2 + 0]), -(g * (x1 - x2)));
+      atomicAdd(&(grad_xyz2_[(i * m + j2) * 2 + 1]), -(g * (y1 - y2)));
     }
   }
 }
@@ -436,11 +455,11 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx, diopiCons
   // here: wait for dipu ready
   // at::cuda::CUDAGuard device_guard(xyz1.device());
   auto stream = impl::cuda::getStream(ctx);
-  dispatch_dtype(chamfer_distance_forward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * n), THREADS_PER_BLOCK, stream,
+  dispatch_float_types_and_half(chamfer_distance_forward_cuda_kernel, xyz1.dtype(), GET_BLOCKS(batch_size * n), THREADS_PER_BLOCK, stream,
                 batch_size, n, xyz1.data(), m,
                 xyz2.data(), dist1.data(),
-                static_cast<int*>(idx2.data()));
-  dispatch_dtype(chamfer_distance_forward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK, stream,
+                static_cast<int*>(idx1.data()));
+  dispatch_float_types_and_half(chamfer_distance_forward_cuda_kernel, xyz1.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK, stream,
                 batch_size, m, xyz2.data(), n,
                 xyz1.data(), dist2.data(),
                 static_cast<int*>(idx2.data()));
@@ -458,7 +477,7 @@ extern "C" diopiError_t diopiChamferDistanceBackward(
   auto idx1 = impl::cuda::makeTensor(idx1_in);
   auto idx2 = impl::cuda::makeTensor(idx2_in);
   auto grad_dist1 = impl::cuda::makeTensor(grad_dist1_in);
-  auto grad_dist2 = impl::cuda::makeTensor(grad_dist2);
+  auto grad_dist2 = impl::cuda::makeTensor(grad_dist2_in);
   auto grad_xyz1 = impl::cuda::makeTensor(grad_xyz1_out);
   auto grad_xyz2 = impl::cuda::makeTensor(grad_xyz2_out);
   int batch_size = xyz1.shape(0);
@@ -467,16 +486,21 @@ extern "C" diopiError_t diopiChamferDistanceBackward(
   // here: wait for dipu ready
   // at::cuda::CUDAGuard device_guard(xyz1.device());
   auto stream = impl::cuda::getStream(ctx);
-  dispatch_dtype(chamfer_distance_backward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * n), THREADS_PER_BLOCK / 2, stream,
+  dispatch_float_types_and_half(
+                chamfer_distance_backward_cuda_kernel,
+                xyz1.dtype(),
+                GET_BLOCKS(batch_size * n),
+                THREADS_PER_BLOCK / 2,
+                stream,
                 batch_size, m, xyz1.data(), n,
                 xyz2.data(), grad_dist1.data(),
-                static_cast<int*>(idx1.data()),
+                static_cast<const int*>(idx1.data()),
                 grad_xyz1.data(),
                 grad_xyz2.data());
-  dispatch_dtype(chamfer_distance_backward_cuda_kernel, xyz1_in.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK / 2, stream,
+  dispatch_float_types_and_half(chamfer_distance_backward_cuda_kernel, xyz1.dtype(), GET_BLOCKS(batch_size * m), THREADS_PER_BLOCK / 2, stream,
                 batch_size, n, xyz2.data(), m,
                 xyz1.data(), grad_dist2.data(),
-                static_cast<int*>(idx2.data()),
+                static_cast<const int*>(idx2.data()),
                 grad_xyz2.data(),
                 grad_xyz1.data());
   return diopiSuccess;
