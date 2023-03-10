@@ -1,14 +1,20 @@
+#include <diopi/functions.h>
 #include <string.h>
 #include <numeric>
-#include <diopi/functions.h>
 #include "../cnnl_helper.hpp"
 
 namespace impl {
 namespace camb {
 
 extern "C" {
-DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input,
-                                      diopiSize_t kernel_size, diopiSize_t stride, diopiSize_t padding, diopiSize_t dilation, bool ceil_mode) {
+DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx,
+                                      diopiTensorHandle_t out,
+                                      diopiConstTensorHandle_t input,
+                                      diopiSize_t kernel_size,
+                                      diopiSize_t stride,
+                                      diopiSize_t padding,
+                                      diopiSize_t dilation,
+                                      bool ceil_mode) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -25,7 +31,7 @@ DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandl
     CnnlResourceGuard<cnnlPoolingDescriptor_t, cnnlCreatePoolingDescriptor, cnnlDestroyPoolingDescriptor> CnnlPoolDesc;
     cnnlPoolingDescriptor_t pool_desc = CnnlPoolDesc.get();
     const int64_t kernel_h = kernel_size.data[0];
-    const int64_t kernel_w = kernel_size.len == 1? kernel_h : kernel_size.data[1];
+    const int64_t kernel_w = kernel_size.len == 1 ? kernel_h : kernel_size.data[1];
     int64_t stride_h = 0;
     int64_t stride_w = 0;
     if (stride.len == 0) {
@@ -33,12 +39,12 @@ DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandl
         stride_w = kernel_w;
     } else {
         stride_h = stride.data[0];
-        stride_w = stride.len == 1? stride_h: stride.data[1];
+        stride_w = stride.len == 1 ? stride_h : stride.data[1];
     }
     const int64_t pad_h = padding.data[0];
-    const int64_t pad_w = padding.len == 1? pad_h: padding.data[1];
+    const int64_t pad_w = padding.len == 1 ? pad_h : padding.data[1];
     const int64_t dilation_0 = dilation.data[0];
-    const int64_t dilation_1 = dilation.len == 1? dilation_0: dilation.data[1];
+    const int64_t dilation_1 = dilation.len == 1 ? dilation_0 : dilation.data[1];
 
     // calculate padding coefficients
     auto pl = 0, pr = 0, pu = 0, pd = 0;
@@ -50,12 +56,12 @@ DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandl
         int diff_width = (out_tensor.shape()[3] - 1) * stride_w + kernel_w - input_tensor.shape()[3];
         // If ceil_mode is set to true, the pad needs to be filled up.
         // If the offset pad is redundant, it will be removed.
-        pd = diff_height > pad_h? diff_height - pad_h: 0;
-        pr = diff_width > pad_w? diff_width - pad_w: 0;
+        pd = diff_height > pad_h ? diff_height - pad_h : 0;
+        pr = diff_width > pad_w ? diff_width - pad_w : 0;
     }
 
-    DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu,
-                                                 pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
+    DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(
+        pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu, pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
 
     std::vector<int8_t> extra_host_input;
     size_t workspace_size = 0;
@@ -65,25 +71,22 @@ DIOPI_API diopiError_t diopiMaxPool2d(diopiContextHandle_t ctx, diopiTensorHandl
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    const void * alpha = nullptr;
-    const void * beta = nullptr;
-    DIOPI_CALLCNNL(cnnlPoolingForward(handle,
-                                      pool_desc,
-                                      alpha,
-                                      input_desc.get(),
-                                      input_ptr,
-                                      beta,
-                                      out_desc.get(),
-                                      out_ptr,
-                                      workspace,
-                                      workspace_size));
+    const void* alpha = nullptr;
+    const void* beta = nullptr;
+    DIOPI_CALLCNNL(cnnlPoolingForward(handle, pool_desc, alpha, input_desc.get(), input_ptr, beta, out_desc.get(), out_ptr, workspace, workspace_size));
 
     return diopiSuccess;
 }
 
-DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandle_t indices,
-                                                 diopiConstTensorHandle_t input, diopiSize_t kernel_size, diopiSize_t stride,
-                                                 diopiSize_t padding, diopiSize_t dilation, bool ceil_mode) {
+DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx,
+                                                 diopiTensorHandle_t out,
+                                                 diopiTensorHandle_t indices,
+                                                 diopiConstTensorHandle_t input,
+                                                 diopiSize_t kernel_size,
+                                                 diopiSize_t stride,
+                                                 diopiSize_t padding,
+                                                 diopiSize_t dilation,
+                                                 bool ceil_mode) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -115,7 +118,7 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
     CnnlResourceGuard<cnnlPoolingDescriptor_t, cnnlCreatePoolingDescriptor, cnnlDestroyPoolingDescriptor> CnnlPoolDesc;
     cnnlPoolingDescriptor_t pool_desc = CnnlPoolDesc.get();
     const int64_t kernel_h = kernel_size.data[0];
-    const int64_t kernel_w = kernel_size.len == 1? kernel_h : kernel_size.data[1];
+    const int64_t kernel_w = kernel_size.len == 1 ? kernel_h : kernel_size.data[1];
     int64_t stride_h = 0;
     int64_t stride_w = 0;
     if (stride.len == 0) {
@@ -123,12 +126,12 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         stride_w = kernel_w;
     } else {
         stride_h = stride.data[0];
-        stride_w = stride.len == 1? stride_h: stride.data[1];
+        stride_w = stride.len == 1 ? stride_h : stride.data[1];
     }
     const int64_t pad_h = padding.data[0];
-    const int64_t pad_w = padding.len == 1? pad_h: padding.data[1];
+    const int64_t pad_w = padding.len == 1 ? pad_h : padding.data[1];
     const int64_t dilation_0 = dilation.data[0];
-    const int64_t dilation_1 = dilation.len == 1? dilation_0: dilation.data[1];
+    const int64_t dilation_1 = dilation.len == 1 ? dilation_0 : dilation.data[1];
 
     // calculate padding coefficients
     auto pl = 0, pr = 0, pu = 0, pd = 0;
@@ -140,8 +143,8 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         int diff_width = (out_tensor.shape()[3] - 1) * stride_w + kernel_w - input_tensor.shape()[3];
         // If ceil_mode is set to true, the pad needs to be filled up.
         // If the offset pad is redundant, it will be removed.
-        pd = diff_height > pad_h? diff_height - pad_h: 0;
-        pr = diff_width > pad_w? diff_width - pad_w: 0;
+        pd = diff_height > pad_h ? diff_height - pad_h : 0;
+        pr = diff_width > pad_w ? diff_width - pad_w : 0;
     }
 
     int pool_rank_ = kernel_size.len;
@@ -150,11 +153,11 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         std::vector<int> padding_{padding.data, padding.data + padding.len};
         std::vector<int> stride_{stride.data, stride.data + stride.len};
         std::vector<int> dilation_{dilation.data, dilation.data + dilation.len};
-        DIOPI_CALLCNNL(cnnlSetPoolingNdDescriptor_v2(pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, pool_rank_+2,
-                                                     window_.data(), padding_.data(), stride_.data(), dilation_.data(), ceil_mode));
+        DIOPI_CALLCNNL(cnnlSetPoolingNdDescriptor_v2(
+            pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, pool_rank_ + 2, window_.data(), padding_.data(), stride_.data(), dilation_.data(), ceil_mode));
     } else {
-        DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu,
-                                                     pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
+        DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(
+            pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu, pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
     }
 
     std::vector<int8_t> extra_host_input;
@@ -165,8 +168,8 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    const void * alpha = nullptr;
-    const void * beta = nullptr;
+    const void* alpha = nullptr;
+    const void* beta = nullptr;
     diopiTensorHandle_t indices32_tmp;
     DIOPI_CALL(diopiRequireTensor(ctx, &indices32_tmp, &indices_shape, nullptr, diopi_dtype_int32, diopi_device));
     auto indices32_tmp_tensor = makeTensor(indices32_tmp);
@@ -175,31 +178,21 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
 
     if (indices_dtype == CNNL_DTYPE_INT64) {
         DIOPI_CALLCNNL(cnnlPoolingForwardWithIndex(handle,
-                                                pool_desc,
-                                                alpha,
-                                                input_desc.get(),
-                                                input_ptr,
-                                                beta,
-                                                out_desc.get(),
-                                                out_ptr,
-                                                indices32_tmp_desc.get(),
-                                                indices32_tmp_ptr,
-                                                workspace,
-                                                workspace_size));
+                                                   pool_desc,
+                                                   alpha,
+                                                   input_desc.get(),
+                                                   input_ptr,
+                                                   beta,
+                                                   out_desc.get(),
+                                                   out_ptr,
+                                                   indices32_tmp_desc.get(),
+                                                   indices32_tmp_ptr,
+                                                   workspace,
+                                                   workspace_size));
         DIOPI_CHECKCNNL(cnnlCastDataType(handle, indices32_tmp_desc.get(), indices32_tmp_ptr, CNNL_CAST_INT32_TO_INT64, indices_desc.get(), indices_ptr));
     } else if ((indices_dtype == indices_dtype_ori) && (indices_dtype_ori == CNNL_DTYPE_INT32)) {
-        DIOPI_CALLCNNL(cnnlPoolingForwardWithIndex(handle,
-                                               pool_desc,
-                                               alpha,
-                                               input_desc.get(),
-                                               input_ptr,
-                                               beta,
-                                               out_desc.get(),
-                                               out_ptr,
-                                               indices_desc.get(),
-                                               indices_ptr,
-                                               workspace,
-                                               workspace_size));
+        DIOPI_CALLCNNL(cnnlPoolingForwardWithIndex(
+            handle, pool_desc, alpha, input_desc.get(), input_ptr, beta, out_desc.get(), out_ptr, indices_desc.get(), indices_ptr, workspace, workspace_size));
     } else if ((indices_dtype == CNNL_DTYPE_INT16) && (indices_dtype_ori == CNNL_DTYPE_INT32)) {
         diopiTensorHandle_t indices16_tmp;
         DIOPI_CALL(diopiRequireTensor(ctx, &indices16_tmp, &indices_shape, nullptr, diopi_dtype_int16, diopi_device));
@@ -207,17 +200,17 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         CnnlTensorDesc indices16_tmp_desc(indices16_tmp_tensor, CNNL_LAYOUT_NCHW);
         void* indices16_tmp_ptr = indices16_tmp_tensor.data();
         DIOPI_CALLCNNL(cnnlPoolingForwardWithIndex(handle,
-                                               pool_desc,
-                                               alpha,
-                                               input_desc.get(),
-                                               input_ptr,
-                                               beta,
-                                               out_desc.get(),
-                                               out_ptr,
-                                               indices16_tmp_desc.get(),
-                                               indices16_tmp_ptr,
-                                               workspace,
-                                               workspace_size));
+                                                   pool_desc,
+                                                   alpha,
+                                                   input_desc.get(),
+                                                   input_ptr,
+                                                   beta,
+                                                   out_desc.get(),
+                                                   out_ptr,
+                                                   indices16_tmp_desc.get(),
+                                                   indices16_tmp_ptr,
+                                                   workspace,
+                                                   workspace_size));
         DIOPI_CHECKCNNL(cnnlCastDataType(handle, indices16_tmp_desc.get(), indices16_tmp_ptr, CNNL_CAST_INT16_TO_INT32, indices_desc.get(), indices_ptr));
     } else {
         diopiTensorHandle_t indices16_tmp;
@@ -226,26 +219,34 @@ DIOPI_API diopiError_t diopiMaxPool2dWithIndices(diopiContextHandle_t ctx, diopi
         CnnlTensorDesc indices16_tmp_desc(indices16_tmp_tensor, CNNL_LAYOUT_NCHW);
         void* indices16_tmp_ptr = indices16_tmp_tensor.data();
         DIOPI_CALLCNNL(cnnlPoolingForwardWithIndex(handle,
-                                               pool_desc,
-                                               alpha,
-                                               input_desc.get(),
-                                               input_ptr,
-                                               beta,
-                                               out_desc.get(),
-                                               out_ptr,
-                                               indices16_tmp_desc.get(),
-                                               indices16_tmp_ptr,
-                                               workspace,
-                                               workspace_size));
-        DIOPI_CHECKCNNL(cnnlCastDataType(handle, indices16_tmp_desc.get(), indices16_tmp_ptr, CNNL_CAST_INT16_TO_INT32, indices32_tmp_desc.get(), indices32_tmp_ptr));
+                                                   pool_desc,
+                                                   alpha,
+                                                   input_desc.get(),
+                                                   input_ptr,
+                                                   beta,
+                                                   out_desc.get(),
+                                                   out_ptr,
+                                                   indices16_tmp_desc.get(),
+                                                   indices16_tmp_ptr,
+                                                   workspace,
+                                                   workspace_size));
+        DIOPI_CHECKCNNL(
+            cnnlCastDataType(handle, indices16_tmp_desc.get(), indices16_tmp_ptr, CNNL_CAST_INT16_TO_INT32, indices32_tmp_desc.get(), indices32_tmp_ptr));
         DIOPI_CHECKCNNL(cnnlCastDataType(handle, indices32_tmp_desc.get(), indices32_tmp_ptr, CNNL_CAST_INT32_TO_INT64, indices_desc.get(), indices_ptr));
     }
     return diopiSuccess;
 }
 
-DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input, diopiConstTensorHandle_t grad_output,
-                                              diopiConstTensorHandle_t input, diopiSize_t kernel_size, diopiSize_t stride, diopiSize_t padding,
-                                              diopiSize_t dilation, bool ceil_mode, diopiConstTensorHandle_t indices) {
+DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx,
+                                              diopiTensorHandle_t grad_input,
+                                              diopiConstTensorHandle_t grad_output,
+                                              diopiConstTensorHandle_t input,
+                                              diopiSize_t kernel_size,
+                                              diopiSize_t stride,
+                                              diopiSize_t padding,
+                                              diopiSize_t dilation,
+                                              bool ceil_mode,
+                                              diopiConstTensorHandle_t indices) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -269,7 +270,7 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
     diopiTensorHandle_t grad_output_t;
     diopiTensorHandle_t indices_t;
 
-    auto permute_to_nhwc = [&](auto src, auto &dst) {
+    auto permute_to_nhwc = [&](auto src, auto& dst) {
         std::vector<int64_t> axis{0, 2, 3, 1};
         auto src_tensor = makeTensor(src);
         std::vector<int64_t> src_shape_t_64(src_tensor.shape().size());
@@ -305,7 +306,7 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
     CnnlResourceGuard<cnnlPoolingDescriptor_t, cnnlCreatePoolingDescriptor, cnnlDestroyPoolingDescriptor> CnnlPoolDesc;
     cnnlPoolingDescriptor_t pool_desc = CnnlPoolDesc.get();
     const int64_t kernel_h = kernel_size.data[0];
-    const int64_t kernel_w = kernel_size.len == 1? kernel_h : kernel_size.data[1];
+    const int64_t kernel_w = kernel_size.len == 1 ? kernel_h : kernel_size.data[1];
     int64_t stride_h = 0;
     int64_t stride_w = 0;
     if (stride.len == 0) {
@@ -313,13 +314,12 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
         stride_w = kernel_w;
     } else {
         stride_h = stride.data[0];
-        stride_w = stride.len == 1? stride_h: stride.data[1];
+        stride_w = stride.len == 1 ? stride_h : stride.data[1];
     }
     const int64_t pad_h = padding.data[0];
-    const int64_t pad_w = padding.len == 1? pad_h: padding.data[1];
+    const int64_t pad_w = padding.len == 1 ? pad_h : padding.data[1];
     const int64_t dilation_0 = dilation.data[0];
-    const int64_t dilation_1 = dilation.len == 1? dilation_0: dilation.data[1];
-
+    const int64_t dilation_1 = dilation.len == 1 ? dilation_0 : dilation.data[1];
 
     // calculate padding coefficients
     auto pl = 0, pr = 0, pu = 0, pd = 0;
@@ -331,14 +331,14 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
         int diff_width = (grad_output_tensor.shape()[3] - 1) * stride_w + kernel_w - input_tensor.shape()[3];
         // If ceil_mode is set to true, the pad needs to be filled up.
         // If the offset pad is redundant, it will be removed.
-        pd = diff_height > pad_h? diff_height - pad_h: 0;
-        pr = diff_width > pad_w? diff_width - pad_w: 0;
+        pd = diff_height > pad_h ? diff_height - pad_h : 0;
+        pr = diff_width > pad_w ? diff_width - pad_w : 0;
     }
 
-    DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu,
-                                                 pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
-    const void * alpha = nullptr;
-    const void * beta = nullptr;
+    DIOPI_CALLCNNL(cnnlSetPooling2dDescriptor_v2(
+        pool_desc, CNNL_POOLING_MAX, CNNL_PROPAGATE_NAN, kernel_h, kernel_w, pu, pd, pl, pr, stride_h, stride_w, dilation_0, dilation_1, ceil_mode));
+    const void* alpha = nullptr;
+    const void* beta = nullptr;
 
     diopiSize_t indices_t_shape;
     DIOPI_CALL(diopiGetTensorShape(indices_t, &indices_t_shape));
@@ -357,12 +357,8 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
     DIOPI_CALL(indices16_cast_desc.set(indices16_cast_tensor, CNNL_LAYOUT_NHWC, indices_shape_));
 
     if (indices_dtype == CNNL_DTYPE_INT64) {
-        DIOPI_CHECKCNNL(cnnlCastDataType(handle,
-                                         indices_t_desc.get(),
-                                         indices_tensor_t.data(),
-                                         CNNL_CAST_INT64_TO_INT32,
-                                         indices32_cast_desc.get(),
-                                         indices32_cast_tensor.data()));
+        DIOPI_CHECKCNNL(cnnlCastDataType(
+            handle, indices_t_desc.get(), indices_tensor_t.data(), CNNL_CAST_INT64_TO_INT32, indices32_cast_desc.get(), indices32_cast_tensor.data()));
         DIOPI_CALLCNNL(cnnlPoolingBackward(handle,
                                            pool_desc,
                                            alpha,
@@ -375,7 +371,7 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
                                            beta,
                                            grad_input_desc.get(),
                                            grad_input_ptr));
-    } else if((indices_dtype == indices_dtype_ori) && (indices_dtype_ori == CNNL_DTYPE_INT32)) {
+    } else if ((indices_dtype == indices_dtype_ori) && (indices_dtype_ori == CNNL_DTYPE_INT32)) {
         DIOPI_CALLCNNL(cnnlPoolingBackward(handle,
                                            pool_desc,
                                            alpha,
@@ -389,12 +385,8 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
                                            grad_input_desc.get(),
                                            grad_input_ptr));
     } else if ((indices_dtype == CNNL_DTYPE_INT16) && (indices_dtype_ori == CNNL_DTYPE_INT32)) {
-        DIOPI_CHECKCNNL(cnnlCastDataType(handle,
-                                         indices_t_desc.get(),
-                                         indices_tensor_t.data(),
-                                         CNNL_CAST_INT32_TO_INT16,
-                                         indices16_cast_desc.get(),
-                                         indices16_cast_tensor.data()));
+        DIOPI_CHECKCNNL(cnnlCastDataType(
+            handle, indices_t_desc.get(), indices_tensor_t.data(), CNNL_CAST_INT32_TO_INT16, indices16_cast_desc.get(), indices16_cast_tensor.data()));
         DIOPI_CALLCNNL(cnnlPoolingBackward(handle,
                                            pool_desc,
                                            alpha,
@@ -408,12 +400,8 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
                                            grad_input_desc.get(),
                                            grad_input_ptr));
     } else {
-        DIOPI_CHECKCNNL(cnnlCastDataType(handle,
-                                         indices_t_desc.get(),
-                                         indices_tensor_t.data(),
-                                         CNNL_CAST_INT64_TO_INT32,
-                                         indices32_cast_desc.get(),
-                                         indices32_cast_tensor.data()));
+        DIOPI_CHECKCNNL(cnnlCastDataType(
+            handle, indices_t_desc.get(), indices_tensor_t.data(), CNNL_CAST_INT64_TO_INT32, indices32_cast_desc.get(), indices32_cast_tensor.data()));
         DIOPI_CHECKCNNL(cnnlCastDataType(handle,
                                          indices32_cast_desc.get(),
                                          indices32_cast_tensor.data(),
