@@ -4,21 +4,13 @@
 #include <cnnl.h>
 
 #include <cassert>
+#include <map>
 #include <mutex>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include "diopi_helper.hpp"
-
-namespace std{
-template<>
-struct hash<diopiDtype_t>{
-    size_t operator() (diopiDtype_t v)const {
-        return hash<size_t>()((size_t)v);
-    }
-};
-}
 
 namespace impl {
 namespace camb {
@@ -269,7 +261,7 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
 }
 
 // global var
-extern std::unordered_map<diopiDtype_t, std::unordered_map<diopiDtype_t, cnnlCastDataType_t>> gCnnlCastDataTypeMapping;
+extern std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping;
 extern CnnlHandlePool cnnlHandlePool;
 
 }  // namespace camb
