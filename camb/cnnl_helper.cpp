@@ -2,14 +2,7 @@
 
 #include "error.hpp"
 #include <functional>
-namespace std{
-template<>
-struct hash<diopiDtype_t>{
-    size_t operator() (diopiDtype_t v)const {
-        return hash<size_t>()((size_t)v);
-    }
-};
-}
+
 namespace impl {
 namespace camb {
 
@@ -61,7 +54,7 @@ bool CnnlDataType::isInteger(cnnlDataType_t cnnlDT) {
 }
 bool CnnlDataType::isBool(cnnlDataType_t cnnlDT) { return cnnlDT == CNNL_DTYPE_BOOL; }
 
-std::unordered_map<diopiDtype_t, std::unordered_map<diopiDtype_t, cnnlCastDataType_t>> cnnlCastDataTypeMapping{
+std::unordered_map<diopiDtype_t, std::unordered_map<diopiDtype_t, cnnlCastDataType_t>> gCnnlCastDataTypeMapping{
     {diopi_dtype_bool, {{diopi_dtype_float16, CNNL_CAST_BOOL_TO_HALF}, {diopi_dtype_float32, CNNL_CAST_BOOL_TO_FLOAT}}},
 
     {diopi_dtype_int8,

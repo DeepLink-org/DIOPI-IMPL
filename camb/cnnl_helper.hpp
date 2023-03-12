@@ -11,6 +11,15 @@
 
 #include "diopi_helper.hpp"
 
+namespace std{
+template<>
+struct hash<diopiDtype_t>{
+    size_t operator() (diopiDtype_t v)const {
+        return hash<size_t>()((size_t)v);
+    }
+};
+}
+
 namespace impl {
 namespace camb {
 
@@ -27,7 +36,8 @@ namespace camb {
     do {                                                                                                                          \
         ::cnnlStatus_t ret = Expr;                                                                                                \
         if (ret != ::CNNL_STATUS_SUCCESS) {                                                                                       \
-            set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
+            printf("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
+            std::abort(); \
         }                                                                                                                         \
     } while (false);
 
@@ -60,6 +70,7 @@ public:
         diopiError_t status = set(t, layout);
         if (status != diopiSuccess) {
             set_last_error_string("failed to cnnlSetTensorDescriptor %d at %s:%d", status, __FILE__, __LINE__);
+            assert(false);
         }
     }
 
@@ -68,14 +79,15 @@ public:
             cnnlStatus_t ret = cnnlDestroyTensorDescriptor(desc);
             if (ret != CNNL_STATUS_SUCCESS) {
                 set_last_error_string("failed to cnnlDestroyTensorDescriptor %d at %s:%d", ret, __FILE__, __LINE__);
+                assert(false);
             }
         }
     }
 
     template <typename T>
     diopiError_t set(T& t, cnnlTensorLayout_t layout) {
-        const std::vector<int32_t>& dimSize = t.shape();
-        int dim = dimSize.size();
+        const std::vector<int64_t>& dimSize = t.shape();
+        size_t dim = dimSize.size();
         std::vector<int32_t> shape(dim);
 
         if (layout == CNNL_LAYOUT_NHWC || layout == CNNL_LAYOUT_NDHWC
@@ -96,12 +108,10 @@ public:
                 shape[i] = dimSize[i];
             }
         }
-
         cnnlDataType_t dtype;
         DIOPI_CALLCNNL(cnnlCreateTensorDescriptor(&desc));
         DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
         DIOPI_CALLCNNL(cnnlSetTensorDescriptor(desc, layout, dtype, shape.size(), shape.data()));
-
         return diopiSuccess;
     }
 
@@ -258,6 +268,8 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
     return diopiSuccess;
 }
 
+// global var
+extern std::unordered_map<diopiDtype_t, std::unordered_map<diopiDtype_t, cnnlCastDataType_t>> gCnnlCastDataTypeMapping;
 extern CnnlHandlePool cnnlHandlePool;
 
 }  // namespace camb
