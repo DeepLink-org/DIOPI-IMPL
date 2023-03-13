@@ -15,8 +15,6 @@ namespace camb {
 
 extern "C" DIOPI_API diopiError_t
 diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
-    static int cnt = 0;
-    cnt+=1;
     diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
     diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
     auto trInput = makeTensor(input_);
