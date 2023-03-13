@@ -1,7 +1,8 @@
-#ifndef IMPL_CAMB_COMMON_HPP_
-#define IMPL_CAMB_COMMON_HPP_
+#ifndef IMPL_CAMB_COMMON_COMMON_HPP_
+#define IMPL_CAMB_COMMON_COMMON_HPP_
 
 #include <set>
+#include <vector>
 
 #include "../cnnl_helper.hpp"
 
@@ -23,4 +24,4 @@ void autoCastTensorType(diopiContextHandle_t ctx, std::vector<DiopiTensorT*>& pT
 }  // namespace camb
 }  // namespace impl
 
-#endif  // IMPL_CAMB_COMMON_HPP
+#endif  // IMPL_CAMB_COMMON_COMMON_HPP_

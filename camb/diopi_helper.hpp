@@ -102,9 +102,9 @@ public:
             stride_ = std::move(strideTmp);
         }
     }
-    operator TensorType(){
-        return tensor_;
-    }
+
+    operator TensorType() { return tensor_; }
+
     diopiDevice_t device() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         diopiDevice_t device;
@@ -118,11 +118,11 @@ public:
         return dtype;
     }
 
-    const std::vector<int64_t>& shape() const{
+    const std::vector<int64_t>& shape() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return shape_;
     }
-    const std::vector<int64_t>& stride() const{
+    const std::vector<int64_t>& stride() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return stride_;
     }
@@ -144,9 +144,7 @@ public:
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;
     }
-    int64_t dim() {
-        return this->shape().size();
-    }
+    int64_t dim() { return this->shape().size(); }
 
     DiopiTensor<TensorType> contiguous(diopiContextHandle_t ctx, MemoryFormat format = MemoryFormat::Contiguous) {
         /* Returns a new Tensor in new memory format, without data copy */

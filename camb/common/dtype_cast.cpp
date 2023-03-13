@@ -18,7 +18,7 @@ DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, di
     DIOPI_CHECK_ABORT(cnnlCastDtype != 0, "data type cast from %d to %d in cnnl is not allown", srcDtype, destDtype);
     CnnlTensorDesc descSrc(src, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc descDest(dest, CNNL_LAYOUT_ARRAY);
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), (void*)((const_cast<DiopiTensorT&>(src)).data()), cnnlCastDtype, descDest.get(), dest.data()));
+    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensorT&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
     return dest;
 }
 
