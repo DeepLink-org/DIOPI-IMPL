@@ -140,7 +140,7 @@ public:
         diopiGetTensorShape(tensor_, &diopi_shape);
         diopiGetTensorStride(tensor_, &diopi_stride);
         diopiTensorHandle_t tensor;
-        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, dtype, this->device());        
+        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, dtype, this->device());
         _diopiCast(ctx, tensor_, tensor, this->dtype(), dtype);
         TensorType tensor_may_const = tensor;
         return DiopiTensor<TensorType>(tensor_may_const);
