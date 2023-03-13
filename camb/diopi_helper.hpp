@@ -78,6 +78,8 @@ struct DataType<diopiConstTensorHandle_t> {
     }
 };
 
+diopiError_t _diopiCast(diopiContextHandle_t ctx, diopiConstTensorHandle_t input, diopiTensorHandle_t output, diopiDtype_t from, diopiDtype_t to);
+
 template<typename TensorType>
 class DiopiTensor final {
 public:
@@ -130,6 +132,18 @@ public:
     }
     int64_t dim() {
         return this->shape().size();
+    }
+
+    DiopiTensor<TensorType> to(diopiContextHandle_t ctx, diopiDtype_t dtype) {
+        if (dtype == this->dtype()) return *this;
+        diopiSize_t diopi_stride, diopi_shape;
+        diopiGetTensorShape(tensor_, &diopi_shape);
+        diopiGetTensorStride(tensor_, &diopi_stride);
+        diopiTensorHandle_t tensor;
+        diopiRequireTensor(ctx, &tensor, &diopi_shape, &diopi_stride, dtype, this->device());        
+        _diopiCast(ctx, tensor_, tensor, this->dtype(), dtype);
+        TensorType tensor_may_const = tensor;
+        return DiopiTensor<TensorType>(tensor_may_const);
     }
 
     DiopiTensor<TensorType> contiguous(diopiContextHandle_t ctx, MemoryFormat format = MemoryFormat::Contiguous) {

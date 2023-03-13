@@ -206,6 +206,8 @@ public:
         /* if dim is not set, all dimensions are reduced. */
         std::vector<int> axis;
         if (dim.len > 0) {
+            // vector initialization includes copy construction
+            // in other words, converting from int64_t to int
             std::vector<int> dims{dim.data, dim.data + dim.len};
             axis = dims;
         } else {
