@@ -70,7 +70,7 @@ diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
     size_t workspaceSize = 0;
     DIOPI_CALLCNNL(cnnlGetAddNWorkspaceSize(handle, inputDescs, inputNum, descOutTmp.get(), &workspaceSize));
     auto buff = requiresBuffer(ctx, workspaceSize);
-    void* pWorkspace = buff.data_ptr();
+    void* pWorkspace = buff.data();
 
     DIOPI_CALLCNNL(cnnlAddN_v2(handle, inputDescs, inputs, inputNum, descOutTmp.get(), trOutTmp.data(), pWorkspace, workspaceSize));
     if (trOutTmp.dtype() != trOut.dtype()) {

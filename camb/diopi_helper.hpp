@@ -126,12 +126,7 @@ public:
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return stride_;
     }
-    void* data_ptr() {
-        DIOPI_CHECK_NULLPTR_ABORT(tensor_);
-        void* p = 0;
-        diopiGetTensorData(tensor_, &p);
-        return p;
-    }
+
     int64_t numel() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         int64_t numel;
