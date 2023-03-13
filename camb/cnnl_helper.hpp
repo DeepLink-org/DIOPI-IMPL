@@ -15,6 +15,14 @@
 namespace impl {
 namespace camb {
 
+inline void print(std::vector<int32_t> vec) {
+    std::cout << "vec: ";
+    for (auto i : vec) {
+        std::cout << i << ", ";
+    }
+    std::cout << std::endl;
+}
+
 #define DIOPI_CALLCNNL(Expr)                                                                                                      \
     do {                                                                                                                          \
         ::cnnlStatus_t ret = Expr;                                                                                                \
@@ -103,6 +111,9 @@ public:
         cnnlDataType_t dtype;
         DIOPI_CALLCNNL(cnnlCreateTensorDescriptor(&desc));
         DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
+        std::cout << "+Tensor Descriptor dtype: " << dtype << std::endl;
+        std::cout << "+Tensor Descriptor shape: " ;
+        print(shape);
         DIOPI_CALLCNNL(cnnlSetTensorDescriptor(desc, layout, dtype, shape.size(), shape.data()));
         return diopiSuccess;
     }
@@ -112,6 +123,7 @@ public:
         cnnlDataType_t dtype;
         DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
         DIOPI_CALLCNNL(cnnlCreateTensorDescriptor(&desc));
+        std::cout << "+Tensor Descriptor dtype: " << dtype << std::endl;
         DIOPI_CALLCNNL(cnnlSetTensorDescriptor(desc, layout, dtype, dims.size(), dims.data()));
         return diopiSuccess;
     }

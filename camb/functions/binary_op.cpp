@@ -47,8 +47,9 @@ DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, di
     std::cout << "handle: " << handle << std::endl;
     // auto queue = getStream(ctx);
     // cnrtQueueSync(queue);
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), (const_cast<DiopiTensorT&>(src)).data(), cnnlCastDtype, descDest.get(), dest.data()));
-    std::cout << "cnnlCastDtype:" << cnnlCastDtype << "(ok)" << std::endl;
+    // cnrtQueueSync(getStream(ctx));
+    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), (void*)((const_cast<DiopiTensorT&>(src)).data()), cnnlCastDtype, descDest.get(), dest.data()));
+    // std::cout << "cnnlCastDtype:" << cnnlCastDtype << "(ok)" << std::endl;
     return dest;
 }
 
@@ -57,7 +58,10 @@ void dataTypeCast(diopiContextHandle_t ctx, DiopiTensorT& dest, const DiopiTenso
         return;
     }
     // check size of dest and src
-    assert((void("the shapes of src and dest are not equal"), src.shape() == dest.shape()));
+    std::cout << "++++++dataTypeCast_out++begin++++" << std::endl;
+    assert((void("the shapes of src and dest are not equal"), src.shape().size() != 0 && src.shape() == dest.shape()));
+    print(src.shape());
+    print(dest.shape());
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     diopiDtype_t srcDtype = src.dtype();
     diopiDtype_t destDtype = dest.dtype();
@@ -65,7 +69,20 @@ void dataTypeCast(diopiContextHandle_t ctx, DiopiTensorT& dest, const DiopiTenso
     CnnlTensorDesc descDest(dest, CNNL_LAYOUT_ARRAY);
     cnnlCastDataType_t cnnlCastDtype = gCnnlCastDataTypeMapping[{srcDtype, destDtype}];
     std::cout << "cnnlCastDtype:" << cnnlCastDtype << std::endl;
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensorT&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
+    cnnlHandle_t handleTmp;
+    cnnlCreate(&handleTmp);
+
+    cnrtQueue_t q0;
+    cnrtQueueCreate(&q0);
+    cnnlSetQueue(handleTmp, q0);
+
+    cnrtQueueSync(getStream(ctx));
+    //std::cout << camb_get_last_error_string() << std::endl;
+    DIOPI_CHECKCNNL(cnnlCastDataType(handleTmp, descSrc.get(), (void*)(const_cast<DiopiTensorT&>(src).data()), (cnnlCastDataType_t)cnnlCastDtype, descDest.get(), dest.data()));
+    cnrtQueueSync(q0);
+
+    std::cout << "cnnlCastDtype:" << cnnlCastDtype << "(ok)" << std::endl;
+    std::cout << "++++++dataTypeCast_out++end++++" << std::endl;
     return;
 }
 
