@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          cd ${GITHUB_WORKSPACE} && git clone git@github.com:OpenComputeLab/ConformanceTest-DIOPI.git && cd ConformanceTest-DIOPI
+          cd ${GITHUB_WORKSPACE} && rm -rf ConformanceTest-DIOPI && git clone git@github.com:OpenComputeLab/ConformanceTest-DIOPI.git && cd ConformanceTest-DIOPI
           git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl
           cd impl && git checkout ${{ github.sha }}
       - name: Rsync to Server
