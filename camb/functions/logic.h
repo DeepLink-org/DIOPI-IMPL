@@ -22,3 +22,5 @@ DIOPI_API diopiError_t LogicInp(diopiContextHandle_t ctx, diopiTensorHandle_t in
 
 }  // namespace camb
 }  // namespace impl
+
+#endif  // IMPL_CAMB_FUNCTIONS_LOGIC_H_
