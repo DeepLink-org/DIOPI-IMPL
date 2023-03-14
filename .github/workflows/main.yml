@@ -50,8 +50,8 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 bash scripts/ci_script.sh cpp-lint
           """
 
-  Gen-test:
-    name: Gen-test
+  Build-gendata:
+    name: Build-gendata
     runs-on:  github-diopi-ci
     needs: [lint-cpp]
     steps:
@@ -64,7 +64,7 @@ jobs:
           export CI=true
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4'
           """
-      - name: Gen-test
+      - name: Gen-data
         run: |
           ssh ${CLUSTER_1984} """
           set -e
@@ -72,6 +72,12 @@ jobs:
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode gen_data && python main.py --mode run_test'
           """
+
+  Test:
+    name: Test
+    runs-on:  github-diopi-ci
+    needs: [Build-gendata]
+    steps:
       - name: Unit-test
         run: |
           ssh ${CLUSTER_1984} """
@@ -95,7 +101,7 @@ jobs:
   Test-camb:
     name: test-camb
     runs-on:  github-diopi-ci
-    needs: [Gen-test]
+    needs: [Build-gendata]
     steps:
       - name: Build-camb
         run: |
@@ -103,7 +109,7 @@ jobs:
           set -e
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
-          rsync -a ${CLUSTER_1984}:${NFS_PATH}/Gen-test/python/conformance_test/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
+          rsync -a ${CLUSTER_1984}:${NFS_PATH}/Build-gendata/python/conformance_test/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
           export CI=true
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4'
           """
@@ -137,7 +143,7 @@ jobs:
   test-dyload:
     name: test-dyload
     runs-on: github-diopi-ci
-    needs: [Gen-test]
+    needs: [Build-gendata]
     steps:
       - name: Build-dyload
         run: |
@@ -154,6 +160,7 @@ jobs:
           set -e
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode gen_data && python main.py --mode run_test'
+          rsync -a ${NFS_PATH}/Build-gendata/python/conformance_test/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test'
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB}
           """
