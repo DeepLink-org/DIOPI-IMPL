@@ -2,6 +2,7 @@
 #include <string.h>
 #include <numeric>
 #include "../cnnl_helper.hpp"
+#include "logic.h"
 
 namespace impl {
 namespace camb {
