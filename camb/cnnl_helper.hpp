@@ -15,22 +15,22 @@
 namespace impl {
 namespace camb {
 
-#define DIOPI_CALLCNNL(Expr)                                                                                                      \
-    do {                                                                                                                          \
-        ::cnnlStatus_t ret = Expr;                                                                                                \
-        if (ret != ::CNNL_STATUS_SUCCESS) {                                                                                       \
+#define DIOPI_CALLCNNL(Expr)                                                                                          \
+    do {                                                                                                              \
+        ::cnnlStatus_t ret = Expr;                                                                                    \
+        if (ret != ::CNNL_STATUS_SUCCESS) {                                                                           \
             set_last_error_string("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
-            return diopiErrorOccurred;                                                                                            \
-        }                                                                                                                         \
+            return diopiErrorOccurred;                                                                                \
+        }                                                                                                             \
     } while (false);
 
-#define DIOPI_CHECKCNNL(Expr)                                                                                                     \
-    do {                                                                                                                          \
-        ::cnnlStatus_t ret = Expr;                                                                                                \
-        if (ret != ::CNNL_STATUS_SUCCESS) {                                                                                       \
+#define DIOPI_CHECKCNNL(Expr)                                                                          \
+    do {                                                                                               \
+        ::cnnlStatus_t ret = Expr;                                                                     \
+        if (ret != ::CNNL_STATUS_SUCCESS) {                                                            \
             printf("cnnl error %d : %s at %s:%d", ret, ::cnnlGetErrorString(ret), __FILE__, __LINE__); \
-            std::abort(); \
-        }                                                                                                                         \
+            std::abort();                                                                              \
+        }                                                                                              \
     } while (false);
 
 class CnnlDataType final {
@@ -82,11 +82,10 @@ public:
         size_t dim = dimSize.size();
         std::vector<int32_t> shape(dim);
 
-        if (layout == CNNL_LAYOUT_NHWC || layout == CNNL_LAYOUT_NDHWC
-                || layout == CNNL_LAYOUT_NLC) {
+        if (layout == CNNL_LAYOUT_NHWC || layout == CNNL_LAYOUT_NDHWC || layout == CNNL_LAYOUT_NLC) {
             shape[0] = dimSize[0];
             for (size_t i = 0; i < dim - 1; ++i) {
-                shape[i+1] = dimSize[(i + 1) % (dim - 1) + 1];
+                shape[i + 1] = dimSize[(i + 1) % (dim - 1) + 1];
             }
         } else if (layout == CNNL_LAYOUT_HWCN) {
             // HWCN is only used by depthwise conv now, and the dim is 4
@@ -167,15 +166,11 @@ protected:
     T resource_{0};
 };
 
-class CnnlTransposeDescriptor final
-    : public CnnlDescBase<cnnlTransposeDescriptor_t,
-          cnnlCreateTransposeDescriptor, cnnlDestroyTransposeDescriptor> {
+class CnnlTransposeDescriptor final : public CnnlDescBase<cnnlTransposeDescriptor_t, cnnlCreateTransposeDescriptor, cnnlDestroyTransposeDescriptor> {
 public:
     CnnlTransposeDescriptor() {}
 
-    CnnlTransposeDescriptor(const int dim, const int* permute) {
-        set(dim, permute);
-    }
+    CnnlTransposeDescriptor(const int dim, const int* permute) { set(dim, permute); }
 
     diopiError_t set(const int dim, const int* permute) {
         DIOPI_CALLCNNL(cnnlSetTransposeDescriptor(get(), dim, permute));
@@ -183,13 +178,12 @@ public:
     }
 };
 
-class CnnlReduceDescriptor final
-    : public CnnlDescBase<cnnlReduceDescriptor_t,
-          cnnlCreateReduceDescriptor, cnnlDestroyReduceDescriptor> {
+class CnnlReduceDescriptor final : public CnnlDescBase<cnnlReduceDescriptor_t, cnnlCreateReduceDescriptor, cnnlDestroyReduceDescriptor> {
 public:
     CnnlReduceDescriptor() {}
 
-    CnnlReduceDescriptor(auto& t, diopiSize_t dim,
+    CnnlReduceDescriptor(auto& t,
+                         diopiSize_t dim,
                          const cnnlReduceOp_t reduceOp,
                          cnnlDataType_t dtype,
                          cnnlNanPropagation_t nanPropagation,
@@ -199,12 +193,13 @@ public:
     }
 
     template <typename T>
-    diopiError_t set(T& t, diopiSize_t dim,
-            const cnnlReduceOp_t reduceOp,
-            cnnlDataType_t dtype,
-            cnnlNanPropagation_t nanPropagation,
-            cnnlReduceIndices_t indices,
-            cnnlIndicesType_t indicesType) {
+    diopiError_t set(T& t,
+                     diopiSize_t dim,
+                     const cnnlReduceOp_t reduceOp,
+                     cnnlDataType_t dtype,
+                     cnnlNanPropagation_t nanPropagation,
+                     cnnlReduceIndices_t indices,
+                     cnnlIndicesType_t indicesType) {
         /* if dim is not set, all dimensions are reduced. */
         std::vector<int> axis;
         if (dim.len > 0) {
@@ -216,19 +211,14 @@ public:
                 axis.push_back(i);
             }
         }
-        DIOPI_CALLCNNL(cnnlSetReduceDescriptor(
-            get(), axis.data(), axis.size(), reduceOp, dtype,
-            nanPropagation, indices, indicesType));
+        DIOPI_CALLCNNL(cnnlSetReduceDescriptor(get(), axis.data(), axis.size(), reduceOp, dtype, nanPropagation, indices, indicesType));
 
         return diopiSuccess;
     }
 };
 
-template<typename T1, typename T2>
-diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
-                            cnnlHandle_t& handle, T1& in, T2& out,
-                            cnnlTensorLayout_t layoutIn,
-                            cnnlTensorLayout_t layoutOut) {
+template <typename T1, typename T2>
+diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, T1& in, T2& out, cnnlTensorLayout_t layoutIn, cnnlTensorLayout_t layoutOut) {
     std::vector<int> order;
     if (layoutIn == CNNL_LAYOUT_NHWC && layoutOut == CNNL_LAYOUT_HWCN) {
         order = {1, 2, 3, 0};
@@ -243,8 +233,11 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
     } else if (layoutIn == CNNL_LAYOUT_HWCN && layoutOut == CNNL_LAYOUT_NCHW) {
         order = {3, 2, 0, 1};
     } else {
-        set_last_error_string("unkown layout error, layout should be "
-        "in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s", __FILE__, __LINE__);
+        set_last_error_string(
+            "unkown layout error, layout should be "
+            "in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s",
+            __FILE__,
+            __LINE__);
         return diopiDtypeNotSupported;
     }
     CnnlTensorDesc inDesc(in, layoutIn);
@@ -253,10 +246,9 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx,
     size_t workspace_size = 0;
     DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
 
-    void* workspace_ptr = workspace_size== 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
-    DIOPI_CALLCNNL(cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(),
-                                      in.data(), outDesc.get(), const_cast<void*>(out.data()),
-                                      workspace_ptr, workspace_size));
+    void* workspace_ptr = workspace_size == 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
+    DIOPI_CALLCNNL(
+        cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(), in.data(), outDesc.get(), const_cast<void*>(out.data()), workspace_ptr, workspace_size));
     return diopiSuccess;
 }
 

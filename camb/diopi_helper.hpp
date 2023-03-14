@@ -39,12 +39,12 @@ namespace camb {
         }                                                                                        \
     } while (false);
 
-#define DIOPI_CHECK_ABORT(condation)                                                  \
-    do {                                                                              \
-        if (condition) {                                                              \
-            printf("" #condation "` is not satisfied at %s:%d ", __FILE__, __LINE__); \
-            abort();                                                                  \
-        }                                                                             \
+#define DIOPI_CHECK_ABORT(cond, fmt, args...)                    \
+    do {                                                         \
+        if (!(cond)) {                                           \
+            printf(#fmt " at %s:%d ", args, __FILE__, __LINE__); \
+            abort();                                             \
+        }                                                        \
     } while (false);
 
 #define DIOPI_CALL(Expr)           \
@@ -89,18 +89,21 @@ public:
 template <typename TensorType>
 class DiopiTensor final {
 public:
+    DiopiTensor() = default;
     explicit DiopiTensor(TensorType& tensor) : tensor_(tensor) {
         if (tensor_ != nullptr) {
             diopiSize_t diopiShape;
             diopiSize_t diopiStride;
             diopiGetTensorShape(tensor_, &diopiShape);
-            std::vector<int32_t> shapeTmp(diopiShape.data, diopiShape.data + diopiShape.len);
+            std::vector<int64_t> shapeTmp(diopiShape.data, diopiShape.data + diopiShape.len);
             diopiGetTensorStride(tensor_, &diopiStride);
-            std::vector<int32_t> strideTmp(diopiStride.data, diopiStride.data + diopiStride.len);
+            std::vector<int64_t> strideTmp(diopiStride.data, diopiStride.data + diopiStride.len);
             shape_ = std::move(shapeTmp);
             stride_ = std::move(strideTmp);
         }
     }
+
+    operator TensorType() { return tensor_; }
 
     diopiDevice_t device() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
@@ -115,11 +118,11 @@ public:
         return dtype;
     }
 
-    const std::vector<int32_t>& shape() {
+    const std::vector<int64_t>& shape() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return shape_;
     }
-    const std::vector<int32_t>& stride() {
+    const std::vector<int64_t>& stride() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return stride_;
     }
@@ -141,9 +144,7 @@ public:
         diopiGetTensorElemSize(tensor_, &elemsize);
         return elemsize;
     }
-    int64_t dim() {
-        return this->shape().size();
-    }
+    int64_t dim() { return this->shape().size(); }
 
     DiopiTensor<TensorType> contiguous(diopiContextHandle_t ctx, MemoryFormat format = MemoryFormat::Contiguous) {
         /* Returns a new Tensor in new memory format, without data copy */
@@ -209,9 +210,9 @@ public:
     typename DataType<TensorType>::type data() { return DataType<TensorType>::data(tensor_); }
 
 protected:
-    TensorType tensor_;
-    std::vector<int32_t> shape_;
-    std::vector<int32_t> stride_;
+    TensorType tensor_ = 0;
+    std::vector<int64_t> shape_{0};
+    std::vector<int64_t> stride_{0};
 };
 
 template <typename TensorType>
@@ -244,6 +245,16 @@ inline cnrtQueue_t getStream(diopiContextHandle_t ctx) {
     diopiStreamHandle_t stream_handle;
     diopiGetStream(ctx, &stream_handle);
     return static_cast<cnrtQueue_t>(stream_handle);
+}
+
+template <typename T>
+inline std::vector<T> diopiSize_t2Vector(diopiSize_t size, T) {
+    return std::vector<T>(size.data(), size.data() + size.len);
+}
+
+inline diopiSize_t vec2diopiSize_t(const std::vector<int64_t>& sizeIn) {
+    diopiSize_t diopiSize(sizeIn.data(), sizeIn.size());
+    return diopiSize;
 }
 
 }  // namespace camb

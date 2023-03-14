@@ -1,5 +1,7 @@
 #include "cnnl_helper.hpp"
 
+#include <functional>
+
 #include "error.hpp"
 #include <functional>
 
