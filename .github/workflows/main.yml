@@ -93,9 +93,9 @@ jobs:
 
 
   Gen-test-camb:
-    name: Gen-test
+    name: Gen-test-camb
     runs-on:  github-diopi-ci
-    needs: [lint-cpp]
+    needs: [Gen-test]
     steps:
       - name: Build-camb
         run: |
@@ -137,7 +137,7 @@ jobs:
   Gen-test-dyload:
     name: Gen-test-dyload
     runs-on: github-diopi-ci
-    needs: [lint-cpp]
+    needs: [Gen-test]
     steps:
       - name: Build-dyload
         run: |
