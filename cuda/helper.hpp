@@ -59,10 +59,15 @@ public:
         diopiGetTensorDevice(tensor_, &device);
         return device;
     }
+
     diopiDtype_t dtype() const {
         diopiDtype_t dtype;
         diopiGetTensorDtype(tensor_, &dtype);
         return dtype;
+    }
+
+    diopiDtype_t scalar_type() const {
+        return dtype();
     }
 
     const diopiSize_t& shape() {
@@ -70,10 +75,18 @@ public:
         return shape_;
     }
 
-    int64_t shape(int i) {
+    int64_t size(int i) {
+        if (!shape_.data)
+            diopiGetTensorShape(tensor_, &shape_);
         assert(i < shape_.len);
         const int64_t* shape_p = shape_.data;
         return *(shape_p + i);
+    }
+
+    int64_t ndimension() {
+        if (!shape_.data)
+            diopiGetTensorShape(tensor_, &shape_);
+        return shape_.len;
     }
 
     const diopiSize_t& stride() {
