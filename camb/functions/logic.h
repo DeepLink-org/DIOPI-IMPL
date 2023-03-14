@@ -3,6 +3,9 @@
 #include <numeric>
 #include "../cnnl_helper.hpp"
 
+#ifndef IMPL_CAMB_FUNCTIONS_LOGIC_H_
+#define IMPL_CAMB_FUNCTIONS_LOGIC_H_
+
 namespace impl {
 namespace camb {
 
