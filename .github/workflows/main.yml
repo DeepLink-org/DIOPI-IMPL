@@ -92,8 +92,8 @@ jobs:
           """
 
 
-  Gen-test-camb:
-    name: Gen-test-camb
+  Test-camb:
+    name: test-camb
     runs-on:  github-diopi-ci
     needs: [Gen-test]
     steps:
@@ -134,7 +134,7 @@ jobs:
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB}
           """
 
-  Gen-test-dyload:
+  test-dyload:
     name: Gen-test-dyload
     runs-on: github-diopi-ci
     needs: [Gen-test]
