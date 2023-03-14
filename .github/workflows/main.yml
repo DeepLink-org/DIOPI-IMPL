@@ -135,7 +135,7 @@ jobs:
           """
 
   test-dyload:
-    name: Gen-test-dyload
+    name: test-dyload
     runs-on: github-diopi-ci
     needs: [Gen-test]
     steps:
