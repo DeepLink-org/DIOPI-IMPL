@@ -7,6 +7,9 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
 template <typename T>
 __global__ void deform_roi_pool_forward_cuda_kernel(
     const int nthreads, const void* input_, const void* rois_, const void* offset_,
@@ -191,6 +194,9 @@ __global__ void deform_roi_pool_backward_cuda_kernel(
     }
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_,
                    diopiTensorHandle_t rois_, diopiTensorHandle_t offset_,
@@ -208,19 +214,8 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx, diopiTensorHandle_t in
 
   // at::cuda::CUDAGuard device_guard(input.device());
   auto stream = impl::cuda::getStream(ctx);
-  // dispatch_float_types_and_half(
-  //               deform_roi_pool_forward_cuda_kernel,
-  //               input.scalar_type(),
-  //               GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
-  //               output_size, input.data(),
-  //               rois.data(), offset.data(),
-  //               output.data(), pooled_height, pooled_width,
-  //               static_cast<scalar_t>(spatial_scale), sampling_ratio,
-  //               static_cast<scalar_t>(gamma), channels, height, width);
-  
-  // 这里在double情形下，不知道有没有问题？是否会自动提升
   dispatch_float_types_and_half(
-                deform_roi_pool_forward_cuda_kernel,
+                impl::cuda::deform_roi_pool_forward_cuda_kernel,
                 input.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
                 output_size, input.data(),
@@ -252,18 +247,8 @@ diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx, diopiTensorHan
 
   // at::cuda::CUDAGuard device_guard(grad_output.device());
   auto stream = impl::cuda::getStream(ctx);
-  // dispatch_float_types_and_half(
-  //               deform_roi_pool_backward_cuda_kernel,
-  //               grad_output.scalar_type(),
-  //               GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
-  //               output_size, grad_output.data(),
-  //               input.data(), rois.data(),
-  //               offset.data(), grad_input.data(),
-  //               grad_offset.data(), pooled_height, pooled_width,
-  //               static_cast<scalar_t>(spatial_scale), sampling_ratio,
-  //               static_cast<scalar_t>(gamma), channels, height, width);
   dispatch_float_types_and_half(
-                deform_roi_pool_backward_cuda_kernel,
+                impl::cuda::deform_roi_pool_backward_cuda_kernel,
                 grad_output.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
                 output_size, grad_output.data(),

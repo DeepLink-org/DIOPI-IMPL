@@ -7,6 +7,9 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
 inline __device__ void swap_float(float *x, float *y) {
   float tmp = *x;
   *x = *y;
@@ -88,6 +91,9 @@ __global__ void knn_forward_cuda_kernel(int b, int n, int m, int nsample,
     }
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiKnn(diopiContextHandle_t ctx, diopiTensorHandle_t xyz_,
                       diopiTensorHandle_t new_xyz_,
@@ -111,7 +117,7 @@ diopiError_t diopiKnn(diopiContextHandle_t ctx, diopiTensorHandle_t xyz_,
   dim3 threads(THREADS_PER_BLOCK);
 
   dispatch_float_types_and_half(
-            knn_forward_cuda_kernel,
+            impl::cuda::knn_forward_cuda_kernel,
             new_xyz.scalar_type(),
             blocks, threads, stream,
             b, n, m, nsample, xyz.data(),

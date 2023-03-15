@@ -7,6 +7,9 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
 template <typename T>
 __device__ __forceinline__ void load_bbox(const T* bbox, const int base, T& x1,
                                           T& y1, T& x2, T& y2) {
@@ -89,6 +92,9 @@ __global__ void bbox_overlaps_cuda_kernel(const void* bbox1_, const void* bbox2_
     }
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
                                diopiConstTensorHandle_t bboxes1_,
@@ -105,7 +111,7 @@ diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
   // // at::cuda::CUDAGuard device_guard(bboxes1.device());
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
-                bbox_overlaps_cuda_kernel,
+                impl::cuda::bbox_overlaps_cuda_kernel,
                 bboxes1.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
                 bboxes1.data(), bboxes2.data(),

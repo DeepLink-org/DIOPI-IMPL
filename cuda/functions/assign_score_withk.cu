@@ -7,6 +7,9 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
 template <typename T>
 __global__ void assign_score_withk_forward_cuda_kernel_diopi(
     const int B, const int N0, const int N1, const int M, const int K,
@@ -115,6 +118,9 @@ __global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(
     grad_scores[out_idx] = val;
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
                                    diopiConstTensorHandle_t points_,
@@ -137,7 +143,7 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
   dim3 threads(THREADS_PER_BLOCK);
 
   dispatch_float_types_and_half(
-                assign_score_withk_forward_cuda_kernel_diopi,
+                impl::cuda::assign_score_withk_forward_cuda_kernel_diopi,
                 points.scalar_type(),
                 blocks, threads, stream,
                 B, N0, N1, M, K, O, aggregate, points.data(),
@@ -146,8 +152,6 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-
-// 不加 extern C 可以么
 diopiError_t diopiAssignScoreWithkBackward(
     diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_out_,
     diopiConstTensorHandle_t points_, diopiConstTensorHandle_t centers_,
@@ -173,7 +177,7 @@ diopiError_t diopiAssignScoreWithkBackward(
   dim3 threads2(THREADS_PER_BLOCK);
 
   dispatch_float_types_and_half(
-                assign_score_withk_points_backward_cuda_kernel_diopi,
+                impl::cuda::assign_score_withk_points_backward_cuda_kernel_diopi,
                 grad_out.scalar_type(),
                 blocks1, threads1, stream,
                 B, N0, N1, M, K, O, aggregate, grad_out.data(),
@@ -182,7 +186,7 @@ diopiError_t diopiAssignScoreWithkBackward(
                 grad_centers.data());
 
   dispatch_float_types_and_half(
-                assign_score_withk_scores_backward_cuda_kernel_diopi,
+                impl::cuda::assign_score_withk_scores_backward_cuda_kernel_diopi,
                 grad_out.scalar_type(),
                 blocks2, threads2, stream,
                 B, N0, N1, M, K, O, aggregate, grad_out.data(),

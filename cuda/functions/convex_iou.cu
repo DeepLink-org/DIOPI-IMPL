@@ -7,6 +7,10 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
+
 #define MAXN 100
 #define NMAX 512
 
@@ -834,6 +838,9 @@ __global__ void convex_iou_cuda_kernel(const int ex_n_boxes,
     }
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiConvexIou(diopiContextHandle_t ctx,
                             diopiConstTensorHandle_t pointsets_,
@@ -850,7 +857,7 @@ diopiError_t diopiConvexIou(diopiContextHandle_t ctx,
   // at::cuda::CUDAGuard device_guard(pointsets.device());
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
-                convex_iou_cuda_kernel,
+                impl::cuda::convex_iou_cuda_kernel,
                 pointsets.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK / 2, stream,
                 num_pointsets, num_polygons, pointsets.data(),
@@ -873,7 +880,7 @@ diopiError_t diopiConvexGiou(diopiContextHandle_t ctx,
   // at::cuda::CUDAGuard device_guard(pointsets.device());
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
-                convex_giou_cuda_kernel,
+                impl::cuda::convex_giou_cuda_kernel,
                 pointsets.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK / 2, stream,
                 num_pointsets, num_polygons, pointsets.data(),

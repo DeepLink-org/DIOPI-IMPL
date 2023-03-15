@@ -9,7 +9,9 @@
 
 #include <float.h>
 
-// 这里是否会重复定义问题？如果和 mmcv 一起编译的话
+namespace impl {
+
+namespace cuda {
 enum BorderMode { Top = 0, Left = 1, Bottom = 2, Right = 3 };
 
 /*** Forward ***/
@@ -193,6 +195,9 @@ __global__ void border_align_backward_cuda_kernel(
               *offset_grad_output * w4);
   }
 }
+}  // namespace cuda
+
+}  // namespace impl
 
 diopiError_t diopiBorderAlign(diopiContextHandle_t ctx, diopiConstTensorHandle_t input_,
                  diopiConstTensorHandle_t boxes_, diopiTensorHandle_t output_,
@@ -219,7 +224,7 @@ diopiError_t diopiBorderAlign(diopiContextHandle_t ctx, diopiConstTensorHandle_t
   auto stream = impl::cuda::getStream(ctx);
   dim3 block(128, 4);
   dispatch_float_types_and_half(
-                border_align_forward_cuda_kernel,
+                impl::cuda::border_align_forward_cuda_kernel,
                 input.scalar_type(), 
                 GET_BLOCKS(nthreads), block, stream,
                 nthreads, input.data(),
@@ -252,7 +257,7 @@ diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
   auto stream = impl::cuda::getStream(ctx);
   dim3 block(128, 4);
   dispatch_float_types_and_half(
-                border_align_backward_cuda_kernel,
+                impl::cuda::border_align_backward_cuda_kernel,
                 grad_output.scalar_type(),
                 GET_BLOCKS(nthreads), block, stream,
                 nthreads, grad_output.data(),
