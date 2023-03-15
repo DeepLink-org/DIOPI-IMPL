@@ -10,6 +10,75 @@
 #define MAX_SHARED_SCALAR_T 6144  // 49152 / 8 = 6144
 
 template <typename scalar_t>
+__global__ void chamfer_distance_forward_cuda_kernel_diopi(int b, int n,
+                                                    const void* xyz, int m,
+                                                    const void* xyz2,
+                                                     void* result,
+                                                     int* result_i) {
+  __shared__ scalar_t buf[MAX_SHARED_SCALAR_T];
+  for (int i = blockIdx.x; i < b; i += gridDim.x) {
+    for (int k2 = 0; k2 < m; k2 += THREADS_PER_BLOCK) {
+      int end_k = min(m, k2 + THREADS_PER_BLOCK) - k2;
+      const scalar_t* xyz2_ = static_cast<const scalar_t*>(xyz2);
+      for (int j = threadIdx.x; j < end_k * 2; j += blockDim.x) {
+        buf[j] = xyz2_[(i * m + k2) * 2 + j];
+      }
+      __syncthreads();
+      const scalar_t* xyz_ = static_cast<const scalar_t*>(xyz);
+      for (int j = threadIdx.x; j < n; j += blockDim.x * gridDim.y) {
+        scalar_t x1 = xyz_[(i * n + j) * 2 + 0];
+        scalar_t y1 = xyz_[(i * n + j) * 2 + 1];
+        int best_i = 0;
+        scalar_t best = 1e10;
+        int end_ka = end_k & (~2);
+        if (end_ka == THREADS_PER_BLOCK) {
+          for (int k = 0; k < THREADS_PER_BLOCK; k += 4) {
+#pragma unroll
+            for (int j = 0; j < 4; ++j) {
+              scalar_t x2 = buf[(k + j) * 2] - x1;
+              scalar_t y2 = buf[(k + j) * 2 + 1] - y1;
+              scalar_t d = x2 * x2 + y2 * y2;
+              if (d < best) {
+                best = d;
+                best_i = k + k2 + j;
+              }
+            }
+          }
+        } else {
+          for (int k = 0; k < end_ka; k += 4) {
+#pragma unroll
+            for (int j = 0; j < 4; ++j) {
+              scalar_t x2 = buf[(k + j) * 2] - x1;
+              scalar_t y2 = buf[(k + j) * 2 + 1] - y1;
+              scalar_t d = x2 * x2 + y2 * y2;
+              if (d < best) {
+                best = d;
+                best_i = k + k2 + j;
+              }
+            }
+          }
+        }
+        for (int k = end_ka; k < end_k; k++) {
+          scalar_t x2 = buf[k * 2 + 0] - x1;
+          scalar_t y2 = buf[k * 2 + 1] - y1;
+          scalar_t d = x2 * x2 + y2 * y2;
+          if (k == 0 || d < best) {
+            best = d;
+            best_i = k + k2;
+          }
+        }
+        scalar_t* result_ = static_cast<scalar_t*>(result);
+        if (k2 == 0 || result_[(i * n + j)] > best) {
+          result_[(i * n + j)] = best;
+          result_i[(i * n + j)] = best_i;
+        }
+      }
+      __syncthreads();
+    }
+  }
+}
+
+template <typename scalar_t>
 __global__ void chamfer_distance_backward_cuda_kernel_diopi(
     int b, int n, const void* xyz1, int m, const void* xyz2,
     const void* grad_dist1, const int* idx1, void* grad_xyz1,
