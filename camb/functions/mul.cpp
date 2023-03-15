@@ -1,6 +1,7 @@
 #include <diopi/functions.h>
-#include "../common/common.hpp"
+
 #include "../cnnl_helper.hpp"
+#include "../common/common.hpp"
 
 namespace impl {
 namespace camb {
@@ -59,8 +60,7 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     DiopiTensor<diopiTensorHandle_t> out_tensor_tmp;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
         out_tensor_tmp = dataTypeCast(ctx, out_tensor, diopi_dtype_float16);
-    }
-    else {
+    } else {
         out_tensor_tmp = makeTensor(out);
     }
     input_tensor = dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
