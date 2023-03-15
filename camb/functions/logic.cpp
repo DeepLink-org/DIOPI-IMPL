@@ -2,7 +2,6 @@
 #include <string.h>
 #include <numeric>
 #include "../cnnl_helper.hpp"
-#include "logic.h"
 
 namespace impl {
 namespace camb {
@@ -133,6 +132,108 @@ DIOPI_API diopiError_t LogicInp(diopiContextHandle_t ctx, diopiTensorHandle_t in
                                input_desc.get(),
                                input_tensor.data()));
     return diopiSuccess;
+}
+
+// ge
+DIOPI_API diopiError_t diopiGeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_GE));
+}
+
+DIOPI_API diopiError_t diopiGeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_GE));
+}
+
+DIOPI_API diopiError_t diopiGe(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_GE));
+}
+
+DIOPI_API diopiError_t diopiGeInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_GE));
+}
+
+// gt
+DIOPI_API diopiError_t diopiGtScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_GT));
+}
+
+DIOPI_API diopiError_t diopiGtInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_GT));
+}
+
+DIOPI_API diopiError_t diopiGt(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_GT));
+}
+
+DIOPI_API diopiError_t diopiGtInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_GT));
+}
+
+// le
+DIOPI_API diopiError_t diopiLeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_LE));
+}
+
+DIOPI_API diopiError_t diopiLeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_LE));
+}
+
+DIOPI_API diopiError_t diopiLe(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_LE));
+}
+
+DIOPI_API diopiError_t diopiLeInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_LE));
+}
+
+// lt
+DIOPI_API diopiError_t diopiLtScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_LT));
+}
+
+DIOPI_API diopiError_t diopiLtInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_LT));
+}
+
+DIOPI_API diopiError_t diopiLt(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_LT));
+}
+
+DIOPI_API diopiError_t diopiLtInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_LT));
+}
+
+// ne
+DIOPI_API diopiError_t diopiNeScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_NE));
+}
+
+DIOPI_API diopiError_t diopiNeInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_NE));
+}
+
+DIOPI_API diopiError_t diopiNe(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_NE));
+}
+
+DIOPI_API diopiError_t diopiNeInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_NE));
+}
+
+// eq
+DIOPI_API diopiError_t diopiEqScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicScalar(ctx, out, input, other, CNNL_LOGIC_OP_EQ));
+}
+
+DIOPI_API diopiError_t diopiEqInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
+    DIOPI_CALL(LogicInpScalar(ctx, input, other, CNNL_LOGIC_OP_EQ));
+}
+
+DIOPI_API diopiError_t diopiEq(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(Logic(ctx, out, input, other, CNNL_LOGIC_OP_EQ));
+}
+
+DIOPI_API diopiError_t diopiEqInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other) {
+    DIOPI_CALL(LogicInp(ctx, input, other, CNNL_LOGIC_OP_EQ));
 }
 
 }  // extern "C"
