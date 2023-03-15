@@ -34,7 +34,7 @@ diopiError_t diopiCat(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiCo
     return diopiSuccess;
 }
 
-}
+}  // extern "C"
 
-}
-}
+}  // namespace camb
+}  // namespace impl
