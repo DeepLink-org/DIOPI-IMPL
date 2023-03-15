@@ -57,6 +57,7 @@ endif()
 set(IMPL_SRC functions.cpp functions.cu)
 
 if (RUNTIME)
+    add_definitions(-DDIOPI_WITH_RUNTIME)
     set(IMPL_SRC ${IMPL_SRC} conform_test.cpp)
 endif()
 

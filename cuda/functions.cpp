@@ -9,9 +9,10 @@
 #include <cudnn.h>
 #include <cstdio>
 #include <vector>
-#include <mutex>
 
 #include "helper.hpp"
+#ifndef DIOPI_WITH_RUNTIME
+#include <mutex>
 
 extern "C" {
 static char strLastErrorOther[4096] = {0};
@@ -33,7 +34,7 @@ void set_last_error_string(const char* szFmt, Types&&...args) {
     sprintf(szBuf, szFmt, std::forward<Types>(args)...);
     _set_last_error_string(szBuf);
 }
-
+#endif
 }  // namespace cuda
 
 }  // namespace impl
