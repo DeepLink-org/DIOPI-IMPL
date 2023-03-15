@@ -66,9 +66,7 @@ public:
         return dtype;
     }
 
-    diopiDtype_t scalar_type() const {
-        return dtype();
-    }
+    diopiDtype_t scalar_type() const { return dtype(); }
 
     const diopiSize_t& shape() {
         diopiGetTensorShape(tensor_, &shape_);
@@ -76,16 +74,14 @@ public:
     }
 
     int64_t size(int i) {
-        if (!shape_.data)
-            diopiGetTensorShape(tensor_, &shape_);
+        if (!shape_.data) diopiGetTensorShape(tensor_, &shape_);
         assert(i < shape_.len);
         const int64_t* shape_p = shape_.data;
         return *(shape_p + i);
     }
 
     int64_t ndimension() {
-        if (!shape_.data)
-            diopiGetTensorShape(tensor_, &shape_);
+        if (!shape_.data) diopiGetTensorShape(tensor_, &shape_);
         return shape_.len;
     }
 
@@ -142,13 +138,13 @@ inline cudaStream_t getStream(diopiContextHandle_t ctx) {
 }
 
 #ifdef DIOPI_WITH_RUNTIME
-void _set_last_error_string(const char *err);	
+void _set_last_error_string(const char* err);
 
-template<typename...Types>	
-void set_last_error_string(const char* szFmt, Types&&...args) {	
-    char szBuf[4096] = {0};	
-    sprintf(szBuf, szFmt, std::forward<Types>(args)...);	
-    _set_last_error_string(szBuf);	
+template <typename... Types>
+void set_last_error_string(const char* szFmt, Types&&... args) {
+    char szBuf[4096] = {0};
+    sprintf(szBuf, szFmt, std::forward<Types>(args)...);
+    _set_last_error_string(szBuf);
 }
 #endif
 

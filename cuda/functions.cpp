@@ -23,13 +23,13 @@ namespace impl {
 
 namespace cuda {
 
-void _set_last_error_string(const char *err) {
+void _set_last_error_string(const char* err) {
     std::lock_guard<std::mutex> lock(mtxLastError);
     sprintf(strLastErrorOther, "%s", err);
 }
 
-template<typename...Types>
-void set_last_error_string(const char* szFmt, Types&&...args) {
+template <typename... Types>
+void set_last_error_string(const char* szFmt, Types&&... args) {
     char szBuf[4096] = {0};
     sprintf(szBuf, szFmt, std::forward<Types>(args)...);
     _set_last_error_string(szBuf);
@@ -38,7 +38,6 @@ void set_last_error_string(const char* szFmt, Types&&...args) {
 }  // namespace cuda
 
 }  // namespace impl
-
 
 #define DIOPI_CALLCUDNN(Expr) {                                                         \
         ::cudnnStatus_t ret = Expr;                                                     \
