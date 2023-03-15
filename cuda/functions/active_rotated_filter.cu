@@ -7,6 +7,10 @@
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
 
+namespace impl {
+
+namespace cuda {
+
 template <typename scalar_t>
 __global__ void active_rotated_filter_forward_cuda_kernel_diopi(
     const int nthreads, const void* weight_data_, const int* indices_data,
@@ -58,6 +62,10 @@ __global__ void active_rotated_filter_backward_cuda_kernel_diopi(
   }
 }
 
+}  // namespace cuda
+
+}  // namespace impl
+
 extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
                                       diopiConstTensorHandle_t input_,
                                       diopiConstTensorHandle_t indices_,
@@ -78,7 +86,7 @@ extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
   // // at::cuda::CUDAGuard device_guard(input.device());
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
-        active_rotated_filter_forward_cuda_kernel_diopi,
+        impl::cuda::active_rotated_filter_forward_cuda_kernel_diopi,
         input.dtype(),
         GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
         output_size, input.data(),
@@ -107,7 +115,7 @@ extern "C" diopiError_t diopiActiveRotatedFilterBackward(
   // // at::cuda::CUDAGuard device_guard(indices.device());
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
-        active_rotated_filter_backward_cuda_kernel_diopi,
+        impl::cuda::active_rotated_filter_backward_cuda_kernel_diopi,
         grad_out.scalar_type(),
         GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
         output_size, grad_out.data(),

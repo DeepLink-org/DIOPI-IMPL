@@ -112,7 +112,7 @@ __global__ void border_align_backward_cuda_kernel(
     const int* argmax_idx, void* grad_input_, const int channels,
     const int box_size, const int height, const int width,
     const int pool_size) {
-  const T* grad_outpu = static_cast<const T*>(grad_output_);
+  const T* grad_output = static_cast<const T*>(grad_output_);
   const T* boxes = static_cast<const T*>(boxes_);
   T* grad_input = static_cast<T*>(grad_input_);
   CUDA_1D_KERNEL_LOOP(index, nthreads) {

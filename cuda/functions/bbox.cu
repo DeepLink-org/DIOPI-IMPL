@@ -6,6 +6,7 @@
 
 #include "../helper.hpp"
 #include "../cuda_helper.hpp"
+
 template <typename T>
 __device__ __forceinline__ void load_bbox(const T* bbox, const int base, T& x1,
                                           T& y1, T& x2, T& y2) {
@@ -105,7 +106,7 @@ diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
   auto stream = impl::cuda::getStream(ctx);
   dispatch_float_types_and_half(
                 bbox_overlaps_cuda_kernel,
-                bboxes1.scalar_type()
+                bboxes1.scalar_type(),
                 GET_BLOCKS(output_size), THREADS_PER_BLOCK, stream,
                 bboxes1.data(), bboxes2.data(),
                 ious.data(), num_bbox1, num_bbox2, mode, aligned,
