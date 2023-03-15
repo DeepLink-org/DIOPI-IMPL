@@ -68,13 +68,7 @@ void autoCastTensorType(diopiContextHandle_t ctx, std::vector<DiopiTensorT*>& pT
     for (const auto& pTensor : pTensors) {
         dtypeAndTensorPtrs.insert(pTensor->dtype());
     }
-    if (dtypeAndTensorPtrs.find(diopi_dtype_bool) != dtypeAndTensorPtrs.end()) {
-        if (opSupportedDtype.find(diopi_dtype_bool) == opSupportedDtype.end()) {  // not support bool
-            targetType = choiceDtype(opSupportedDtype);
-        } else {  // all tensors cast into bool
-            targetType = diopi_dtype_bool;
-        }
-    } else if (dtypeAndTensorPtrs.find(diopi_dtype_float64) != dtypeAndTensorPtrs.end() ||
+    if (dtypeAndTensorPtrs.find(diopi_dtype_float64) != dtypeAndTensorPtrs.end() ||
                dtypeAndTensorPtrs.find(diopi_dtype_float32) != dtypeAndTensorPtrs.end()) {
         if (opSupportedDtype.find(diopi_dtype_float32) == opSupportedDtype.end()) {  // not support float32
             targetType = choiceDtype(opSupportedDtype);
@@ -109,6 +103,12 @@ void autoCastTensorType(diopiContextHandle_t ctx, std::vector<DiopiTensorT*>& pT
             targetType = choiceDtype(opSupportedDtype);
         } else {  // all tensors cast into int8
             targetType = diopi_dtype_int8;
+        }
+    } else if (dtypeAndTensorPtrs.find(diopi_dtype_bool) != dtypeAndTensorPtrs.end()) {
+        if (opSupportedDtype.find(diopi_dtype_bool) == opSupportedDtype.end()) {  // not support bool
+            targetType = choiceDtype(opSupportedDtype);
+        } else {  // all tensors cast into bool
+            targetType = diopi_dtype_bool;
         }
     } else {
         assert((void("tensor's dtype error, can't be cast"), false));
