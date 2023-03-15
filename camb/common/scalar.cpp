@@ -1,9 +1,9 @@
 #include "common.hpp"
 
-
 namespace impl {
 namespace camb {
 
+using DiopiTensorT = DiopiTensor<diopiTensorHandle_t>;
 DiopiTensorT makeTensorFromScalar(diopiContextHandle_t ctx, const diopiScalar_t* scalar) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     int64_t sizeTmp[1] = {1};

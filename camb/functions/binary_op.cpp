@@ -13,6 +13,7 @@
 namespace impl {
 namespace camb {
 
+using DiopiTensorT = DiopiTensor<diopiTensorHandle_t>;
 extern "C" DIOPI_API diopiError_t
 diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
     diopiTensorHandle_t input_ = diopiTensorHandle_t(input);

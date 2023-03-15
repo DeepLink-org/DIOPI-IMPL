@@ -5,7 +5,7 @@
 namespace impl {
 namespace camb {
 
-
+template <typename DiopiTensorT>
 DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, diopiDtype_t destDtype) {
     if (src.dtype() == destDtype) {
         return src;
@@ -22,6 +22,7 @@ DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, di
     return dest;
 }
 
+template <typename DiopiTensorT>
 void dataTypeCast(diopiContextHandle_t ctx, DiopiTensorT& dest, const DiopiTensorT& src) {
     if (dest.dtype() == src.dtype()) {
         return;
@@ -38,6 +39,7 @@ void dataTypeCast(diopiContextHandle_t ctx, DiopiTensorT& dest, const DiopiTenso
     return;
 }
 
+template <typename DiopiTensorT>
 diopiDtype_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes) {
     if (opSupportedDtypes.find(diopi_dtype_float32) != opSupportedDtypes.end()) {
         return diopi_dtype_float32;
@@ -61,6 +63,7 @@ diopiDtype_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes) {
     return diopi_dtype_int64;  // just for return a value
 }
 
+template <typename DiopiTensorT>
 void autoCastTensorType(diopiContextHandle_t ctx, std::vector<DiopiTensorT*>& pTensors, const std::set<diopiDtype_t>& opSupportedDtype) {
     // std::multimap<diopiDtype_t, DiopiTensorT*> dtypeAndTensorPtrs;
     std::set<diopiDtype_t> dtypeAndTensorPtrs;
