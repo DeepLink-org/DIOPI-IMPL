@@ -1,7 +1,5 @@
 #include <diopi/functions.h>
-
-#include <iostream>
-
+#include "../common/common.hpp"
 #include "../cnnl_helper.hpp"
 
 namespace impl {
@@ -28,10 +26,8 @@ diopiError_t broadcast(diopiContextHandle_t ctx, DiopiTensorT& out, const DiopiT
             break;
         }
     }
-
     CnnlTensorDesc inputDesc(input, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc outDesc(out, CNNL_LAYOUT_ARRAY);
-    std::cout << "ready to expand!!!" << std::endl;
     DIOPI_CALLCNNL(cnnlExpand(handle, inputDesc.get(), const_cast<DiopiTensorT&>(input).data(), outDesc.get(), out.data()));
     return diopiSuccess;
 }
@@ -44,10 +40,8 @@ DiopiTensorT broadcastHelper(diopiContextHandle_t ctx, DiopiTensorT input_tensor
         diopiGetTensorShape(target_tensor, &target_size);
         diopiRequireTensor(ctx, &bcast_input, &target_size, nullptr, target_tensor.dtype(), diopi_device);
         bcast_input_tensor = makeTensor(bcast_input);
-        std::cout << "ready to broadcast!!!" << std::endl;
         broadcast(ctx, bcast_input_tensor, input_tensor);
         return bcast_input_tensor;
-
     } else {
         bcast_input_tensor = input_tensor;
         return bcast_input_tensor;
@@ -62,20 +56,30 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     auto input_tensor = makeTensor(input_);
     auto other_tensor = makeTensor(other_);
     auto out_tensor = makeTensor(out);
+    DiopiTensor<diopiTensorHandle_t> out_tensor_tmp;
+    if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
+        out_tensor_tmp = dataTypeCast(ctx, out_tensor, diopi_dtype_float16);
+    }
+    else {
+        out_tensor_tmp = makeTensor(out);
+    }
+    input_tensor = dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
+    other_tensor = dataTypeCast(ctx, other_tensor, out_tensor_tmp.dtype());
 
-    CnnlTensorDesc out_desc(out_tensor, CNNL_LAYOUT_ARRAY);
-    // datatype check todo
-
-    DiopiTensorT bcast_input_tensor = broadcastHelper(ctx, input_tensor, out_tensor);
-    DiopiTensorT bcast_other_tensor = broadcastHelper(ctx, other_tensor, out_tensor);
+    DiopiTensorT bcast_input_tensor = broadcastHelper(ctx, input_tensor, out_tensor_tmp);
+    DiopiTensorT bcast_other_tensor = broadcastHelper(ctx, other_tensor, out_tensor_tmp);
 
     CnnlTensorDesc bcast_input_desc(bcast_input_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc bcast_other_desc(bcast_other_tensor, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc out_desc(out_tensor_tmp, CNNL_LAYOUT_ARRAY);
 
     cnnlTensorDescriptor_t input_descs[] = {bcast_input_desc.get(), bcast_other_desc.get()};
     const void* inputs[] = {bcast_input_tensor.data(), bcast_other_tensor.data()};
 
-    DIOPI_CALLCNNL(cnnlMulN(handle, input_descs, inputs, 2, out_desc.get(), out_tensor.data()))
+    DIOPI_CALLCNNL(cnnlMulN(handle, input_descs, inputs, 2, out_desc.get(), out_tensor_tmp.data()))
+    if (out_tensor_tmp.dtype() != out_tensor.dtype()) {
+        dataTypeCast(ctx, out_tensor, out_tensor_tmp);
+    }
     return diopiSuccess;
 }
 
