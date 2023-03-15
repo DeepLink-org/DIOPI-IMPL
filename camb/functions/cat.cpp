@@ -10,12 +10,13 @@ extern "C" {
 diopiError_t diopiCat(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t* tensors, int64_t num_inputs, int64_t dim) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
+    std::vector<CnnlTensorDesc> inputsDesc(num_inputs);
     std::vector<cnnlTensorDescriptor_t> inputs_desc(num_inputs);
     std::vector<const void *> inputs(num_inputs);
     for (int i = 0; i < num_inputs; i++) {
         auto temp_tensor = makeTensor(tensors[i]);
-        CnnlTensorDesc temp_desc(temp_tensor, CNNL_LAYOUT_ARRAY);
-        inputs_desc[i] = temp_desc.get();
+        inputsDesc[i].set(temp_tensor, CNNL_LAYOUT_ARRAY);
+        inputs_desc[i] = inputsDesc[i].get();
         inputs[i] = temp_tensor.data();
     }
 
