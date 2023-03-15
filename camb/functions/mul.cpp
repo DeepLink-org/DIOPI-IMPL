@@ -37,10 +37,7 @@ DiopiTensorT broadcastHelper(diopiContextHandle_t ctx, DiopiTensorT input_tensor
     diopiTensorHandle_t bcast_input = nullptr;
     DiopiTensorT bcast_input_tensor;
     if (input_tensor.shape() != target_tensor.shape()) {
-        diopiSize_t target_size;
-        diopiGetTensorShape(target_tensor, &target_size);
-        diopiRequireTensor(ctx, &bcast_input, &target_size, nullptr, target_tensor.dtype(), diopi_device);
-        bcast_input_tensor = makeTensor(bcast_input);
+        bcast_input_tensor = requiresTensor(ctx, vec2diopiSize_t(target_tensor.shape()), target_tensor.dtype());
         broadcast(ctx, bcast_input_tensor, input_tensor);
         return bcast_input_tensor;
     } else {
@@ -94,9 +91,7 @@ DIOPI_API diopiError_t diopiMulScalar(diopiContextHandle_t ctx, diopiTensorHandl
     auto out_tensor = makeTensor(out);
 
     diopiTensorHandle_t other_t;
-    diopiSize_t input_shape;
-    DIOPI_CALL(diopiGetTensorShape(input, &input_shape));
-    DIOPI_CALL(diopiRequireTensor(ctx, &other_t, &input_shape, nullptr, input_tensor.dtype(), diopi_device));
+    other_t = requiresTensor(ctx, vec2diopiSize_t(input_tensor.shape()), input_tensor.dtype());
     DIOPI_CALL(diopiFill(ctx, other_t, other));
     auto other_t_tensor = makeTensor(other_t);
     CnnlTensorDesc other_t_desc(other_t_tensor, CNNL_LAYOUT_ARRAY);
