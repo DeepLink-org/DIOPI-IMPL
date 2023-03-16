@@ -56,11 +56,11 @@ __device__ inline void minBoundingRect(Point *ps, int n_points, float *minbox) {
         edges[i].y = ps[i + 1].y - ps[i].y;
     }
     for (int i = 0; i < n_edges; i++) {
-        edges_angles[i] = atan2((double)edges[i].y, (double)edges[i].x);
+        edges_angles[i] = atan2(static_cast<double>(edges[i].y), static_cast<double>(edges[i].x));
         if (edges_angles[i] >= 0) {
-            edges_angles[i] = fmod((double)edges_angles[i], (double)PI / 2);
+            edges_angles[i] = fmod(static_cast<double>(edges_angles[i]), static_cast<double>(PI / 2));
         } else {
-            edges_angles[i] = edges_angles[i] - (int)(edges_angles[i] / (PI / 2) - 1) * (PI / 2);
+            edges_angles[i] = edges_angles[i] - static_cast<int>(edges_angles[i] / (PI / 2) - 1) * (PI / 2);
         }
     }
     unique_angles[0] = edges_angles[0];
@@ -310,7 +310,7 @@ diopiError_t diopiMinAreaPolygons(diopiContextHandle_t ctx, diopiConstTensorHand
                                   THREADS_PER_BLOCK,
                                   stream,
                                   num_pointsets,
-                                  pointsets..data(),
-                                  polygons..data());
+                                  pointsets.data(),
+                                  polygons.data());
     return diopiSuccess;
 }

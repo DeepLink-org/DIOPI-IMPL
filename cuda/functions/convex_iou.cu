@@ -588,8 +588,8 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
 
     Point convex[MAXN];
     for (int i = 0; i < 9; i++) {
-        convex[i].x = (double)p[i * 2];
-        convex[i].y = (double)p[i * 2 + 1];
+        convex[i].x = static_cast<double>(p[i * 2]);
+        convex[i].y = static_cast<double>(p[i * 2 + 1]);
     }
     int n_convex = 9;
     int points_to_convex_ind[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
@@ -599,13 +599,13 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
     int n2 = 4;
 
     for (int i = 0; i < n1; i++) {
-        ps1[i].x = (double)convex[i].x;
-        ps1[i].y = (double)convex[i].y;
+        ps1[i].x = static_cast<double>(convex[i].x);
+        ps1[i].y = static_cast<double>(convex[i].y);
     }
 
     for (int i = 0; i < n2; i++) {
-        ps2[i].x = (double)q[i * 2];
-        ps2[i].y = (double)q[i * 2 + 1];
+        ps2[i].x = static_cast<double>(q[i * 2]);
+        ps2[i].y = static_cast<double>(q[i * 2 + 1]);
     }
 
     int polygon_index_box_index[18];
@@ -638,10 +638,10 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
     for (int i = 0; i < n_convex; i++) {
         int grad_point = points_to_convex_ind[i];
         grad_point_temp[2 * grad_point] =
-            (float)((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i] - iou / union_area * grad_A[2 * i] -
+            static_cast<float>(union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i] - iou / union_area * grad_A[2 * i] -
                     1 / polygon_area * (grad_AB[2 * i] - grad_A[2 * i]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i]);
         grad_point_temp[2 * grad_point + 1] =
-            (float)((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i + 1] - iou / union_area * grad_A[2 * i + 1] -
+            static_cast<float>(union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i + 1] - iou / union_area * grad_A[2 * i + 1] -
                     1 / polygon_area * (grad_AB[2 * i + 1] - grad_A[2 * i + 1]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i + 1]);
     }
 
@@ -649,7 +649,7 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
         point_grad[2 * i] = grad_point_temp[2 * i];
         point_grad[2 * i + 1] = grad_point_temp[2 * i + 1];
     }
-    return (float)rot_giou;
+    return static_cast<float>(rot_giou);
 }
 
 template <typename T>
@@ -746,27 +746,27 @@ __device__ inline float devrIoU(T const* const p, T const* const q) {
     Point ps1[MAXN], ps2[MAXN];
     Point convex[MAXN];
     for (int i = 0; i < 9; i++) {
-        convex[i].x = (double)p[i * 2];
-        convex[i].y = (double)p[i * 2 + 1];
+        convex[i].x = static_cast<double>(p[i * 2]);
+        convex[i].y = static_cast<double>(p[i * 2 + 1]);
     }
     int n_convex = 9;
     int points_to_convex_ind[9] = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
     Jarvis_and_index(convex, n_convex, points_to_convex_ind);
     int n1 = n_convex;
     for (int i = 0; i < n1; i++) {
-        ps1[i].x = (double)convex[i].x;
-        ps1[i].y = (double)convex[i].y;
+        ps1[i].x = static_cast<double>(convex[i].x);
+        ps1[i].y = static_cast<double>(convex[i].y);
     }
     int n2 = 4;
     for (int i = 0; i < n2; i++) {
-        ps2[i].x = (double)q[i * 2];
-        ps2[i].y = (double)q[i * 2 + 1];
+        ps2[i].x = static_cast<double>(q[i * 2]);
+        ps2[i].y = static_cast<double>(q[i * 2 + 1]);
     }
     double inter_area = intersectAreaO(ps1, n1, ps2, n2);
     double S_pred = area(ps1, n1);
     double union_area = fabs(S_pred) + fabs(area(ps2, n2)) - inter_area;
     double iou = inter_area / union_area;
-    return (float)iou;
+    return static_cast<float>(iou);
 }
 
 template <typename T>

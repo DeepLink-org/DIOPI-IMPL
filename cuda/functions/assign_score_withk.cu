@@ -31,12 +31,12 @@ __global__ void assign_score_withk_forward_cuda_kernel_diopi(const int B,
     // ----- parallel loop for B, N1, K and O ---------
     CUDA_1D_KERNEL_LOOP(i, B * O * N1 * K) {
         // ------- loop for M ----------
-        const int b = (int)(i / (O * N1 * K));
-        const int o = (int)(i % (O * N1 * K) / (N1 * K));
-        const int n = (int)(i % (N1 * K) / K);
-        const int k = (int)(i % K);
-        const int cn = (int)knn_idx[b * K * N1 + n * K + 0];  // The first neighbor is the center point
-        const int kn = (int)knn_idx[b * K * N1 + n * K + k];
+        const int b = static_cast<int>(i / (O * N1 * K));
+        const int o = static_cast<int>(i % (O * N1 * K) / (N1 * K));
+        const int n = static_cast<int>(i % (N1 * K) / K);
+        const int k = static_cast<int>(i % K);
+        const int cn = static_cast<int>(knn_idx[b * K * N1 + n * K + 0]);  // The first neighbor is the center point
+        const int kn = static_cast<int>(knn_idx[b * K * N1 + n * K + k]);
         if (kn >= N0 || kn < 0) {  // if index overflows, it is out of the neighborhood range
             return;
         }
@@ -74,9 +74,9 @@ __global__ void assign_score_withk_points_backward_cuda_kernel_diopi(const int B
     T* grad_centers = static_cast<T*>(grad_centers_);
     // ----- parallel loop for B, M, O ---------
     CUDA_1D_KERNEL_LOOP(i, B * M * O) {
-        int b = (int)(i / (M * O));
-        int m = (int)(i % (M * O) / O);
-        int o = (int)(i % O);
+        int b = static_cast<int>(i / (M * O));
+        int m = static_cast<int>(i % (M * O) / O);
+        int o = static_cast<int>(i % O);
 
         // ----- loop for N,K ---------
         for (int n = 0; n < N; n++) {
@@ -115,10 +115,10 @@ __global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B
     T* grad_scores = static_cast<T*>(grad_scores_);
     // ----- parallel loop for B, N, K, M ---------
     CUDA_1D_KERNEL_LOOP(i, B * N * K * M) {
-        const int b = (int)(i / (N * M * K));
-        const int n = (int)(i % (N * M * K) / M / K);
-        const int k = (int)(i % (M * K) / M);
-        const int m = (int)(i % M);
+        const int b = static_cast<int>(i / (N * M * K));
+        const int n = static_cast<int>(i % (N * M * K) / M / K);
+        const int k = static_cast<int>(i % (M * K) / M);
+        const int m = static_cast<int>(i % M);
         const int cn = knn_idx[b * N * K + n * K + 0];
         const int kn = knn_idx[b * N * K + n * K + k];
         if (kn >= N0 || kn < 0) {  // if index overflows, it is out of the neighborhood range

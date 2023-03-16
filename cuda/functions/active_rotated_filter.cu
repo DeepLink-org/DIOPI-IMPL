@@ -31,7 +31,7 @@ __global__ void active_rotated_filter_forward_cuda_kernel_diopi(const int nthrea
         int k;
         scalar_t val = *(weight_data + index);
         for (k = 0; k < num_rotations; k++) {
-            int idx = (int)(*(indices_data + l * num_rotations + k)) - 1;
+            int idx = static_cast<int>(*(indices_data + l * num_rotations + k)) - 1;
             scalar_t* target = output_data + i * (num_rotations * num_input_planes * nEntry) + k * (num_input_planes * nEntry) + j * (nEntry) + idx;
             *target = val;
         }
@@ -59,7 +59,7 @@ __global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthre
         *val = 0;
         scalar_t tmp = 0;
         for (k = 0; k < num_rotations; k++) {
-            int idx = (int)(*(indices_data + l * num_rotations + k)) - 1;
+            int idx = static_cast<int>(*(indices_data + l * num_rotations + k)) - 1;
             scalar_t target = *(gradWeight_data + i * (num_rotations * num_input_planes * nEntry) + k * (num_input_planes * nEntry) + j * (nEntry) + idx);
             tmp = tmp + target;
         }

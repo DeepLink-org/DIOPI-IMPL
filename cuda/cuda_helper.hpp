@@ -1,7 +1,8 @@
-#ifndef DIOPI_COMMON_CUDA_HELPER
-#define DIOPI_COMMON_CUDA_HELPER
+#ifndef IMPL_CUDA_CUDA_HELPER_HPP_
+#define IMPL_CUDA_CUDA_HELPER_HPP_
 
 #include <cuda.h>
+#include <algorithm>
 
 #define CUDA_1D_KERNEL_LOOP(i, n) for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < (n); i += blockDim.x * gridDim.x)
 
@@ -29,8 +30,8 @@ __device__ T bilinear_interpolate(const T* input, const int height, const int wi
     if (y <= 0) y = 0;
     if (x <= 0) x = 0;
 
-    int y_low = (int)y;
-    int x_low = (int)x;
+    int y_low = static_cast<int>(y);
+    int x_low = static_cast<int>(x);
     int y_high;
     int x_high;
 
@@ -88,8 +89,8 @@ __device__ void bilinear_interpolate_gradient(const int height,
     if (y <= 0) y = 0;
     if (x <= 0) x = 0;
 
-    y_low = (int)y;
-    x_low = (int)x;
+    y_low = static_cast<int>(y);
+    x_low = static_cast<int>(x);
 
     if (y_low >= height - 1) {
         y_high = y_low = height - 1;
@@ -154,4 +155,4 @@ __device__ void bilinear_interpolate_gradient(const int height,
         fprintf(stderr, "%s:%s: %s<%s %d><<<%d,%d>>>(%s)", __FILE__, __FUNCTION__, #fun, #dtype, dtype, gridSize, blockSize, #__VA_ARGS__); \
         return diopiDtypeNotSupported;                                                                                                      \
     }
-#endif  // DIOPI_COMMON_CUDA_HELPER
+#endif  // IMPL_CUDA_CUDA_HELPER_HPP_
