@@ -5,8 +5,8 @@
  *
  *************************************************************************************************/
 
-#ifndef IMPL_CUDA_HELPER_HPP_
-#define IMPL_CUDA_HELPER_HPP_
+#ifndef IMPL_CUDA_HELPER_H_
+#define IMPL_CUDA_HELPER_H_
 
 #include <diopi/diopirt.h>
 #include <cuda_runtime.h>
@@ -152,4 +152,4 @@ void set_last_error_string(const char* szFmt, Types&&... args) {
 
 }  // namespace impl
 
-#endif  // IMPL_CUDA_HELPER_HPP_
+#endif  // IMPL_CUDA_HELPER_H_
