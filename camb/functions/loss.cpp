@@ -287,7 +287,7 @@ diopiError_t diopiCrossEntropyLossBackward(diopiContextHandle_t ctx,
     diopiNLLLossBackward(ctx, grad_input, grad_output, input, target, weight, reduction, ignore_index);
     diopiLogSoftmaxBackward(ctx, grad_input, grad_output, input, 1, input_tr.dtype());
     return diopiSuccess;
-                                           }
+}
 
 }  // extern "C"
 
