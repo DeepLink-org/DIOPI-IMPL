@@ -639,10 +639,10 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
     for (int i = 0; i < n_convex; i++) {
         int grad_point = points_to_convex_ind[i];
         grad_point_temp[2 * grad_point] =
-            static_cast<float>(union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i] - iou / union_area * grad_A[2 * i] -
+            static_cast<float>((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i] - iou / union_area * grad_A[2 * i] -
                     1 / polygon_area * (grad_AB[2 * i] - grad_A[2 * i]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i]);
         grad_point_temp[2 * grad_point + 1] =
-            static_cast<float>(union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i + 1] - iou / union_area * grad_A[2 * i + 1] -
+            static_cast<float>((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i + 1] - iou / union_area * grad_A[2 * i + 1] -
                     1 / polygon_area * (grad_AB[2 * i + 1] - grad_A[2 * i + 1]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i + 1]);
     }
 
