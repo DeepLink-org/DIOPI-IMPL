@@ -38,7 +38,8 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
         DIOPI_CHECK(target_tr.dim() == 1,
             "1D target_tr tensor expected, multi-target_tr not supported");
         DIOPI_CHECK(input_tr.shape()[0] == target_tr.shape()[0], "size mismatch ");
-        DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1], "weight_tr tensor should be defined either for all classes or no classes");
+        DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1],
+        "weight_tr tensor should be defined either for all classes or no classes");
     } else if (dim == 4) {
         input_contiguous = input_tr.contiguous(ctx, MemoryFormat::ChannelsLast);
         cnnl_transpose(ctx, handle, input_tr, input_contiguous, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
@@ -146,7 +147,8 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
         DIOPI_CHECK(target_tr.dim() == 1,
             "1D target_tr tensor expected, multi-target_tr not supported");
         DIOPI_CHECK(input_tr.shape()[0] == target_tr.shape()[0], "size mismatch ");
-        DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1], "weight_tr tensor should be defined either for all classes or no classes");
+        DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1],
+        "weight_tr tensor should be defined either for all classes or no classes");
     } else if (dim == 4) {
         input_contiguous = input_tr.contiguous(ctx, MemoryFormat::ChannelsLast);
         cnnl_transpose(ctx, handle, input_tr, input_contiguous, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
@@ -187,7 +189,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
         case 2:
             reduction_mode = CNNL_REDUCTION_SUM;
             break;
-        default: 
+        default:
             DIOPI_CHECK(false, "unexpected nll_loss reduciton mode");
     }
     std::vector<int64_t> output_size = {N, C};

@@ -236,9 +236,7 @@ inline diopiTensorHandle_t ones(diopiContextHandle_t ctx, std::vector<int64_t>& 
     diopiSize_t size_(size.data(), size.size());
     diopiRequireTensor(ctx, &tensor, &size_, nullptr, dtype, diopi_device);
     diopiScalar_t scalar = {dtype, 1.0};
-    if (dtype <= 7) {
-        scalar = {dtype, {.ival=1}};
-    }
+    if (dtype <= 7) scalar = {dtype, {.ival=1}};
     diopiFill(ctx, tensor, &scalar);
     return tensor;
 }
@@ -249,7 +247,9 @@ inline DiopiTensor<diopiTensorHandle_t> requiresTensor(diopiContextHandle_t ctx,
     return makeTensor(tensor);
 }
 
-inline DiopiTensor<diopiTensorHandle_t> requiresTensor(diopiContextHandle_t ctx, const std::vector<int64_t>& size, const std::vector<int64_t>& stride, diopiDtype_t dtype) {
+inline DiopiTensor<diopiTensorHandle_t> requiresTensor(
+        diopiContextHandle_t ctx, const std::vector<int64_t>& size,
+        const std::vector<int64_t>& stride, diopiDtype_t dtype) {
     diopiSize_t size_(size.data(), size.size());
     diopiSize_t stride_(stride.data(), stride.size());
     diopiTensorHandle_t tensor;
@@ -285,7 +285,6 @@ inline diopiSize_t vec2diopiSize_t(const std::vector<int64_t>& sizeIn) {
     diopiSize_t diopiSize(sizeIn.data(), sizeIn.size());
     return diopiSize;
 }
-
 }  // namespace camb
 
 }  // namespace impl
