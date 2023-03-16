@@ -21,7 +21,7 @@ diopiError_t broadcast(diopiContextHandle_t ctx, DiopiTensorT& out, const DiopiT
     }
 
     for (int i = 0; i < nDimsTarget; i++) {
-        DIOPI_CHECK( ((inputShape[i] == 1) || (inputShape[i] == targetShape[i])), "shape1 not match shape2, can't broadcast");
+        DIOPI_CHECK(((inputShape[i] == 1) || (inputShape[i] == targetShape[i])), "shape1 not match shape2, can't broadcast");
     }
     CnnlTensorDesc inputDesc(input, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc outDesc(out, CNNL_LAYOUT_ARRAY);
@@ -48,7 +48,7 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
 
     auto input_tensor = makeTensor(input_);
-    auto other_tempensor = makeTensor(other_);
+    auto other_tensor = makeTensor(other_);
     auto out_tensor = makeTensor(out);
     DiopiTensor<diopiTensorHandle_t> out_tensor_tmp;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
@@ -57,17 +57,17 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
         out_tensor_tmp = makeTensor(out);
     }
     input_tensor = dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
-    other_tempensor = dataTypeCast(ctx, other_tempensor, out_tensor_tmp.dtype());
+    other_tensor = dataTypeCast(ctx, other_tensor, out_tensor_tmp.dtype());
 
     DiopiTensorT bcast_input_tensor = broadcastHelper(ctx, input_tensor, out_tensor_tmp);
-    DiopiTensorT bcast_other_tempensor = broadcastHelper(ctx, other_tempensor, out_tensor_tmp);
+    DiopiTensorT bcast_other_tensor = broadcastHelper(ctx, other_tensor, out_tensor_tmp);
 
     CnnlTensorDesc bcast_input_desc(bcast_input_tensor, CNNL_LAYOUT_ARRAY);
-    CnnlTensorDesc bcast_other_desc(bcast_other_tempensor, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc bcast_other_desc(bcast_other_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc out_desc(out_tensor_tmp, CNNL_LAYOUT_ARRAY);
 
     cnnlTensorDescriptor_t input_descs[] = {bcast_input_desc.get(), bcast_other_desc.get()};
-    const void* inputs[] = {bcast_input_tensor.data(), bcast_other_tempensor.data()};
+    const void* inputs[] = {bcast_input_tensor.data(), bcast_other_tensor.data()};
 
     DIOPI_CALLCNNL(cnnlMulN(handle, input_descs, inputs, 2, out_desc.get(), out_tensor_tmp.data()))
     if (out_tensor_tmp.dtype() != out_tensor.dtype()) {
