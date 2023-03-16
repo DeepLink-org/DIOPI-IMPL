@@ -22,6 +22,31 @@ DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, di
     return dest;
 }
 
+DiopiTensorT dataTypeCast(diopiContextHandle_t ctx, DiopiConstTensorT& src, diopiDtype_t destDtype) {
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
+    diopiSize_t srcSize;
+    if (src.shape().size() > 0) {
+        srcSize = vec2diopiSize_t(src.shape());
+    } else {
+        std::vector<int64_t> shape_{1};
+        srcSize = vec2diopiSize_t(shape_);
+    }
+    DiopiTensorT dest = requiresTensor(ctx, srcSize, destDtype);
+    diopiDtype_t srcDtype = src.dtype();
+    cnnlCastDataType_t cnnlCastDtype = gCnnlCastDataTypeMapping[{srcDtype, destDtype}];
+    DIOPI_CHECK_ABORT(cnnlCastDtype != 0, "data type cast from %d to %d in cnnl is not allown", srcDtype, destDtype);
+    CnnlTensorDesc descSrc;
+    if (src.shape().size() > 0) {
+        descSrc.set(src, CNNL_LAYOUT_ARRAY);
+    } else {
+        std::vector<int> src_dims = {1};
+        descSrc.set(src, CNNL_LAYOUT_ARRAY, src_dims);
+    }
+    CnnlTensorDesc descDest(dest, CNNL_LAYOUT_ARRAY);
+    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), src.data(), cnnlCastDtype, descDest.get(), dest.data()));
+    return dest;
+}
+
 void dataTypeCast(diopiContextHandle_t ctx, DiopiTensorT& dest, const DiopiTensorT& src) {
     if (dest.dtype() == src.dtype()) {
         return;
