@@ -1,5 +1,7 @@
 #include <diopi/functions.h>
+
 #include <numeric>
+
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 namespace impl {
@@ -7,9 +9,13 @@ namespace camb {
 
 extern "C" {
 
-diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
-                          diopiConstTensorHandle_t input, diopiConstTensorHandle_t target,
-                          diopiConstTensorHandle_t weight, diopiReduction_t reduction, int64_t ignore_index) {
+diopiError_t diopiNLLLoss(diopiContextHandle_t ctx,
+                          diopiTensorHandle_t out,
+                          diopiConstTensorHandle_t input,
+                          diopiConstTensorHandle_t target,
+                          diopiConstTensorHandle_t weight,
+                          diopiReduction_t reduction,
+                          int64_t ignore_index) {
     // TODO(after yb的cast支持模板后): remove target_
     diopiTensorHandle_t target_ = diopiTensorHandle_t(target);
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -29,17 +35,18 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
         diopiConstTensorHandle_t weight_ = ones(ctx, weight_size, input_tr.dtype());
         weight_tr = makeTensor(weight_);
     }
-    DIOPI_CHECK(input_tr.is_contiguous() && weight_tr.is_contiguous() && target_tr.is_contiguous(), "input tensor should be contiguous");
+    DIOPI_CHECK(input_tr.is_contiguous(), "input tensor should be contiguous");
+    DIOPI_CHECK(weight_tr.is_contiguous(), "weight tensor should be contiguous");
+    DIOPI_CHECK(target_tr.is_contiguous(), "input tensor should be contiguous");
 
     auto input_contiguous = input_tr;
 
     auto dim = input_tr.dim();
     if (dim == 2 || dim == 1) {
-        DIOPI_CHECK(target_tr.dim() == 1,
-            "1D target_tr tensor expected, multi-target_tr not supported");
+        DIOPI_CHECK(target_tr.dim() == 1, "1D target_tr tensor expected, multi-target_tr not supported");
         DIOPI_CHECK(input_tr.shape()[0] == target_tr.shape()[0], "size mismatch ");
         DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1],
-        "weight_tr tensor should be defined either for all classes or no classes");
+                    "weight_tr tensor should be defined either for all classes or no classes");
     } else if (dim == 4) {
         input_contiguous = input_tr.contiguous(ctx, MemoryFormat::ChannelsLast);
         cnnl_transpose(ctx, handle, input_tr, input_contiguous, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
@@ -64,8 +71,7 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
 
     auto input_size = input_contiguous.shape();
     int C = input_size[1];
-    int N = std::accumulate(input_size.begin(), input_size.end(),
-        1, std::multiplies<int64_t>()) / C;
+    int N = std::accumulate(input_size.begin(), input_size.end(), 1, std::multiplies<int64_t>()) / C;
     DIOPI_CHECK(N == target_tr.numel(), "Target size need be equal as input N*H*W.");
     DIOPI_CHECK(C == weight_tr.numel(), "Weight size need be equal as input C.");
     std::vector<int> output_size(input_size.begin(), input_size.end());
@@ -74,7 +80,7 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     switch (reduction) {
         case 0: {
             reduction_mode = CNNL_REDUCTION_NONE;
-            output_size.erase(output_size.begin()+1);
+            output_size.erase(output_size.begin() + 1);
             break;
         }
         case 1: {
@@ -87,7 +93,8 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
             output_size = {1};
             break;
         }
-        default: DIOPI_CHECK(false, "unexpected nll_loss reduciton mode");
+        default:
+            DIOPI_CHECK(false, "unexpected nll_loss reduciton mode");
     }
     std::vector<int64_t> total_weight_size = {1};
     auto total_weight_tr = requiresTensor(ctx, total_weight_size, weight_tr.dtype());
@@ -107,17 +114,33 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx, diopiTensorHandle_t out,
     DIOPI_CHECKCNNL(cnnlGetNlllossWorkspaceSize(handle, input_desc.get(), &workspace_size));
     void* workspace_ptr = workspace_size == 0 ? nullptr : requiresBuffer(ctx, workspace_size).data();
 
-    DIOPI_CALLCNNL(cnnlNlllossForward(
-        handle, reduction_mode, workspace_ptr, workspace_size, input_desc.get(), input_contiguous.data(),
-        target_desc.get(), target_tr.data(), static_cast<int>(ignore_index), weight_desc.get(),
-        weight_tr.data(), tw_desc.get(), total_weight_tr.data(), output_desc.get(),  output_tr.data()));
+    DIOPI_CALLCNNL(cnnlNlllossForward(handle,
+                                      reduction_mode,
+                                      workspace_ptr,
+                                      workspace_size,
+                                      input_desc.get(),
+                                      input_contiguous.data(),
+                                      target_desc.get(),
+                                      target_tr.data(),
+                                      static_cast<int>(ignore_index),
+                                      weight_desc.get(),
+                                      weight_tr.data(),
+                                      tw_desc.get(),
+                                      total_weight_tr.data(),
+                                      output_desc.get(),
+                                      output_tr.data()));
 
     return diopiSuccess;
 }
 
-diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input, diopiConstTensorHandle_t grad_output,
-                                            diopiConstTensorHandle_t input, diopiConstTensorHandle_t target, diopiConstTensorHandle_t weight,
-                                            diopiReduction_t reduction, int64_t ignore_index) {
+diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
+                                  diopiTensorHandle_t grad_input,
+                                  diopiConstTensorHandle_t grad_output,
+                                  diopiConstTensorHandle_t input,
+                                  diopiConstTensorHandle_t target,
+                                  diopiConstTensorHandle_t weight,
+                                  diopiReduction_t reduction,
+                                  int64_t ignore_index) {
     // TODO(after yb的cast支持模板后): remove target_
     diopiTensorHandle_t target_ = diopiTensorHandle_t(target);
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -138,17 +161,18 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
         diopiConstTensorHandle_t weight_ = ones(ctx, weight_size, input_tr.dtype());
         weight_tr = makeTensor(weight_);
     }
-    DIOPI_CHECK(input_tr.is_contiguous() && weight_tr.is_contiguous() && target_tr.is_contiguous(), "input tensor should be contiguous");
+    DIOPI_CHECK(input_tr.is_contiguous(), "input tensor should be contiguous");
+    DIOPI_CHECK(weight_tr.is_contiguous(), "weight tensor should be contiguous");
+    DIOPI_CHECK(target_tr.is_contiguous(), "input tensor should be contiguous");
 
     auto input_contiguous = input_tr;
 
     auto dim = input_tr.dim();
     if (dim == 2 || dim == 1) {
-        DIOPI_CHECK(target_tr.dim() == 1,
-            "1D target_tr tensor expected, multi-target_tr not supported");
+        DIOPI_CHECK(target_tr.dim() == 1, "1D target_tr tensor expected, multi-target_tr not supported");
         DIOPI_CHECK(input_tr.shape()[0] == target_tr.shape()[0], "size mismatch ");
         DIOPI_CHECK(!weight_tr.defined() || weight_tr.numel() == input_tr.shape()[1],
-        "weight_tr tensor should be defined either for all classes or no classes");
+                    "weight_tr tensor should be defined either for all classes or no classes");
     } else if (dim == 4) {
         input_contiguous = input_tr.contiguous(ctx, MemoryFormat::ChannelsLast);
         cnnl_transpose(ctx, handle, input_tr, input_contiguous, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
@@ -173,8 +197,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
 
     auto input_size = input_contiguous.shape();
     int C = input_size[1];
-    int N = std::accumulate(input_size.begin(), input_size.end(),
-        1, std::multiplies<int64_t>()) / C;
+    int N = std::accumulate(input_size.begin(), input_size.end(), 1, std::multiplies<int64_t>()) / C;
     DIOPI_CHECK(N == target_tr.numel(), "Target size need be equal as input N*H*W.");
     DIOPI_CHECK(C == weight_tr.numel(), "Weight size need be equal as input C.");
 
@@ -195,8 +218,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
     std::vector<int64_t> output_size = {N, C};
     diopiSize_t output_size_diopi(output_size.data(), output_size.size());
     diopiTensorHandle_t grad_input_real;
-    diopiRequireTensor(ctx, &grad_input_real,
-        &output_size_diopi, nullptr, input_contiguous.dtype(), input_contiguous.device());
+    diopiRequireTensor(ctx, &grad_input_real, &output_size_diopi, nullptr, input_contiguous.dtype(), input_contiguous.device());
     auto grad_input_real_tr = makeTensor(grad_input_real);
 
     std::vector<int64_t> total_weight_size = {1};
@@ -210,12 +232,19 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx, diopiTensorHandle_t 
     std::vector<int> target_desc_size({N});
     target_desc.set(target_tr, CNNL_LAYOUT_ARRAY, target_desc_size);
 
-
-    DIOPI_CALLCNNL(cnnlNlllossBackward(
-        handle, reduction_mode, grad_output_desc.get(), grad_output_tr.data(),
-        target_desc.get(), target_tr.data(), static_cast<int>(ignore_index), weight_desc.get(),
-        weight_tr.data(), tw_desc.get(), total_weight_tr.data(), grad_input_desc.get(),
-        grad_input_real_tr.data()));
+    DIOPI_CALLCNNL(cnnlNlllossBackward(handle,
+                                       reduction_mode,
+                                       grad_output_desc.get(),
+                                       grad_output_tr.data(),
+                                       target_desc.get(),
+                                       target_tr.data(),
+                                       static_cast<int>(ignore_index),
+                                       weight_desc.get(),
+                                       weight_tr.data(),
+                                       tw_desc.get(),
+                                       total_weight_tr.data(),
+                                       grad_input_desc.get(),
+                                       grad_input_real_tr.data()));
     if (dim > 2) {
         // NHWC -> NCHW
         grad_input_real_tr.reshape(input_contiguous.shape());

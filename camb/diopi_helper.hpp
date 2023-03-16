@@ -201,13 +201,7 @@ public:
         return this->numel() != 0;
     }
 
-    void reshape(const std::vector<int64_t> shape) {
-        this->shape_ = shape;
-    }
-
-    void fill_(diopiContextHandle_t ctx, diopiScalar_t scalar) {
-        diopiFill(ctx, this->tensor_, &scalar);
-    }
+    void reshape(const std::vector<int64_t> shape) { this->shape_ = shape; }
 
     typename DataType<TensorType>::type data() { return DataType<TensorType>::data(tensor_); }
 
@@ -236,7 +230,7 @@ inline diopiTensorHandle_t ones(diopiContextHandle_t ctx, std::vector<int64_t>& 
     diopiSize_t size_(size.data(), size.size());
     diopiRequireTensor(ctx, &tensor, &size_, nullptr, dtype, diopi_device);
     diopiScalar_t scalar = {dtype, 1.0};
-    if (dtype <= 7) scalar = {dtype, {.ival=1}};
+    if (DiopiDataType().isInteger(dtype)) scalar = {dtype, {.ival = 1}};
     diopiFill(ctx, tensor, &scalar);
     return tensor;
 }
@@ -247,9 +241,10 @@ inline DiopiTensor<diopiTensorHandle_t> requiresTensor(diopiContextHandle_t ctx,
     return makeTensor(tensor);
 }
 
-inline DiopiTensor<diopiTensorHandle_t> requiresTensor(
-        diopiContextHandle_t ctx, const std::vector<int64_t>& size,
-        const std::vector<int64_t>& stride, diopiDtype_t dtype) {
+inline DiopiTensor<diopiTensorHandle_t> requiresTensor(diopiContextHandle_t ctx,
+                                                       const std::vector<int64_t>& size,
+                                                       const std::vector<int64_t>& stride,
+                                                       diopiDtype_t dtype) {
     diopiSize_t size_(size.data(), size.size());
     diopiSize_t stride_(stride.data(), stride.size());
     diopiTensorHandle_t tensor;
