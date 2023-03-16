@@ -1,6 +1,6 @@
+#include <string.h>
 #include <iostream>
 #include <memory>
-#include <string.h>
 #include <numeric>
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
@@ -10,8 +10,8 @@ namespace camb {
 
 extern "C" {
 
-DIOPI_API diopiError_t diopiMaskedFill(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mask,
-                                       diopiConstTensorHandle_t value) {
+DIOPI_API diopiError_t diopiMaskedFill(
+    diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mask, diopiConstTensorHandle_t value) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -51,21 +51,31 @@ DIOPI_API diopiError_t diopiMaskedFill(diopiContextHandle_t ctx, diopiTensorHand
     }
 
     size_t workspace_size = 0;
-    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle, CNNL_MASKED_FILL, input_desc.get(),
+    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle,
+                                              CNNL_MASKED_FILL,
+                                              input_desc.get(),
                                               mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                               value_cast ? value_cast_desc.get() : value_desc.get(),
-                                              out_desc.get(), &workspace_size));
+                                              out_desc.get(),
+                                              &workspace_size));
     void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    DIOPI_CALLCNNL(cnnlMasked_v3(handle, CNNL_MASKED_FILL, input_desc.get(), input_tensor.data(),
+    DIOPI_CALLCNNL(cnnlMasked_v3(handle,
+                                 CNNL_MASKED_FILL,
+                                 input_desc.get(),
+                                 input_tensor.data(),
                                  mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                  mask_cast ? mask_cast_tensor.data() : mask_tensor.data(),
                                  value_cast ? value_cast_desc.get() : value_desc.get(),
                                  value_cast ? value_cast_tensor.data() : value_tensor.data(),
-                                 workspace, workspace_size, out_desc.get(), out_tensor.data(), nullptr));
+                                 workspace,
+                                 workspace_size,
+                                 out_desc.get(),
+                                 out_tensor.data(),
+                                 nullptr));
     return diopiSuccess;
 }
 
@@ -107,26 +117,36 @@ DIOPI_API diopiError_t diopiMaskedFillInp(diopiContextHandle_t ctx, diopiTensorH
     }
 
     size_t workspace_size = 0;
-    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle, CNNL_MASKED_FILL, input_desc.get(),
+    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle,
+                                              CNNL_MASKED_FILL,
+                                              input_desc.get(),
                                               mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                               value_cast ? value_cast_desc.get() : value_desc.get(),
-                                              input_desc.get(), &workspace_size));
+                                              input_desc.get(),
+                                              &workspace_size));
     void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    DIOPI_CALLCNNL(cnnlMasked_v3(handle, CNNL_MASKED_FILL, input_desc.get(), input_tensor.data(),
+    DIOPI_CALLCNNL(cnnlMasked_v3(handle,
+                                 CNNL_MASKED_FILL,
+                                 input_desc.get(),
+                                 input_tensor.data(),
                                  mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                  mask_cast ? mask_cast_tensor.data() : mask_tensor.data(),
                                  value_cast ? value_cast_desc.get() : value_desc.get(),
                                  value_cast ? value_cast_tensor.data() : value_tensor.data(),
-                                 workspace, workspace_size, input_desc.get(), input_tensor.data(), nullptr));
+                                 workspace,
+                                 workspace_size,
+                                 input_desc.get(),
+                                 input_tensor.data(),
+                                 nullptr));
     return diopiSuccess;
 }
 
-DIOPI_API diopiError_t diopiMaskedFillScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mask,
-                                             const diopiScalar_t* value) {
+DIOPI_API diopiError_t diopiMaskedFillScalar(
+    diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mask, const diopiScalar_t* value) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -153,7 +173,7 @@ DIOPI_API diopiError_t diopiMaskedFillScalar(diopiContextHandle_t ctx, diopiTens
             *reinterpret_cast<float*>(value_.get()) = static_cast<float>(value->fval);
         }
     }
-    
+
     diopiTensorHandle_t value_t;
     std::vector<int64_t> shape_{1};
     diopiSize_t value_shape = vec2diopiSize_t(shape_);
@@ -190,25 +210,38 @@ DIOPI_API diopiError_t diopiMaskedFillScalar(diopiContextHandle_t ctx, diopiTens
     }
 
     size_t workspace_size = 0;
-    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle, CNNL_MASKED_FILL, input_desc.get(),
+    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle,
+                                              CNNL_MASKED_FILL,
+                                              input_desc.get(),
                                               mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                               value_cast ? value_cast_desc.get() : value_desc.get(),
-                                              out_desc.get(), &workspace_size));
+                                              out_desc.get(),
+                                              &workspace_size));
     void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    DIOPI_CALLCNNL(cnnlMasked_v3(handle, CNNL_MASKED_FILL, input_desc.get(), input_tensor.data(),
+    DIOPI_CALLCNNL(cnnlMasked_v3(handle,
+                                 CNNL_MASKED_FILL,
+                                 input_desc.get(),
+                                 input_tensor.data(),
                                  mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                  mask_cast ? mask_cast_tensor.data() : mask_tensor.data(),
                                  value_cast ? value_cast_desc.get() : value_desc.get(),
                                  value_cast ? value_cast_tensor.data() : value_tensor.data(),
-                                 workspace, workspace_size, out_desc.get(), out_tensor.data(), nullptr));
+                                 workspace,
+                                 workspace_size,
+                                 out_desc.get(),
+                                 out_tensor.data(),
+                                 nullptr));
     return diopiSuccess;
 }
 
-DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t mask, const diopiScalar_t* value) {
+DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx,
+                                                diopiTensorHandle_t input,
+                                                diopiConstTensorHandle_t mask,
+                                                const diopiScalar_t* value) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = makeTensor(input);
@@ -234,7 +267,7 @@ DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiT
             *reinterpret_cast<float*>(value_.get()) = static_cast<float>(value->fval);
         }
     }
-    
+
     diopiTensorHandle_t value_t;
     std::vector<int64_t> shape_{1};
     diopiSize_t value_shape = vec2diopiSize_t(shape_);
@@ -270,21 +303,31 @@ DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiT
     }
 
     size_t workspace_size = 0;
-    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle, CNNL_MASKED_FILL, input_desc.get(),
+    DIOPI_CALLCNNL(cnnlGetMaskedWorkspaceSize(handle,
+                                              CNNL_MASKED_FILL,
+                                              input_desc.get(),
                                               mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                               value_cast ? value_cast_desc.get() : value_desc.get(),
-                                              input_desc.get(), &workspace_size));
+                                              input_desc.get(),
+                                              &workspace_size));
     void* workspace = nullptr;
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
 
-    DIOPI_CALLCNNL(cnnlMasked_v3(handle, CNNL_MASKED_FILL, input_desc.get(), input_tensor.data(),
+    DIOPI_CALLCNNL(cnnlMasked_v3(handle,
+                                 CNNL_MASKED_FILL,
+                                 input_desc.get(),
+                                 input_tensor.data(),
                                  mask_cast ? mask_cast_desc.get() : mask_desc.get(),
                                  mask_cast ? mask_cast_tensor.data() : mask_tensor.data(),
                                  value_cast ? value_cast_desc.get() : value_desc.get(),
                                  value_cast ? value_cast_tensor.data() : value_tensor.data(),
-                                 workspace, workspace_size, input_desc.get(), input_tensor.data(), nullptr));
+                                 workspace,
+                                 workspace_size,
+                                 input_desc.get(),
+                                 input_tensor.data(),
+                                 nullptr));
     return diopiSuccess;
 }
 

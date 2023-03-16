@@ -5,7 +5,6 @@
 namespace impl {
 namespace camb {
 
-
 DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, diopiDtype_t destDtype) {
     if (src.dtype() == destDtype) {
         return src;
