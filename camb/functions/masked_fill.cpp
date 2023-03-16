@@ -40,13 +40,17 @@ DIOPI_API diopiError_t diopiMaskedFill(
     bool mask_cast = false;
     if (input_tensor.dtype() != value_tensor.dtype()) {
         value_cast = true;
-        value_cast_tensor = dataTypeCast(ctx, value_tensor, input_tensor.dtype());
+        diopiTensorHandle_t value_t = const_cast<diopiTensorHandle_t>(value);
+        auto value_t_tensor = makeTensor(value_t);
+        value_cast_tensor = dataTypeCast(ctx, value_t_tensor, input_tensor.dtype());
         value_cast_desc.set(value_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 
     if ((mask_tensor.dtype() != diopi_dtype_int8) && (mask_tensor.dtype() != diopi_dtype_uint8) && (mask_tensor.dtype() != diopi_dtype_bool)) {
         mask_cast = true;
-        mask_cast_tensor = dataTypeCast(ctx, mask_tensor, diopi_dtype_int8);
+        diopiTensorHandle_t mask_t = const_cast<diopiTensorHandle_t>(mask);
+        auto mask_t_tensor = makeTensor(mask_t);
+        mask_cast_tensor = dataTypeCast(ctx, mask_t_tensor, diopi_dtype_int8);
         mask_cast_desc.set(mask_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 
@@ -106,13 +110,17 @@ DIOPI_API diopiError_t diopiMaskedFillInp(diopiContextHandle_t ctx, diopiTensorH
     bool mask_cast = false;
     if (input_tensor.dtype() != value_tensor.dtype()) {
         value_cast = true;
-        value_cast_tensor = dataTypeCast(ctx, value_tensor, input_tensor.dtype());
+        diopiTensorHandle_t value_t = const_cast<diopiTensorHandle_t>(value);
+        auto value_t_tensor = makeTensor(value_t);
+        value_cast_tensor = dataTypeCast(ctx, value_t_tensor, input_tensor.dtype());
         value_cast_desc.set(value_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 
     if ((mask_tensor.dtype() != diopi_dtype_int8) && (mask_tensor.dtype() != diopi_dtype_uint8) && (mask_tensor.dtype() != diopi_dtype_bool)) {
         mask_cast = true;
-        mask_cast_tensor = dataTypeCast(ctx, mask_tensor, diopi_dtype_int8);
+        diopiTensorHandle_t mask_t = const_cast<diopiTensorHandle_t>(mask);
+        auto mask_t_tensor = makeTensor(mask_t);
+        mask_cast_tensor = dataTypeCast(ctx, mask_t_tensor, diopi_dtype_int8);
         mask_cast_desc.set(mask_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 
@@ -205,7 +213,9 @@ DIOPI_API diopiError_t diopiMaskedFillScalar(
 
     if ((mask_tensor.dtype() != diopi_dtype_int8) && (mask_tensor.dtype() != diopi_dtype_uint8) && (mask_tensor.dtype() != diopi_dtype_bool)) {
         mask_cast = true;
-        mask_cast_tensor = dataTypeCast(ctx, mask_tensor, diopi_dtype_int8);
+        diopiTensorHandle_t mask_t = const_cast<diopiTensorHandle_t>(mask);
+        auto mask_t_tensor = makeTensor(mask_t);
+        mask_cast_tensor = dataTypeCast(ctx, mask_t_tensor, diopi_dtype_int8);
         mask_cast_desc.set(mask_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 
@@ -298,7 +308,9 @@ DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx,
 
     if ((mask_tensor.dtype() != diopi_dtype_int8) && (mask_tensor.dtype() != diopi_dtype_uint8) && (mask_tensor.dtype() != diopi_dtype_bool)) {
         mask_cast = true;
-        mask_cast_tensor = dataTypeCast(ctx, mask_tensor, diopi_dtype_int8);
+        diopiTensorHandle_t mask_t = const_cast<diopiTensorHandle_t>(mask);
+        auto mask_t_tensor = makeTensor(mask_t);
+        mask_cast_tensor = dataTypeCast(ctx, mask_t_tensor, diopi_dtype_int8);
         mask_cast_desc.set(mask_cast_tensor, CNNL_LAYOUT_ARRAY);
     }
 

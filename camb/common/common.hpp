@@ -11,11 +11,7 @@ namespace camb {
 
 using DiopiTensorT = DiopiTensor<diopiTensorHandle_t>;
 
-using DiopiConstTensorT = DiopiTensor<diopiConstTensorHandle_t>;
-
 DiopiTensorT dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensorT& src, diopiDtype_t destDtype);
-
-DiopiTensorT dataTypeCast(diopiContextHandle_t ctx, DiopiConstTensorT& src, diopiDtype_t destDtype);
 
 DiopiTensorT makeTensorFromScalar(diopiContextHandle_t ctx, const diopiScalar_t* scalar);
 
