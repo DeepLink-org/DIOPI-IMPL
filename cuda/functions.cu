@@ -10,7 +10,7 @@
 #include <cuda_runtime.h>
 #include <vector>
 
-#include "helper.hpp"
+#include "helper.h"
 
 
 #define dispatch_dtype(fun, dtype, gridSize, blockSize, stream, ...)                             \
