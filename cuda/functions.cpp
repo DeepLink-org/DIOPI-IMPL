@@ -11,6 +11,8 @@
 #include <vector>
 
 #include "helper.h"
+
+
 #ifndef DIOPI_WITH_RUNTIME
 #include <mutex>
 
@@ -34,10 +36,11 @@ void set_last_error_string(const char* szFmt, Types&&... args) {
     sprintf(szBuf, szFmt, std::forward<Types>(args)...);
     _set_last_error_string(szBuf);
 }
-#endif
+
 }  // namespace cuda
 
 }  // namespace impl
+#endif
 
 #define DIOPI_CALLCUDNN(Expr) {                                                         \
         ::cudnnStatus_t ret = Expr;                                                     \
