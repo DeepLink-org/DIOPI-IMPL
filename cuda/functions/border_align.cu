@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "../cuda_helper.hpp"
-#include "../helper.h"
+#include "../helper.hpp"
 
 namespace impl {
 

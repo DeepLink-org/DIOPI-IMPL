@@ -10,7 +10,7 @@
 #include <cstdio>
 #include <vector>
 
-#include "helper.h"
+#include "helper.hpp"
 
 
 #ifndef DIOPI_WITH_RUNTIME

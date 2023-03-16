@@ -5,13 +5,12 @@
  *
  *************************************************************************************************/
 
-#ifndef IMPL_CUDA_HELPER_H_
-#define IMPL_CUDA_HELPER_H_
+#ifndef IMPL_CUDA_HELPER_HPP_
+#define IMPL_CUDA_HELPER_HPP_
 
 #include <diopi/diopirt.h>
 #include <cuda_runtime.h>
 #include <utility>
-#include <assert.h>
 
 #define DIOPI_CALL(Expr) {                                                              \
     diopiError_t ret = Expr;                                                            \
@@ -75,7 +74,6 @@ public:
 
     int64_t size(int i) {
         if (!shape_.data) diopiGetTensorShape(tensor_, &shape_);
-        assert(i < shape_.len);
         const int64_t* shape_p = shape_.data;
         return *(shape_p + i);
     }
@@ -152,4 +150,4 @@ void set_last_error_string(const char* szFmt, Types&&... args) {
 
 }  // namespace impl
 
-#endif  // IMPL_CUDA_HELPER_H_
+#endif  // IMPL_CUDA_HELPER_HPP_
