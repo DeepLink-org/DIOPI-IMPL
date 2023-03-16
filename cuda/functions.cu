@@ -6,6 +6,7 @@
  *************************************************************************************************/
 
 #include <diopi/functions.h>
+#include <diopi/functions_mmcv.h>
 #include <stdio.h>
 #include <cuda_runtime.h>
 #include <vector>

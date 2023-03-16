@@ -1,5 +1,6 @@
 #include <cuda_runtime.h>
 #include <diopi/functions.h>
+#include <diopi/functions_mmcv.h>
 #include <float.h>
 #include <stdio.h>
 
