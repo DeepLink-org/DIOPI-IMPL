@@ -48,7 +48,7 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
 
     auto input_tensor = makeTensor(input_);
-    auto other_tempensor = makeTensor(other_);
+    auto other_tensor = makeTensor(other_);
     auto out_tensor = makeTensor(out);
     DiopiTensor<diopiTensorHandle_t> out_tensor_tmp;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
@@ -57,7 +57,7 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
         out_tensor_tmp = makeTensor(out);
     }
     input_tensor = dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
-    other_tempensor = dataTypeCast(ctx, other_tempensor, out_tensor_tmp.dtype());
+    other_tensor = dataTypeCast(ctx, other_tempensor, out_tensor_tmp.dtype());
 
     DiopiTensorT bcast_input_tensor = broadcastHelper(ctx, input_tensor, out_tensor_tmp);
     DiopiTensorT bcast_other_tempensor = broadcastHelper(ctx, other_tempensor, out_tensor_tmp);
