@@ -65,7 +65,7 @@ extern "C" diopiError_t diopiLogSoftmax(diopiContextHandle_t ctx, diopiTensorHan
     DIOPI_CALL(y_desc.set(output_tensor, CNNL_LAYOUT_ARRAY, input_shape));
 
     DIOPI_CALLCNNL(cnnlSoftmaxForward_v2(
-        handle, CNNL_SOFTMAX_LOG, mode_, CNNL_COMPUTATION_FAST, &alpha, x_desc.get(), input_tensor.data(), &beta, y_desc.get(), output_tensor.data()));
+        handle, CNNL_SOFTMAX_LOG, mode_, CNNL_COMPUTATION_ULTRAHIGH_PRECISION, &alpha, x_desc.get(), input_tensor.data(), &beta, y_desc.get(), output_tensor.data()));
     return diopiSuccess;
 }
 
