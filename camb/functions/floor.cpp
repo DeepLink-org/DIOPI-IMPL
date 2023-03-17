@@ -14,10 +14,9 @@ namespace impl {
 namespace camb {
 
 extern "C" DIOPI_API diopiError_t diopiFloor(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input) {
-    diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
-    auto trInput = makeTensor(input_);
-    auto trOut = makeTensor(out);
-    std::vector<DiopiTensorT*> pTensors{&trInput};
+    auto trInput = DiopiTensor(input);
+    auto trOut = DiopiTensor(out);
+    std::vector<DiopiTensor*> pTensors{&trInput};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
 
     autoCastTensorType(ctx, pTensors, supportedDtypes);
@@ -29,7 +28,7 @@ extern "C" DIOPI_API diopiError_t diopiFloor(diopiContextHandle_t ctx, diopiTens
 
     CnnlTensorDesc descInput(trInput, layout);
     CnnlTensorDesc descOut(trOut, layout);
-    DiopiTensorT trOutTmp;
+    DiopiTensor trOutTmp;
     CnnlTensorDesc descOutTmp;
     if (trInput.dtype() == trOut.dtype()) {
         trOutTmp = trOut;
