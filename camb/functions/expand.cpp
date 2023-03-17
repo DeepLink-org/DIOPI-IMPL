@@ -26,11 +26,6 @@ extern "C" DIOPI_API diopiError_t diopiExpand(diopiContextHandle_t ctx, diopiTen
     CnnlTensorDesc descOut(trOut, layout);
     DiopiTensor trOutTmp;
     CnnlTensorDesc descOutTmp;
-    // vector<int> dims;
-    // for(int i=0;i<size.len;i++) {
-    //     dims.push_back(size[i])
-    // }
-    // descOutTmp.set(trOutTmp, layout, dims);
     if (trInput.dtype() == trOut.dtype()) {
         trOutTmp = trOut;
         descOutTmp = descOut;
