@@ -82,7 +82,6 @@ DIOPI_API diopiError_t diopiMulScalar(diopiContextHandle_t ctx, diopiTensorHandl
     auto input_tensor = DiopiTensor(input);
     auto out_tensor = DiopiTensor(out);
     auto other_tensor = makeTensorFromScalar(ctx, other);
-    CnnlTensorDesc other_temp_desc(other_tensor, CNNL_LAYOUT_ARRAY);
     diopiMul(ctx, out, input, diopiTensorHandle_t(other_tensor));
     return diopiSuccess;
 }
