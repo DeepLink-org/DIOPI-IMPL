@@ -11,9 +11,9 @@ DIOPI_API diopiError_t
 diopiHardtanh(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* min_val, const diopiScalar_t* max_val) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = makeTensor(input);
+    auto input_tensor = DiopiTensor(input);
     CnnlTensorDesc inputDesc(input_tensor, CNNL_LAYOUT_ARRAY);
-    auto out_tensor = makeTensor(out);
+    auto out_tensor = DiopiTensor(out);
     CnnlTensorDesc outDesc(out_tensor, CNNL_LAYOUT_ARRAY);
 
     float min = min_val->fval;
@@ -29,7 +29,7 @@ diopiHardtanh(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTenso
 DIOPI_API diopiError_t diopiHardtanhInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* min_val, const diopiScalar_t* max_val) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = makeTensor(input);
+    auto input_tensor = DiopiTensor(input);
     CnnlTensorDesc inputDesc(input_tensor, CNNL_LAYOUT_ARRAY);
 
     float min = min_val->fval;
@@ -49,11 +49,11 @@ DIOPI_API diopiError_t diopiHardtanhBackward(diopiContextHandle_t ctx,
                                              const diopiScalar_t* min_val,
                                              const diopiScalar_t* max_val) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = makeTensor(input);
+    auto input_tensor = DiopiTensor(input);
     CnnlTensorDesc inputDesc(input_tensor, CNNL_LAYOUT_ARRAY);
-    auto grad_out_tensor = makeTensor(grad_output);
+    auto grad_out_tensor = DiopiTensor(grad_output);
     CnnlTensorDesc gradoutDesc(grad_out_tensor, CNNL_LAYOUT_ARRAY);
-    auto grad_in_tensor = makeTensor(grad_input);
+    auto grad_in_tensor = DiopiTensor(grad_input);
     CnnlTensorDesc gradinDesc(grad_in_tensor, CNNL_LAYOUT_ARRAY);
 
     float min = min_val->fval;
