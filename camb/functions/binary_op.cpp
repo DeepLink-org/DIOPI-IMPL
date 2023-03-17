@@ -15,10 +15,8 @@ namespace camb {
 
 extern "C" DIOPI_API diopiError_t
 diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
-    diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
-    diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
-    auto trInput = DiopiTensor(input_);
-    auto trOther = DiopiTensor(other_);
+    auto trInput = DiopiTensor(input);
+    auto trOther = DiopiTensor(other);
     auto trOut = DiopiTensor(out);
     std::vector<DiopiTensor*> pTensors{&trInput, &trOther};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int32};
