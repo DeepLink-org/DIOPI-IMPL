@@ -42,12 +42,10 @@ DiopiTensor broadcastHelper(diopiContextHandle_t ctx, DiopiTensor input_tensor, 
 
 DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    diopiTensorHandle_t input_ = diopiTensorHandle_t(input);
-    diopiTensorHandle_t other_ = diopiTensorHandle_t(other);
-
-    auto input_tensor = DiopiTensor(input_);
-    auto other_tensor = DiopiTensor(other_);
+    auto input_tensor = DiopiTensor(input);
+    auto other_tensor = DiopiTensor(other);
     auto out_tensor = DiopiTensor(out);
+
     DiopiTensor out_tensor_tmp;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
         out_tensor_tmp = dataTypeCast(ctx, out_tensor, diopi_dtype_float16);
