@@ -2237,6 +2237,14 @@ diopiError_t diopiNormal(diopiContextHandle_t ctx, diopiTensorHandle_t out, doub
     return diopiSuccess;
 }
 
+diopiError_t diopiNormalInp(diopiContextHandle_t ctx, diopiTensorHandle_t inout, double mean, double std) {
+    impl::aten::setCurCtx(ctx);
+    auto atInOut = impl::aten::buildATen(inout); 
+    at::native::normal_(atInOut, mean, std, c10::nullopt);
+    return diopiSuccess;
+}
+ 
+
 diopiError_t diopiNormalTensorScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t mean, double std) {
     impl::aten::setCurCtx(ctx);
     auto atOut = impl::aten::buildATen(out);
