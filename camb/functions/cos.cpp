@@ -17,7 +17,6 @@ extern "C" diopiError_t diopiCosInp(diopiContextHandle_t ctx, diopiTensorHandle_
         CnnlTensorDesc f32_desc(input_tensor_f32, CNNL_LAYOUT_ARRAY);
         DIOPI_CALLCNNL(cnnlCos_v2(handle, CNNL_COMPUTATION_HIGH_PRECISION, f32_desc.get(), input_tensor_f32.data(), f32_desc.get(), input_tensor_f32.data()));
         dataTypeCast(ctx, input_tensor, input_tensor_f32);
-        return diopiDtypeNotSupported;
     } else {
         CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_ARRAY);
         DIOPI_CALLCNNL(cnnlCos_v2(handle, CNNL_COMPUTATION_HIGH_PRECISION, input_desc.get(), input_tensor.data(), input_desc.get(), input_tensor.data()));
