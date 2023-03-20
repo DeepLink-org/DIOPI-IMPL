@@ -1,5 +1,7 @@
 #include <diopi/functions.h>
 
+#include <iostream>
+
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 
@@ -20,9 +22,26 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
     auto indices_tensor = DiopiTensor(indices);
     auto values_tensor = DiopiTensor(values);
 
-    CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_ARRAY);
-    CnnlTensorDesc values_desc(values_tensor, CNNL_LAYOUT_ARRAY);
-    CnnlTensorDesc indices_desc(indices_tensor, CNNL_LAYOUT_ARRAY);
+    DiopiTensor values_tensor_temp;
+    DiopiTensor input_tensor_temp;
+    if (input_tensor.dtype() == diopi_dtype_float64) {
+        std::cout << "support float64" << std::endl;
+        input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_float32);
+        values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_float32);
+    } else if (input_tensor.dtype() == diopi_dtype_int64) {
+        std::cout << "support int64" << std::endl;
+        input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_int32);
+        values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_int32);
+    } else {
+        input_tensor_temp = DiopiTensor(input);
+        values_tensor_temp = DiopiTensor(values);
+    }
+
+    DiopiTensor indices_tensor_temp;
+    indices_tensor_temp = dataTypeCast(ctx, indices_tensor, diopi_dtype_int32);
+    CnnlTensorDesc input_desc(input_tensor_temp, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc values_desc(values_tensor_temp, CNNL_LAYOUT_ARRAY);
+    CnnlTensorDesc indices_desc(indices_tensor_temp, CNNL_LAYOUT_ARRAY);
 
     size_t workspace_size = 0;
     DIOPI_CALLCNNL(cnnlGetTopKTensorWorkspaceSize(handle, input_desc.get(), k, dim, largest, values_desc.get(), indices_desc.get(), &workspace_size));
@@ -30,11 +49,10 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
     if (0 != workspace_size) {
         workspace = requiresBuffer(ctx, workspace_size).data();
     }
-    //
     const bool lower_index_first = true;
     DIOPI_CALLCNNL(cnnlTopKTensor_v3(handle,
                                      input_desc.get(),
-                                     input_tensor.data(),
+                                     input_tensor_temp.data(),
                                      k,
                                      dim,
                                      largest,
@@ -43,9 +61,18 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
                                      workspace,
                                      workspace_size,
                                      values_desc.get(),
-                                     values_tensor.data(),
+                                     values_tensor_temp.data(),
                                      indices_desc.get(),
-                                     indices_tensor.data()))
+                                     indices_tensor_temp.data()))
+    if (values_tensor_temp.dtype() != values_tensor.dtype()) {
+        dataTypeCast(ctx, values_tensor, values_tensor_temp);
+    }
+
+    if (indices_tensor_temp.dtype() != indices_tensor.dtype()) {
+        dataTypeCast(ctx, indices_tensor, indices_tensor_temp);
+    }
+
+    return diopiSuccess;
 }
 
 }  // extern "C"
