@@ -1,7 +1,5 @@
 #include <diopi/functions.h>
 
-#include <iostream>
-
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 
@@ -25,11 +23,9 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
     DiopiTensor values_tensor_temp;
     DiopiTensor input_tensor_temp;
     if (input_tensor.dtype() == diopi_dtype_float64) {
-        std::cout << "support float64" << std::endl;
         input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_float32);
         values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_float32);
     } else if (input_tensor.dtype() == diopi_dtype_int64) {
-        std::cout << "support int64" << std::endl;
         input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_int32);
         values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_int32);
     } else {
