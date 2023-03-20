@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "../cuda_helper.hpp"
-#include "../helper.h"
+#include "../helper.hpp"
 
 namespace impl {
 
@@ -411,21 +411,8 @@ diopiError_t diopiPrroiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_
 
   // at::cuda::CUDAGuard device_guard(input.device());
   auto stream = impl::cuda::getStream(ctx);
-  dispatch_float_types_and_half(impl::cuda::prroi_pool_forward_cuda_kernel,
-                                diopi_dtype_float32,
-                                GET_BLOCKS(output_size),
-                                THREADS_PER_BLOCK,
-                                stream,
-                                output_size,
-                                input.data(),
-                                rois.data(),
-                                output.data(),
-                                pooled_height,
-                                pooled_width,
-                                static_cast<float>(spatial_scale),
-                                channels,
-                                height,
-                                width);
+  impl::cuda::prroi_pool_forward_cuda_kernel<float><<<GET_BLOCKS(output_size), THREADS_PER_BLOCK, 0, stream>>>(
+      output_size, input.data(), rois.data(), output.data(), pooled_height, pooled_width, static_cast<float>(spatial_scale), channels, height, width);
   return diopiSuccess;
 }
 
@@ -446,21 +433,8 @@ diopiError_t diopiPrroiPoolbackward(diopiContextHandle_t ctx,
 
   // at::cuda::CUDAGuard device_guard(grad_output.device());
   auto stream = impl::cuda::getStream(ctx);
-  dispatch_float_types_and_half(impl::cuda::prroi_pool_backward_cuda_kernel,
-                                diopi_dtype_float32,
-                                GET_BLOCKS(output_size),
-                                THREADS_PER_BLOCK,
-                                stream,
-                                output_size,
-                                grad_output.data(),
-                                rois.data(),
-                                grad_input.data(),
-                                pooled_height,
-                                pooled_width,
-                                static_cast<float>(spatial_scale),
-                                channels,
-                                height,
-                                width);
+  impl::cuda::prroi_pool_backward_cuda_kernel<float><<<GET_BLOCKS(output_size), THREADS_PER_BLOCK, 0, stream>>>(
+      output_size, grad_output.data(), rois.data(), grad_input.data(), pooled_height, pooled_width, static_cast<float>(spatial_scale), channels, height, width);
   return diopiSuccess;
 }
 
@@ -483,22 +457,17 @@ diopiPrroiPoolCoorBackward(diopiContextHandle_t ctx, diopiTensorHandle_t output_
 
   // at::cuda::CUDAGuard device_guard(grad_output.device());
   auto stream = impl::cuda::getStream(ctx);
-  dispatch_float_types_and_half(impl::cuda::prroi_pool_coor_backward_cuda_kernel,
-                                diopi_dtype_float32,
-                                GET_BLOCKS(output_size),
-                                THREADS_PER_BLOCK,
-                                stream,
-                                output_size,
-                                output.data(),
-                                grad_output.data(),
-                                input.data(),
-                                rois.data(),
-                                grad_rois.data(),
-                                pooled_height,
-                                pooled_width,
-                                static_cast<float>(spatial_scale),
-                                channels,
-                                height,
-                                width);
+  impl::cuda::prroi_pool_coor_backward_cuda_kernel<float><<<GET_BLOCKS(output_size), THREADS_PER_BLOCK, 0, stream>>>(output_size,
+                                                                                                                     output.data(),
+                                                                                                                     grad_output.data(),
+                                                                                                                     input.data(),
+                                                                                                                     rois.data(),
+                                                                                                                     grad_rois.data(),
+                                                                                                                     pooled_height,
+                                                                                                                     pooled_width,
+                                                                                                                     static_cast<float>(spatial_scale),
+                                                                                                                     channels,
+                                                                                                                     height,
+                                                                                                                     width);
   return diopiSuccess;
 }
