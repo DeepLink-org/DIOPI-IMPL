@@ -54,9 +54,11 @@ else()
     message(FATAL_ERROR "Not found CUDNN.")
 endif()
 
-set(IMPL_SRC functions.cpp functions.cu)
+file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions/*.cu)
 
 if (RUNTIME)
+    list(APPEND IMPL_SRC functions.cpp)
+    list(APPEND IMPL_SRC functions.cu)
     add_definitions(-DDIOPI_WITH_RUNTIME)
     set(IMPL_SRC ${IMPL_SRC} conform_test.cpp)
 endif()
