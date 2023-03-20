@@ -1779,6 +1779,23 @@ diopiError_t diopiHardtanhInp(diopiContextHandle_t ctx, diopiTensorHandle_t inpu
     return diopiSuccess;
 }
 
+diopiError_t diopiHardswish(diopiContextHandle_t ctx, diopiConstTensorHandle_t out, diopiConstTensorHandle_t input){
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atInput = impl::aten::buildATen(input);
+    at::Tensor atOut = impl::aten::buildATen(out);
+    at::hardswish_out(atOut,atInput);
+    return diopiSuccess;
+}
+
+diopiError_t diopiHardswishInp(diopiContextHandle_t ctx, diopiConstTensorHandle_t input){
+    impl::aten::setCurCtx(ctx);
+    at::Tensor atInput = impl::aten::buildATen(input);
+    impl::aten::invokeATenFuncInp(ctx, at::hardswish_, atInput);
+    return diopiSuccess;
+}
+
+
+
 diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input,
                             const diopiScalar_t* threshold, const diopiScalar_t* value) {
     impl::aten::setCurCtx(ctx);
