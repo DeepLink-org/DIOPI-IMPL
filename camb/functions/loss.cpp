@@ -301,10 +301,13 @@ DIOPI_API diopiError_t diopiMSELoss(diopiContextHandle_t ctx, diopiTensorHandle_
     cnnlMSELossReduction_t cnnl_reduction;
     if(reduction == ReductionMean) {
         cnnl_reduction = CNNL_MSE_LOSS_MEAN;
+        DIOPI_CHECK(trOut.dim() == 0, "Output dim must be 0.");
     } else if(reduction == ReductionSum){
         cnnl_reduction = CNNL_MSE_LOSS_SUM;
+        DIOPI_CHECK(trOut.dim() == 0, "Output dim must be 0.");
     } else {
         cnnl_reduction = CNNL_MSE_LOSS_NONE;
+        DIOPI_CHECK(trOut.dim() == trInput.dim(), "Output dim must be the same as input.");
     }
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -324,31 +327,6 @@ DIOPI_API diopiError_t diopiMSELoss(diopiContextHandle_t ctx, diopiTensorHandle_
         trOutTmp = requiresTensor(ctx, vec2diopiSize_t(trOut.shape()), trInput.dtype());
         descOutTmp.set(trOutTmp, CNNL_LAYOUT_ARRAY);
     }
-
-    std::cout << "trInput:" << std::endl;
-    auto shape = trInput.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    std::cout << "trTarget:" << std::endl;
-    shape = trTarget.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    std::cout << "trOut:" << std::endl;
-    std::cout << trOut.data() << std::endl;
-    shape = trOut.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    std::cout << "trOutTmp:" << std::endl;
-    shape = trOutTmp.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
 
     DIOPI_CALLCNNL(cnnlMSELoss(handle, cnnl_reduction, descInput.get(), trInput.data(), descTarget.get(), trTarget.data(), descOutTmp.get(), trOutTmp.data()));
     if (trOutTmp.dtype() != trOut.dtype()) {
@@ -371,10 +349,13 @@ DIOPI_API diopiError_t diopiMSELossBackward(diopiContextHandle_t ctx, diopiTenso
     cnnlMSELossReduction_t cnnl_reduction;
     if(reduction == ReductionMean) {
         cnnl_reduction = CNNL_MSE_LOSS_MEAN;
+        DIOPI_CHECK(trGradOutput.dim() == 0, "Grad output dim must be 0.");
     } else if(reduction == ReductionSum){
         cnnl_reduction = CNNL_MSE_LOSS_SUM;
+        DIOPI_CHECK(trGradOutput.dim() == 0, "Grad output dim must be 0.");
     } else {
         cnnl_reduction = CNNL_MSE_LOSS_NONE;
+        DIOPI_CHECK(trGradOutput.dim() == trInput.dim(), "Output dim must be the same as input.");
     }
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -395,29 +376,6 @@ DIOPI_API diopiError_t diopiMSELossBackward(diopiContextHandle_t ctx, diopiTenso
         trGradInputTmp = requiresTensor(ctx, vec2diopiSize_t(trGradInput.shape()), trInput.dtype());
         descGradInputTmp.set(trGradInputTmp, CNNL_LAYOUT_ARRAY);
     }
-    std::cout << "trInput:" << std::endl;
-    auto shape = trInput.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    std::cout << "trTarget:" << std::endl;
-    shape = trTarget.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    std::cout << "trGradInput:" << std::endl;   
-    shape = trGradInput.shape();
-    for(int i=0;i<shape.size();i++)
-        std::cout << shape[i] << ' ';
-    std::cout << std::endl;
-
-    // std::cout << "trOut:" << std::endl;
-    // shape = trOut.shape();
-    // for(int i=0;i<shape.size();i++)
-    //     std::cout << shape[i] << ' ';
-    // std::cout << std::endl;
 
     DIOPI_CALLCNNL(cnnlMSELossBackward(handle, cnnl_reduction, descInput.get(), trInput.data(), descTarget.get(), trTarget.data(), descGradOutput.get(), trGradOutput.data(), descGradInputTmp.get(), trGradInputTmp.data()));
     if (trGradInputTmp.dtype() != trGradInput.dtype()) {
