@@ -89,8 +89,7 @@ public:
 
         if (!dim) {
             std::vector<int> dim_array(1, 1);
-            DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(
-                desc, CNNL_LAYOUT_ARRAY, dtype, 1, dim_array.data(), dim_array.data()));
+            DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(desc, CNNL_LAYOUT_ARRAY, dtype, 1, dim_array.data(), dim_array.data()));
             return diopiSuccess;
         }
 
@@ -175,6 +174,86 @@ protected:
     T resource_{0};
 };
 
+class CnnlTensorDescriptor final : public CnnlDescBase<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> {
+public:
+    template <typename T>
+    diopiError_t set(T& t, cnnlTensorLayout_t layout) {
+        const std::vector<int64_t>& dimSize = t.shape();
+        size_t dim = dimSize.size();
+        std::vector<int32_t> shape(dim);
+        cnnlDataType_t dtype;
+        DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
+
+        if (!dim) {
+            std::vector<int> dim_array(1, 1);
+            DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(get(), CNNL_LAYOUT_ARRAY, dtype, 1, dim_array.data(), dim_array.data()));
+            return diopiSuccess;
+        }
+
+        if (layout == CNNL_LAYOUT_NHWC || layout == CNNL_LAYOUT_NDHWC || layout == CNNL_LAYOUT_NLC) {
+            shape[0] = dimSize[0];
+            for (size_t i = 0; i < dim - 1; ++i) {
+                shape[i + 1] = dimSize[(i + 1) % (dim - 1) + 1];
+            }
+        } else if (layout == CNNL_LAYOUT_HWCN) {
+            // HWCN is only used by depthwise conv now, and the dim is 4
+            DIOPI_CHECK(dim == 4, "depthwise convolution input's dim must be 4!");
+            shape[0] = dimSize[2];
+            shape[1] = dimSize[3];
+            shape[2] = dimSize[1];
+            shape[3] = dimSize[0];
+        } else {
+            for (size_t i = 0; i < dim; ++i) {
+                shape[i] = dimSize[i];
+            }
+        }
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), layout, dtype, shape.size(), shape.data()));
+        return diopiSuccess;
+    }
+
+    template <typename T>
+    diopiError_t set(T& t, cnnlTensorLayout_t layout, std::vector<int> dims) {
+        cnnlDataType_t dtype;
+        DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), layout, dtype, dims.size(), dims.data()));
+        return diopiSuccess;
+    }
+
+    diopiError_t set_reduce(const DiopiTensor& t) {
+        int t_dim = t.dim();
+        std::vector<int> dim_array;
+        if (t_dim == 0) {
+            t_dim = 1;
+            dim_array.push_back(1);
+        } else {
+            auto shape = t.shape();
+            for (int i = 0; i < t_dim; i++) {
+                dim_array.push_back(shape[i]);
+            }
+        }
+        cnnlDataType_t cnnl_dtype;
+        DIOPI_CALL(CnnlDataType::convertToCnnlType(&cnnl_dtype, t.dtype()));
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), CNNL_LAYOUT_NCHW, cnnl_dtype, t_dim, dim_array.data()));
+        return diopiSuccess;
+    }
+    diopiError_t set_reduce(const DiopiTensor& t, std::vector<int> keepdim) {
+        int t_dim = keepdim.size();
+        std::vector<int> dim_array;
+        if (t_dim == 0) {
+            t_dim = 1;
+            dim_array.push_back(1);
+        } else {
+            for (int i = 0; i < t_dim; i++) {
+                dim_array.push_back(keepdim[i]);
+            }
+        }
+        cnnlDataType_t cnnl_dtype;
+        DIOPI_CALL(CnnlDataType::convertToCnnlType(&cnnl_dtype, t.dtype()));
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), CNNL_LAYOUT_NCHW, cnnl_dtype, t_dim, dim_array.data()));
+        return diopiSuccess;
+    }
+};
+
 class CnnlTransposeDescriptor final : public CnnlDescBase<cnnlTransposeDescriptor_t, cnnlCreateTransposeDescriptor, cnnlDestroyTransposeDescriptor> {
 public:
     CnnlTransposeDescriptor() {}
@@ -191,76 +270,24 @@ class CnnlReduceDescriptor final : public CnnlDescBase<cnnlReduceDescriptor_t, c
 public:
     CnnlReduceDescriptor() {}
 
-    CnnlReduceDescriptor(auto& t,
-                         diopiSize_t dim,
-                         const cnnlReduceOp_t reduceOp,
-                         cnnlDataType_t dtype,
-                         cnnlNanPropagation_t nanPropagation,
-                         cnnlReduceIndices_t indices,
-                         cnnlIndicesType_t indicesType) {
-        set(t, dim, reduceOp, dtype, nanPropagation, indices, indicesType);
-    }
-
-    template <typename T>
-    diopiError_t set(T& t,
-                     diopiSize_t dim,
-                     const cnnlReduceOp_t reduceOp,
-                     cnnlDataType_t dtype,
-                     cnnlNanPropagation_t nanPropagation,
-                     cnnlReduceIndices_t indices,
-                     cnnlIndicesType_t indicesType) {
-        /* if dim is not set, all dimensions are reduced. */
-        std::vector<int> axis;
-        if (dim.len > 0) {
-            std::vector<int> dims{dim.data, dim.data + dim.len};
-            axis = dims;
-        } else {
-            int input_size = t.shape().size();
-            for (int i = 0; i < input_size; i++) {
-                axis.push_back(i);
-            }
+    diopiError_t set(DiopiTensor& t,
+                     std::vector<int64_t> axis,
+                     cnnlReduceOp_t reduce_op,
+                     cnnlReduceIndices_t is_indices,
+                     cnnlIndicesType_t indices_type,
+                     cnnlDataType_t tensor_type) {
+        int axis_num = axis.size();
+        std::vector<int> axis_list(axis_num);
+        for (int i = 0; i < axis_num; i++) {
+            axis_list[i] = static_cast<int>(axis[i]);
         }
-        DIOPI_CALLCNNL(cnnlSetReduceDescriptor(get(), axis.data(), axis.size(), reduceOp, dtype, nanPropagation, indices, indicesType));
-
+        DIOPI_CALLCNNL(cnnlSetReduceDescriptor(get(), axis_list.data(), axis_num, reduce_op, tensor_type, CNNL_NOT_PROPAGATE_NAN, is_indices, indices_type));
         return diopiSuccess;
     }
 };
 
-template <typename T1, typename T2>
-diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, T1& in, T2& out, cnnlTensorLayout_t layoutIn, cnnlTensorLayout_t layoutOut) {
-    std::vector<int> order;
-    if (layoutIn == CNNL_LAYOUT_NHWC && layoutOut == CNNL_LAYOUT_HWCN) {
-        order = {1, 2, 3, 0};
-    } else if (layoutIn == CNNL_LAYOUT_NHWC && layoutOut == CNNL_LAYOUT_NCHW) {
-        order = {0, 3, 1, 2};
-    } else if (layoutIn == CNNL_LAYOUT_NCHW && layoutOut == CNNL_LAYOUT_HWCN) {
-        order = {2, 3, 1, 0};
-    } else if (layoutIn == CNNL_LAYOUT_NCHW && layoutOut == CNNL_LAYOUT_NHWC) {
-        order = {0, 2, 3, 1};
-    } else if (layoutIn == CNNL_LAYOUT_HWCN && layoutOut == CNNL_LAYOUT_NHWC) {
-        order = {3, 0, 1, 2};
-    } else if (layoutIn == CNNL_LAYOUT_HWCN && layoutOut == CNNL_LAYOUT_NCHW) {
-        order = {3, 2, 0, 1};
-    } else {
-        set_last_error_string(
-            "unkown layout error, layout should be "
-            "in [CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_HWCN], at %s:%s",
-            __FILE__,
-            __LINE__);
-        return diopiDtypeNotSupported;
-    }
-    CnnlTensorDesc inDesc(in, layoutIn);
-    CnnlTensorDesc outDesc(out, layoutOut);
-    CnnlTransposeDescriptor transDesc(order.size(), order.data());
-    size_t workspace_size = 0;
-    DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
-
-    void* workspace_ptr = workspace_size == 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
-    DIOPI_CALLCNNL(
-        cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(), in.data(), outDesc.get(), const_cast<void*>(out.data()), workspace_ptr, workspace_size));
-    return diopiSuccess;
-}
-
+diopiError_t cnnl_transpose(
+    diopiContextHandle_t& ctx, cnnlHandle_t& handle, DiopiTensor& in, DiopiTensor& out, cnnlTensorLayout_t layoutIn, cnnlTensorLayout_t layoutOut);
 // global var
 extern std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping;
 extern CnnlHandlePool cnnlHandlePool;
