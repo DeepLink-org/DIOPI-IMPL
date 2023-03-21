@@ -3302,10 +3302,10 @@ diopiError_t diopiRemainderScalar(diopiContextHandle_t ctx, diopiTensorHandle_t 
 diopiError_t diopiRemainder(diopiContextHandle_t ctx, diopiTensorHandle_t out, const diopiScalar_t* input, diopiConstTensorHandle_t other) {
     impl::aten::setCurCtx(ctx);
     auto atInputScalar = impl::aten::buildAtScalar(input);
-    auto atInput = impl::aten::buildATen(other).clone().fill_(atInputScalar);
     auto atOther = impl::aten::buildATen(other);
-    auto atOut = impl::aten::buildATen(out);
-    at::remainder_out(atOut, atInput, atOther);
+    // auto atOut = impl::aten::buildATen(out);
+    auto atOut = at::remainder(atInputScalar, atOther);
+    impl::aten::updateATen2Tensor(ctx, atOut, out);
     impl::aten::unsetCurCtx();
     return diopiSuccess;
 }
