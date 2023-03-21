@@ -23,8 +23,8 @@ diopiError_t clampCommon(
     CnnlTensorDesc input32Desc(input32_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc output32Desc(output32_tensor, CNNL_LAYOUT_ARRAY);
 
-    void * min_ptr = nullptr;
-    void * max_ptr = nullptr;
+    void* min_ptr = nullptr;
+    void* max_ptr = nullptr;
     if (nullptr != min) {
         auto min_tensor = DiopiTensor(min);
         DIOPI_CHECK(min_tensor.numel() == 1, "not support min is a tensor currently");
@@ -42,7 +42,8 @@ diopiError_t clampCommon(
         max_ptr = max_tensor.data();
     }
 
-    DIOPI_CALLCNNL(cnnlClip_v2(handle, CNNL_POINTER_MODE_DEVICE, input32Desc.get(), input32_tensor.data(), min_ptr, max_ptr, output32Desc.get(), output32_tensor.data()));
+    DIOPI_CALLCNNL(
+        cnnlClip_v2(handle, CNNL_POINTER_MODE_DEVICE, input32Desc.get(), input32_tensor.data(), min_ptr, max_ptr, output32Desc.get(), output32_tensor.data()));
     if (output_tensor.dtype() != output32_tensor.dtype()) {
         dataTypeCast(ctx, output_tensor, output32_tensor);
     }
