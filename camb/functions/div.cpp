@@ -16,7 +16,7 @@ diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
 
     DiopiTensor out_tensor_temp;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
-        out_tensor_temp = dataTypeCast(ctx, out_tensor, diopi_dtype_float16);
+        out_tensor_temp = dataTypeCast(ctx, out_tensor, diopi_dtype_float32);
     } else {
         out_tensor_temp = DiopiTensor(out);
     }
