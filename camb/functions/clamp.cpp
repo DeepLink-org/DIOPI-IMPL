@@ -27,6 +27,7 @@ diopiError_t clampCommon(
     void * max_ptr = nullptr;
     if (nullptr != min) {
         auto min_tensor = DiopiTensor(min);
+        DIOPI_CHECK(min_tensor.numel() == 1, "not support min is a tensor currently");
         if (input32_tensor.dtype() != min_tensor.dtype()) {
             min_tensor = dataTypeCast(ctx, min_tensor, input32_tensor.dtype());
         }
@@ -34,6 +35,7 @@ diopiError_t clampCommon(
     }
     if (nullptr != max) {
         auto max_tensor = DiopiTensor(max);
+        DIOPI_CHECK(max_tensor.numel() == 1, "not support max is a tensor currently");
         if (input32_tensor.dtype() != max_tensor.dtype()) {
             max_tensor = dataTypeCast(ctx, max_tensor, input32_tensor.dtype());
         }
