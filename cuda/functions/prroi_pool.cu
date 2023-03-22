@@ -334,32 +334,32 @@ __global__ void prroi_pool_coor_backward_cuda_kernel(
     for (int bin_y = start_y; bin_y < end_y; ++bin_y) {
       grad_x1_y += PrRoIPoolingSingleCoorIntegral(
           max(bin_y1, T(bin_y)) - bin_y, min(bin_y2, T(bin_y + 1)) - bin_y,
-          PrRoIPoolingInterpolation(this_input_data, float(bin_y), bin_x1,
+          PrRoIPoolingInterpolation(this_input_data, static_cast<float>(bin_y), bin_x1,
                                     height, width),
-          PrRoIPoolingInterpolation(this_input_data, float(bin_y + 1), bin_x1,
+          PrRoIPoolingInterpolation(this_input_data, static_cast<float>(bin_y + 1), bin_x1,
                                     height, width));
 
       grad_x2_y += PrRoIPoolingSingleCoorIntegral(
           max(bin_y1, T(bin_y)) - bin_y, min(bin_y2, T(bin_y + 1)) - bin_y,
-          PrRoIPoolingInterpolation(this_input_data, float(bin_y), bin_x2,
+          PrRoIPoolingInterpolation(this_input_data, static_cast<float>(bin_y), bin_x2,
                                     height, width),
-          PrRoIPoolingInterpolation(this_input_data, float(bin_y + 1), bin_x2,
+          PrRoIPoolingInterpolation(this_input_data, static_cast<float>(bin_y + 1), bin_x2,
                                     height, width));
     }
 
     for (int bin_x = start_x; bin_x < end_x; ++bin_x) {
       grad_x_y1 += PrRoIPoolingSingleCoorIntegral(
           max(bin_x1, T(bin_x)) - bin_x, min(bin_x2, T(bin_x + 1)) - bin_x,
-          PrRoIPoolingInterpolation(this_input_data, bin_y1, float(bin_x),
+          PrRoIPoolingInterpolation(this_input_data, bin_y1, static_cast<float>(bin_x),
                                     height, width),
-          PrRoIPoolingInterpolation(this_input_data, bin_y1, float(bin_x + 1),
+          PrRoIPoolingInterpolation(this_input_data, bin_y1, static_cast<float>(bin_x + 1),
                                     height, width));
 
       grad_x_y2 += PrRoIPoolingSingleCoorIntegral(
           max(bin_x1, T(bin_x)) - bin_x, min(bin_x2, T(bin_x + 1)) - bin_x,
-          PrRoIPoolingInterpolation(this_input_data, bin_y2, float(bin_x),
+          PrRoIPoolingInterpolation(this_input_data, bin_y2, static_cast<float>(bin_x),
                                     height, width),
-          PrRoIPoolingInterpolation(this_input_data, bin_y2, float(bin_x + 1),
+          PrRoIPoolingInterpolation(this_input_data, bin_y2, static_cast<float>(bin_x + 1),
                                     height, width));
     }
 
@@ -425,7 +425,7 @@ diopiError_t diopiPrroiPoolbackward(diopiContextHandle_t ctx,
   auto grad_output = impl::cuda::makeTensor(grad_output_);
   auto rois = impl::cuda::makeTensor(rois_);
   auto grad_input = impl::cuda::makeTensor(grad_input_);
-  
+
   int output_size = grad_output.numel();
   int channels = grad_input.size(1);
   int height = grad_input.size(2);

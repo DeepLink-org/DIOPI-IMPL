@@ -2,8 +2,8 @@
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
 #include <stdio.h>
- #include<assert.h>
- 
+#include<assert.h>
+
 #include <iostream>
 #include <vector>
 
