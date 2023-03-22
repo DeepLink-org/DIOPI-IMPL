@@ -36,7 +36,7 @@ jobs:
           fi
       - name: ci interruptible and support pr ci
         run: |
-          cd ${GITHUB_WORKSPACE} && bash scripts/ci_interruptible.sh
+          cd ${GITHUB_WORKSPACE}/DIOPI-TEST/impl && bash scripts/ci_interruptible.sh
       - name: Rsync to Server
         run: |
           ssh ${CLUSTER_1984} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
