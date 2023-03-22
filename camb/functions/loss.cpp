@@ -16,12 +16,10 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx,
                           diopiConstTensorHandle_t weight,
                           diopiReduction_t reduction,
                           int64_t ignore_index) {
-    // TODO(after yb的cast支持模板后): remove target_
-    diopiTensorHandle_t target_ = diopiTensorHandle_t(target);
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     auto input_tr = DiopiTensor(input);
     auto output_tr = DiopiTensor(out);
-    auto target_tr = DiopiTensor(target_);
+    auto target_tr = DiopiTensor(target);
     auto weight_tr = DiopiTensor(weight);
 
     DIOPI_CHECK(input_tr.dtype() != diopi_dtype_float16, "Half is not supported currently")
@@ -141,13 +139,11 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
                                   diopiConstTensorHandle_t weight,
                                   diopiReduction_t reduction,
                                   int64_t ignore_index) {
-    // TODO(after yb的cast支持模板后): remove target_
-    diopiTensorHandle_t target_ = diopiTensorHandle_t(target);
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     auto input_tr = DiopiTensor(input);
     auto grad_input_tr = DiopiTensor(grad_input);
     auto grad_output_tr = DiopiTensor(grad_output);
-    auto target_tr = DiopiTensor(target_);
+    auto target_tr = DiopiTensor(target);
     auto weight_tr = DiopiTensor(weight);
 
     DIOPI_CHECK(input_tr.dtype() != diopi_dtype_float16, "Half is not supported currently")
@@ -188,6 +184,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
         std::vector<int64_t> target_shape = {input_tr.shape()[0], 1, target_last_size};
         input_tr.reshape(input_shape);
         target_tr.reshape(target_shape);
+        // TODO(ywt): target_tr shape seems not useful here
 
         input_contiguous = input_tr.contiguous(ctx, MemoryFormat::ChannelsLast);
         cnnl_transpose(ctx, handle, input_tr, input_contiguous, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
@@ -216,10 +213,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
             DIOPI_CHECK(false, "unexpected nll_loss reduciton mode");
     }
     std::vector<int64_t> output_size = {N, C};
-    diopiSize_t output_size_diopi(output_size.data(), output_size.size());
-    diopiTensorHandle_t grad_input_real;
-    diopiRequireTensor(ctx, &grad_input_real, &output_size_diopi, nullptr, input_contiguous.dtype(), input_contiguous.device());
-    auto grad_input_real_tr = DiopiTensor(grad_input_real);
+    auto grad_input_real_tr = requiresTensor(ctx, output_size, input_contiguous.dtype());
 
     std::vector<int64_t> total_weight_size = {1};
     auto total_weight_tr = requiresTensor(ctx, total_weight_size, weight_tr.dtype());
@@ -251,7 +245,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
         grad_input_tr.reshape(input_contiguous.shape());
         cnnl_transpose(ctx, handle, grad_input_real_tr, grad_input_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW);
     } else {
-        diopiCopyInp(ctx, grad_input_real, grad_input);
+        diopiCopyInp(ctx, grad_input_real_tr.handle(), grad_input);
     }
 
     return diopiSuccess;
@@ -265,11 +259,17 @@ diopiError_t diopiCrossEntropyLoss(diopiContextHandle_t ctx,
                                    diopiReduction_t reduction,
                                    int64_t ignore_index,
                                    double label_smoothing) {
-    // TODO(ywt): fix value error
-    DIOPI_CHECK(label_smoothing != 0.0, "param label_smoothing is not supported")
+
     auto input_tr = DiopiTensor(input);
-    diopiLogSoftmax(ctx, out, input, 1, input_tr.dtype());
-    diopiNLLLoss(ctx, out, input, target, weight, reduction, ignore_index);
+    auto target_tr = DiopiTensor(target);
+
+    DIOPI_CHECK(label_smoothing == 0, "param label_smoothing is not supported")
+    DIOPI_CHECK(target_tr.dim() == input_tr.dim() - 1, "Probabilities for each class are not supported");
+
+    auto log_tr = requiresTensor(ctx, input_tr.shape(), input_tr.dtype());
+
+    diopiLogSoftmax(ctx, log_tr.handle(), input, 1, input_tr.dtype());
+    diopiNLLLoss(ctx, out, log_tr.handle(), target, weight, reduction, ignore_index);
     return diopiSuccess;
 }
 diopiError_t diopiCrossEntropyLossBackward(diopiContextHandle_t ctx,
@@ -281,11 +281,22 @@ diopiError_t diopiCrossEntropyLossBackward(diopiContextHandle_t ctx,
                                            diopiReduction_t reduction,
                                            int64_t ignore_index,
                                            double label_smoothing) {
-    // TODO(ywt): fix value error
-    DIOPI_CHECK(label_smoothing != 0.0, "param label_smoothing is not supported")
+
     auto input_tr = DiopiTensor(input);
-    diopiNLLLossBackward(ctx, grad_input, grad_output, input, target, weight, reduction, ignore_index);
-    diopiLogSoftmaxBackward(ctx, grad_input, grad_output, input, 1, input_tr.dtype());
+    auto target_tr = DiopiTensor(target);
+    auto grad_input_tr = DiopiTensor(grad_input);
+
+    DIOPI_CHECK(label_smoothing == 0, "param label_smoothing is not supported")
+    DIOPI_CHECK(target_tr.dim() == input_tr.dim() - 1, "Probabilities for each class are not supported");
+
+    auto log_tr = requiresTensor(ctx, input_tr.shape(), input_tr.dtype());
+    auto grad_tmp_tr = requiresTensor(ctx, grad_input_tr.shape(), grad_input_tr.dtype());
+
+    diopiLogSoftmax(ctx, log_tr.handle(), input, 1, input_tr.dtype());
+    // for nll loss backward, `input` should be logsoftmax out.
+    diopiNLLLossBackward(ctx, grad_tmp_tr.handle(), grad_output, log_tr.handle(), target, weight, reduction, ignore_index);
+    // for softmax backward, `output` should be logsoftmax out
+    diopiLogSoftmaxBackward(ctx, grad_input, grad_tmp_tr.handle(), log_tr.handle(), 1, input_tr.dtype());
     return diopiSuccess;
 }
 

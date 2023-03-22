@@ -144,9 +144,7 @@ public:
         diopiSize_t shape_diopi(this->shape().data(), this->shape().size());
         diopiTensorHandle_t tensor;
         diopiRequireTensor(ctx, &tensor, &shape_diopi, &stride_diopi, this->dtype(), this->device());
-
-        diopiTensorHandle_t tensor_may_const = tensor;
-        return DiopiTensor(tensor_may_const);
+        return DiopiTensor(tensor);
     }
 
     bool is_contiguous(MemoryFormat format = MemoryFormat::Contiguous) {
@@ -189,6 +187,10 @@ public:
         const void* p = nullptr;
         diopiGetTensorDataConst(tensor_, &p);
         return p;
+    }
+
+    diopiTensorHandle_t handle() {
+        return tensor_;
     }
 
 protected:
