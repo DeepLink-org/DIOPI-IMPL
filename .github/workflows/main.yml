@@ -24,15 +24,15 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          cd ${GITHUB_WORKSPACE} && rm -rf ConformanceTest-DIOPI && git clone git@github.com:OpenComputeLab/ConformanceTest-DIOPI.git && cd ConformanceTest-DIOPI
+          cd ${GITHUB_WORKSPACE} && rm -rf ConformanceTest-DIOPI DIOPI-TEST && git clone git@github.com:OpenComputeLab/DIOPI-TEST.git && cd DIOPI-TEST
           git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl
           cd impl && git checkout ${{ github.sha }}
       - name: Rsync to Server
         run: |
           ssh ${CLUSTER_1984} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/ConformanceTest-DIOPI/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
           ssh ${CLUSTER_CAMB} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/ConformanceTest-DIOPI/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
 
   lint-cpp:
     name: lint-cpp
@@ -83,7 +83,7 @@ jobs:
           ssh ${CLUSTER_1984} """
           set -e
           export CI=true
-          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest'
           """
       - name: NHWC-32bit-test
@@ -111,7 +111,7 @@ jobs:
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
           rsync -a ${CLUSTER_1984}:${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
           export CI=true
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=CAMB && make -j4'
           """
       - name: Run-test-camb
         run: |
