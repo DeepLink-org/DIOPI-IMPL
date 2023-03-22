@@ -8,7 +8,7 @@ on:
       - 'main'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 env:
   NFS_PATH: '/mnt/cache/share/parrotsci/github/cibuild/${{ github.repository }}'
