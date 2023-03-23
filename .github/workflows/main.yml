@@ -74,7 +74,7 @@ jobs:
           export CI=true
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
-    name: Build-Camb
+      - name: Build-Camb
         run: |
           ssh ${CLUSTER_CAMB} """
           set -e
