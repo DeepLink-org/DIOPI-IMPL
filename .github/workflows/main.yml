@@ -10,6 +10,7 @@ on:
 env:
   NFS_PATH: '/mnt/cache/share/parrotsci/github/cibuild/${{ github.repository }}'
   ENV_PATH: '/mnt/cache/share/platform/cienv'
+  SOURCE_PATH: ${NFS_PATH}/${GITHUB_WORKSPACE}/../source
   ENV_NAME: 'pt1.10v2'
   GPU_REQUESTS: 1
   SLURM_PAR_SH1984: ${{ secrets.SLURM_PAR_SH1984 }}
@@ -24,6 +25,7 @@ jobs:
     steps:
       - name: clone repo
         run: |
+          echo SOURCE_PATH:${SOURCE_PATH}
           cd ${GITHUB_WORKSPACE} && rm -rf DIOPI-TEST && git clone git@github.com:OpenComputeLab/DIOPI-TEST.git && cd DIOPI-TEST
           git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl && cd impl
           if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
@@ -39,9 +41,9 @@ jobs:
       - name: Rsync to Server
         run: |
           ssh ${CLUSTER_1984} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_WORKSPACE}/../source/
           ssh ${CLUSTER_CAMB} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_WORKSPACE}/../source/
 
   lint-cpp:
     name: lint-cpp
