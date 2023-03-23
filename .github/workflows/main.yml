@@ -116,7 +116,7 @@ jobs:
           """
 
   Op-test-nvidia:
-    name: operators-test-nvidia
+    name: Operators-test-nvidia
     runs-on:  github-diopi-ci
     needs: [Gen-Data]
     steps:
@@ -143,7 +143,7 @@ jobs:
 
 
   Rt-test-nvidia:
-    name: rt-test-nvidia
+    name: Rt-test-nvidia
     runs-on:  github-diopi-ci
     needs: Build-Nvidia
     steps:
@@ -156,9 +156,9 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
   Op-test-camb:
-    name: operator-test-camb
+    name: Operator-test-camb
     runs-on:  github-diopi-ci
-    needs: [Gen-Data]
+    needs: [Gen-Data, Build-Camb]
     steps:
       - name: test
         run: |
@@ -170,9 +170,9 @@ jobs:
           """
 
   Rt-test-camb:
-    name: rt-test-camb
+    name: Rt-test-camb
     runs-on:  github-diopi-ci
-    needs: [Build-Nvidia]
+    needs: [Build-Camb]
     steps:
       - name: test
         run: |
