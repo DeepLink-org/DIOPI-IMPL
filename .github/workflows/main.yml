@@ -116,7 +116,7 @@ jobs:
           """
 
   Op-test-nvidia:
-    name: Operators-test-nvidia
+    name: Op-test-nvidia
     runs-on:  github-diopi-ci
     needs: [Gen-Data]
     steps:
@@ -156,7 +156,7 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
   Op-test-camb:
-    name: Operator-test-camb
+    name: Op-test-camb
     runs-on:  github-diopi-ci
     needs: [Gen-Data, Build-Camb]
     steps:
@@ -180,7 +180,7 @@ jobs:
           set -e
           export CI=true
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd source
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=mlu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
 
