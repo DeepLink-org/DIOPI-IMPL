@@ -168,10 +168,11 @@ jobs:
     env:
       work_root: ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}
       data_path: ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance/data
-      data_path:
     steps:
       - name: test
         run: |
+          echo work_root:${work_root}
+          echo data_path:${data_path}
           ssh ${CLUSTER_CAMB} """
           set -e
           export CI=true
