@@ -65,7 +65,7 @@ jobs:
     runs-on:  github-diopi-ci
     needs: [lint-cpp]
     steps:
-      - name: Build
+      - name: build
         run: |
           ssh ${CLUSTER_1984} """
           set -e
@@ -74,6 +74,16 @@ jobs:
           export CI=true
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
+      - name: build-dyload
+        run: |
+          ssh ${CLUSTER_1984} """
+          set -e
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME}
+          cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
+          export CI=true
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash scripts/build_impl.sh torch_dyload || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          """
+
   Build-Camb:
     name: Build-Camb
     runs-on:  github-diopi-ci
@@ -105,29 +115,47 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode gen_data && python main.py --mode run_test' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
-  # Test:
-  #   name: Test
-  #   runs-on:  github-diopi-ci
-  #   needs: [Build-gendata]
-  #   steps:
-  #     - name: Unit-test
-  #       run: |
-  #         ssh ${CLUSTER_1984} """
-  #         set -e
-  #         export CI=true
-  #         source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
-  #         srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
-  #         """
-  #     - name: NHWC-32bit-test
-  #       run: |
-  #         ssh ${CLUSTER_1984} """
-  #         set -e
-  #         export CI=true
-  #         source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-  #         srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test --fname batch_norm --nhwc &&
-  #         python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
-  #         || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
-  #         """
+  Op-test-nvidia:
+    name: operators-test-nvidia
+    runs-on:  github-diopi-ci
+    needs: [Gen-Data]
+    steps:
+      - name: NHWC-32bit-test
+        run: |
+          ssh ${CLUSTER_1984} """
+          set -e
+          export CI=true
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test --fname batch_norm --nhwc &&
+          python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          """
+      - name: dyload-test
+        run: |
+          ssh ${CLUSTER_1984} """
+          set -e
+          export CI=true
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
+          rsync -a ${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance/
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          """
+
+
+  Rt-test-nvidia:
+    name: rt-test-nvidia
+    runs-on:  github-diopi-ci
+    needs: Build-Nvidia
+    steps:
+      - name: test
+        run: |
+          ssh ${CLUSTER_1984} """
+          set -e
+          export CI=true
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          """
+
 
 
   # Test-camb:
@@ -169,30 +197,5 @@ jobs:
   #         source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
   #         srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test --fname batch_norm --nhwc &&
   #         python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
-  #         || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
-  #         """
-
-  # test-dyload:
-  #   name: test-dyload
-  #   runs-on: github-diopi-ci
-  #   needs: [Build-gendata]
-  #   steps:
-  #     - name: Build-dyload
-  #       run: |
-  #         ssh ${CLUSTER_1984} """
-  #         set -e
-  #         source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME}
-  #         cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
-  #         export CI=true
-  #         srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash scripts/build_impl.sh torch_dyload || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
-  #         """
-  #     - name: Run-test
-  #       run: |
-  #         ssh ${CLUSTER_1984} """
-  #         set -e
-  #         export CI=true
-  #         source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-  #         rsync -a ${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance/
-  #         srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
   #         || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
   #         """
