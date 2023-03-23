@@ -10,7 +10,6 @@ on:
 env:
   NFS_PATH: '/mnt/cache/share/parrotsci/github/cibuild/${{ github.repository }}'
   ENV_PATH: '/mnt/cache/share/platform/cienv'
-  ppp_pp: ${{ NFS }}/${{ ENV_PATH }}
   ENV_NAME: 'pt1.10v2'
   GPU_REQUESTS: 1
   SLURM_PAR_SH1984: ${{ secrets.SLURM_PAR_SH1984 }}
@@ -19,6 +18,7 @@ env:
   CLUSTER_CAMB: CAMB
   BUILD_TEST1: build_test
   BUILD_TEST2: build_test_dy
+  GEN_DATA: python/conformance/data
 
 jobs:
   Rsync:
@@ -27,7 +27,6 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          echo ${ppp_pp}
           cd ${GITHUB_WORKSPACE} && rm -rf DIOPI-TEST && git clone git@github.com:OpenComputeLab/DIOPI-TEST.git && cd DIOPI-TEST
           git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl && cd impl
           if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
@@ -141,7 +140,7 @@ jobs:
           set -e
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${BUILD_TEST2}
-          rm -rf python/conformance/data ln -s ${NFS_PATH}/${GITHUB_JOB}/python/conformance/
+          rm -rf ${GEN_DATA} ln -s ../${BUILD_TEST1}/${GEN_DATA} ${GEN_DATA}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
