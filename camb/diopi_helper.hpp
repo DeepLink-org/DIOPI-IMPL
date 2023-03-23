@@ -207,14 +207,14 @@ inline auto makeTensor(diopiContextHandle_t ctx, const diopiScalar_t* pScalar) -
     return DiopiTensor(tensor);
 }
 
-inline diopiTensorHandle_t ones(diopiContextHandle_t ctx, std::vector<int64_t>& size, diopiDtype_t dtype) {
+inline DiopiTensor ones(diopiContextHandle_t ctx, std::vector<int64_t> size, diopiDtype_t dtype) {
     diopiTensorHandle_t tensor;
     diopiSize_t size_(size.data(), size.size());
     diopiRequireTensor(ctx, &tensor, &size_, nullptr, dtype, diopi_device);
     diopiScalar_t scalar = {dtype, 1.0};
     if (DiopiDataType().isInteger(dtype)) scalar = {dtype, 1};
     diopiFill(ctx, tensor, &scalar);
-    return tensor;
+    return DiopiTensor(tensor);
 }
 
 inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const diopiSize_t& size, diopiDtype_t dtype) {
