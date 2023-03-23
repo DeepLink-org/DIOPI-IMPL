@@ -48,8 +48,8 @@ std::map<cnnlReduceOp_t, std::vector<diopiDtype_t>> supported_type_table = {
     {CNNL_REDUCE_ADD, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
     {CNNL_REDUCE_AVG, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
     {CNNL_REDUCE_MUL, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int64, diopi_dtype_float64}},
-    {CNNL_REDUCE_MAX, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int64, diopi_dtype_float64}},
-    {CNNL_REDUCE_MIN, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int64, diopi_dtype_float64}},
+    {CNNL_REDUCE_MAX, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
+    {CNNL_REDUCE_MIN, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
     {CNNL_REDUCE_AND, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
     {CNNL_REDUCE_OR, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
     {CNNL_REDUCE_NORM1, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
@@ -78,9 +78,9 @@ diopiError_t reduce_internal(diopiContextHandle_t ctx,
     DIOPI_CHECK(input_tr.is_contiguous(), "input tensor should be contiguous");
 
     CnnlReduceDescriptor reduce_desc;
-    CnnlTensorDescriptor input_desc;
-    CnnlTensorDescriptor output_desc;
-    CnnlTensorDescriptor index_desc;
+    CnnlTensorDesc input_desc;
+    CnnlTensorDesc output_desc;
+    CnnlTensorDesc index_desc;
 
     cnnlDataType_t cnnl_dtype;
     DIOPI_CALL(CnnlDataType::convertToCnnlType(&cnnl_dtype, input_tr.dtype()));
@@ -97,21 +97,18 @@ diopiError_t reduce_internal(diopiContextHandle_t ctx,
         std::vector<int64_t> full_reduce(1, -1);
         std::vector<int64_t> fake_size(input_tr.dim(), 1);
         reduce_desc.set(input_tr, full_reduce, reduce_op, reduce_indices, CNNL_32BIT_INDICES, cnnl_dtype);
-        input_desc.set_reduce(input_tr);
+        input_desc.set(input_tr, CNNL_LAYOUT_ARRAY);
         DiopiTensor fake_tensor = requiresTensor(ctx, fake_size, output_tr.dtype());
-        output_desc.set_reduce(fake_tensor);
-        // output_desc.set(fake_tensor, CNNL_LAYOUT_ARRAY);
+        output_desc.set(fake_tensor, CNNL_LAYOUT_ARRAY);
         DiopiTensor fake_tensor2 = requiresTensor(ctx, fake_size, index_tr.dtype());
-        index_desc.set_reduce(fake_tensor2);
-        // index_desc.set(fake_tensor2, CNNL_LAYOUT_ARRAY);
+        // index_desc.set_reduce(fake_tensor2);
+        index_desc.set(fake_tensor2, CNNL_LAYOUT_ARRAY);
     } else {
         reduce_desc.set(input_tr, reduce_dim, reduce_op, reduce_indices, CNNL_32BIT_INDICES, cnnl_dtype);
-        input_desc.set_reduce(input_tr);
+        input_desc.set(input_tr, CNNL_LAYOUT_ARRAY);
         auto desc_shape = infer_desc_shape(input_tr.shape(), reduce_dim, true);
-        output_desc.set_reduce(output_tr, desc_shape);
-        index_desc.set_reduce(index_tr, desc_shape);
-        // output_desc.set(output_tr, CNNL_LAYOUT_ARRAY, desc_shape);
-        // index_desc.set(index_tr, CNNL_LAYOUT_ARRAY, desc_shape);
+        output_desc.set(output_tr, CNNL_LAYOUT_ARRAY, desc_shape);
+        index_desc.set(index_tr, CNNL_LAYOUT_ARRAY, desc_shape);
     }
 
     size_t workspace_size = 0;
