@@ -166,7 +166,7 @@ jobs:
     runs-on:  github-diopi-ci
     needs: [Gen-Data, Build-Camb]
     env:
-      work_root: ${{ NFS_PATH }}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}
+      work_root: ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}
       data_path: ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance/data
       data_path:
     steps:
