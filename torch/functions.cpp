@@ -1941,15 +1941,15 @@ diopiError_t diopiHardtanhInp(diopiContextHandle_t ctx, diopiTensorHandle_t inpu
     return diopiSuccess;
 }
 
-diopiError_t diopiHardswish(diopiContextHandle_t ctx, diopiConstTensorHandle_t out, diopiConstTensorHandle_t input){
+diopiError_t diopiHardswish(diopiContextHandle_t ctx, diopiConstTensorHandle_t out, diopiConstTensorHandle_t input) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
     at::Tensor atOut = impl::aten::buildATen(out);
-    at::hardswish_out(atOut,atInput);
+    at::hardswish_out(atOut, atInput);
     return diopiSuccess;
 }
 
-diopiError_t diopiHardswishInp(diopiContextHandle_t ctx, diopiConstTensorHandle_t input){
+diopiError_t diopiHardswishInp(diopiContextHandle_t ctx, diopiConstTensorHandle_t input) {
     impl::aten::setCurCtx(ctx);
     at::Tensor atInput = impl::aten::buildATen(input);
     impl::aten::invokeATenFuncInp(ctx, at::hardswish_, atInput);
@@ -2453,11 +2453,10 @@ diopiError_t diopiNormal(diopiContextHandle_t ctx, diopiTensorHandle_t out, doub
 
 diopiError_t diopiNormalInp(diopiContextHandle_t ctx, diopiTensorHandle_t inout, double mean, double std) {
     impl::aten::setCurCtx(ctx);
-    auto atInOut = impl::aten::buildATen(inout); 
+    auto atInOut = impl::aten::buildATen(inout);
     at::native::normal_(atInOut, mean, std, c10::nullopt);
     return diopiSuccess;
 }
- 
 
 diopiError_t diopiNormalTensorScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t mean, double std) {
     impl::aten::setCurCtx(ctx);
