@@ -37,8 +37,8 @@ private:
     template <typename T>
     class ValueHolder : public ValueHolderBase {
     public:
-        ValueHolder(T value) : m_value(value) {}
-        virtual const std::type_info& getTypeInfo() const override { return typeid(T); }
+        explicit ValueHolder(T value) : m_value(value) {}
+        const std::type_info& getTypeInfo() const override { return typeid(T); }
         T get() const { return m_value; }
 
     private:
