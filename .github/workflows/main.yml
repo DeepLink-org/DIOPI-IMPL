@@ -10,7 +10,7 @@ on:
 env:
   NFS_PATH: '/mnt/cache/share/parrotsci/github/cibuild/${{ github.repository }}'
   ENV_PATH: '/mnt/cache/share/platform/cienv'
-  ppp_pp: ${{ $NFS }}/${{ ENV_PATH }}
+  ppp_pp: ${{ env.NFS }}/${{ env.ENV_PATH }}
   ENV_NAME: 'pt1.10v2'
   GPU_REQUESTS: 1
   SLURM_PAR_SH1984: ${{ secrets.SLURM_PAR_SH1984 }}
@@ -140,7 +140,7 @@ jobs:
           ssh ${CLUSTER_1984} """
           set -e
           export CI=true
-          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
+          source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${BUILD_TEST2}
           rsync -a ${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance/
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
