@@ -10,6 +10,7 @@ on:
 env:
   NFS_PATH: '/mnt/cache/share/parrotsci/github/cibuild/${{ github.repository }}'
   ENV_PATH: '/mnt/cache/share/platform/cienv'
+  ppp_pp: ${{ $NFS }}/${{ ENV_PATH }}
   ENV_NAME: 'pt1.10v2'
   GPU_REQUESTS: 1
   SLURM_PAR_SH1984: ${{ secrets.SLURM_PAR_SH1984 }}
@@ -26,6 +27,7 @@ jobs:
     steps:
       - name: clone repo
         run: |
+          echo ${ppp_pp}
           cd ${GITHUB_WORKSPACE} && rm -rf DIOPI-TEST && git clone git@github.com:OpenComputeLab/DIOPI-TEST.git && cd DIOPI-TEST
           git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl && cd impl
           if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
@@ -101,7 +103,7 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=CAMB && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${BUILD_TEST1} && exit 1 )
           """
 
-  # rsync -a ${CLUSTER_1984}:${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
+  # rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance_test/
 
   Gen-Data:
     name: Gen-Data
@@ -144,7 +146,6 @@ jobs:
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
 
-
   Rt-test-nvidia:
     name: Rt-test-nvidia
     runs-on:  github-diopi-ci
@@ -160,18 +161,25 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
+
   Op-test-camb:
     name: Op-test-camb
     runs-on:  github-diopi-ci
     needs: [Gen-Data, Build-Camb]
+    env:
+      work_root: ${{ NFS_PATH }}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}
+      data_path: ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance/data
+      data_path:
     steps:
       - name: test
         run: |
           ssh ${CLUSTER_CAMB} """
           set -e
           export CI=true
-          source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${BUILD_TEST1}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
+          source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${work_root}
+          rsync -a ${CLUSTER_1984}:${data_path} ${data_path}/..
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
+          || ( cd ${work_root} && git clean -df . && exit 1 )
           """
 
   Rt-test-camb:
@@ -184,7 +192,7 @@ jobs:
           ssh ${CLUSTER_CAMB} """
           set -e
           export CI=true
-          source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd {BUILD_TEST1}
+          source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${BUILD_TEST1}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=mlu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
