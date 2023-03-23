@@ -24,15 +24,24 @@ jobs:
     steps:
       - name: clone repo
         run: |
-          cd ${GITHUB_WORKSPACE} && rm -rf ConformanceTest-DIOPI && git clone git@github.com:OpenComputeLab/ConformanceTest-DIOPI.git && cd ConformanceTest-DIOPI
-          git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl
-          cd impl && git checkout ${{ github.sha }}
+          cd ${GITHUB_WORKSPACE} && rm -rf DIOPI-TEST && git clone git@github.com:OpenComputeLab/DIOPI-TEST.git && cd DIOPI-TEST
+          git submodule update --init && rm -rf impl && git clone git@github.com:OpenComputeLab/DIOPI-IMPL.git && mv DIOPI-IMPL impl && cd impl
+          if [ $GITHUB_EVENT_NAME == "pull_request" ]; then
+          git checkout ${{ github.event.pull_request.head.sha }} &&  git merge --no-edit main
+          else
+          git checkout ${{ github.sha }} &&  git merge --no-edit main
+          fi
+      - name: ci interruptible and support pr ci
+        run: |
+          cd ${GITHUB_WORKSPACE}/DIOPI-TEST/impl && bash scripts/ci_interruptible.sh
+        env:
+          GITHUB_TOKEN: "${{ secrets.CI_TOKEN }}"
       - name: Rsync to Server
         run: |
           ssh ${CLUSTER_1984} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/ConformanceTest-DIOPI/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
           ssh ${CLUSTER_CAMB} "mkdir -p ${NFS_PATH}/${GITHUB_RUN_NUMBER}/source"
-          rsync -a --delete ${GITHUB_WORKSPACE}/ConformanceTest-DIOPI/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
+          rsync -a --delete ${GITHUB_WORKSPACE}/DIOPI-TEST/* ${CLUSTER_CAMB}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/source/
 
   lint-cpp:
     name: lint-cpp
@@ -47,7 +56,8 @@ jobs:
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME}
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB}  && cd ${GITHUB_JOB}/impl
           export CI=true
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 bash scripts/ci_script.sh cpp-lint
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 bash scripts/ci_script.sh cpp-lint && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
   Build-gendata:
@@ -62,7 +72,7 @@ jobs:
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME}
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
           export CI=true
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=TORCH && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: Gen-data
         run: |
@@ -70,7 +80,7 @@ jobs:
           set -e
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode gen_data && python main.py --mode run_test'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode gen_data && python main.py --mode run_test' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
   Test:
@@ -84,7 +94,7 @@ jobs:
           set -e
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: NHWC-32bit-test
         run: |
@@ -93,8 +103,8 @@ jobs:
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test --fname batch_norm --nhwc &&
-          python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes'
-          cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB}
+          python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
 
@@ -111,7 +121,7 @@ jobs:
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
           rsync -a ${CLUSTER_1984}:${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance_test/
           export CI=true
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=CAMB && make -j4'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=CAMB && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: Run-test-camb
         run: |
@@ -119,7 +129,7 @@ jobs:
           set -e
           export CI=true
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: Unit-test-camb
         run: |
@@ -127,7 +137,7 @@ jobs:
           set -e
           export CI=true
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest'
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode utest' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: NHWC-32bit-test-camb
         run: |
@@ -136,8 +146,8 @@ jobs:
           export CI=true
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test --fname batch_norm --nhwc &&
-          python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes'
-          cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB}
+          python main.py --mode run_test --fname index_select --four_bytes && python main.py --mode run_test --fname arange --four_bytes' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
 
   test-dyload:
@@ -152,7 +162,7 @@ jobs:
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME}
           cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && rm -rf ${GITHUB_JOB} && cp -R source ${GITHUB_JOB} && cd ${GITHUB_JOB}
           export CI=true
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash scripts/build_impl.sh torch_dyload
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash scripts/build_impl.sh torch_dyload || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
       - name: Run-test
         run: |
@@ -161,6 +171,6 @@ jobs:
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${GITHUB_JOB}
           rsync -a ${NFS_PATH}/Build-gendata/python/conformance/data ${NFS_PATH}/${GITHUB_JOB}/python/conformance/
-          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test'
-          cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB}
+          srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} \
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${GITHUB_JOB} && exit 1 )
           """
