@@ -50,6 +50,10 @@ jobs:
     steps:
       - name: lint-cpp
         run: |
+          echo GITHUB_ACTION_REPOSITORY:${GITHUB_ACTION_REPOSITORY}
+          echo GITHUB_ACTION_PATH:${GITHUB_ACTION_PATH}
+          echo GITHUB_WORKFLOW:${GITHUB_WORKFLOW}
+          echo GITHUB_WORKSPACE:${GITHUB_WORKSPACE}
           ssh ${CLUSTER_1984} """
           set -e
           cd ${NFS_PATH}/ && ls -al && find ${NFS_PATH}/ -maxdepth 1 -ctime 1 -type d |xargs rm -rf
