@@ -1,6 +1,5 @@
 #include <diopi/functions.h>
 
-#include <set>
 #include <vector>
 
 #include "../cnnl_helper.hpp"
@@ -14,11 +13,12 @@ DIOPI_API diopiError_t
 diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandle_t mask, diopiConstTensorHandle_t input, double p, bool train) {
     if (train) {
         cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-
         auto input_tensor = DiopiTensor(input);
         auto output_tensor = DiopiTensor(out);
         auto mask_tensor = DiopiTensor(mask);
+        std::cout << input_tensor.dtype() << std::endl;
 
+        // DIOPI_CHECK((DiopiDataType::isFloatPoint(input_tensor.dtype())), "result type Float can't be cast to the desired output type");
         std::vector<DiopiTensor*> pTensors{&input_tensor, &output_tensor};
         std::set<diopiDtype_t> supportedDtypes{
             diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
@@ -70,7 +70,6 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
                                            output_desc_temp.get(),
                                            output_tensor_temp.data()));
         DIOPI_CALLCNNL(cnnlRandDestroyGenerator(generator));
-
         if (output_tensor_temp.dtype() != output_tensor.dtype()) {
             dataTypeCast(ctx, output_tensor, output_tensor_temp);
         }
