@@ -140,7 +140,7 @@ jobs:
           set -e
           export CI=true
           source ${ENV_PATH}/github_bashrc && source /mnt/cache/share/platform/env/${ENV_NAME} && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER} && cd ${BUILD_TEST2}
-          rm -rf ${GEN_DATA} ln -s ../${BUILD_TEST1}/${GEN_DATA} ${GEN_DATA}
+          rm -rf ${GEN_DATA} && ln -s ../${BUILD_TEST1}/${GEN_DATA} ${GEN_DATA}
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_SH1984} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
