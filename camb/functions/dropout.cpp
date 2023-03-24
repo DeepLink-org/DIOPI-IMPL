@@ -18,7 +18,7 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         auto mask_tensor = DiopiTensor(mask);
         std::cout << input_tensor.dtype() << std::endl;
 
-        // DIOPI_CHECK((DiopiDataType::isFloatPoint(input_tensor.dtype())), "result type Float can't be cast to the desired output type");
+        DIOPI_CHECK(((DiopiDataType::isFloatPoint(input_tensor.dtype()) || p == 0)), "result type Float can't be cast to the desired output type");
         std::vector<DiopiTensor*> pTensors{&input_tensor, &output_tensor};
         std::set<diopiDtype_t> supportedDtypes{
             diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
@@ -27,16 +27,6 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_ARRAY);
         CnnlTensorDesc output_desc(output_tensor, CNNL_LAYOUT_ARRAY);
         CnnlTensorDesc mask_desc(mask_tensor, CNNL_LAYOUT_ARRAY);
-
-        DiopiTensor output_tensor_temp;
-        CnnlTensorDesc output_desc_temp;
-        if (input_tensor.dtype() == output_tensor.dtype()) {
-            output_tensor_temp = output_tensor;
-            output_desc_temp = output_desc;
-        } else {
-            output_tensor_temp = requiresTensor(ctx, vec2diopiSize_t(output_tensor.shape()), input_tensor.dtype());
-            output_desc_temp.set(output_tensor_temp, CNNL_LAYOUT_ARRAY);
-        }
 
         // create and set the rand_generator
         cnnlRandGenerator_t generator;
@@ -59,20 +49,9 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         int rand_seed = rand();
         cnnlRandMakeMTGP32KernelState(handle, state, params, kernel_params, rand_seed);
 
-        DIOPI_CALLCNNL(cnnlFusedDropout_v2(handle,
-                                           generator,
-                                           input_desc.get(),
-                                           input_tensor.data(),
-                                           p,
-                                           state,
-                                           mask_desc.get(),
-                                           mask_tensor.data(),
-                                           output_desc_temp.get(),
-                                           output_tensor_temp.data()));
+        DIOPI_CALLCNNL(cnnlFusedDropout_v2(
+            handle, generator, input_desc.get(), input_tensor.data(), p, state, mask_desc.get(), mask_tensor.data(), output_desc.get(), output_tensor.data()));
         DIOPI_CALLCNNL(cnnlRandDestroyGenerator(generator));
-        if (output_tensor_temp.dtype() != output_tensor.dtype()) {
-            dataTypeCast(ctx, output_tensor, output_tensor_temp);
-        }
         return diopiSuccess;
     } else {
         diopiScalar_t scale;
