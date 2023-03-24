@@ -102,7 +102,7 @@ jobs:
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 bash -c 'mkdir build && cd build && cmake .. -DIMPL_OPT=CAMB && make -j4' || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/ && rm -rf ${BUILD_TEST1} && exit 1 )
           """
 
-  # rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1}/python/conformance_test/
+  # rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance_test/
 
   Gen-Data:
     name: Gen-Data
@@ -174,7 +174,7 @@ jobs:
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}
           rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance/
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
-          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}}/${BUILD_TEST1} && git clean -df . && exit 1 )
+          || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
 
   Rt-test-camb:
