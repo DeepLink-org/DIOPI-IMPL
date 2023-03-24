@@ -18,7 +18,7 @@ env:
   CLUSTER_CAMB: CAMB
   BUILD_TEST1: build_test
   BUILD_TEST2: build_test_dy
-  GEN_DATA: python/conformance/data
+  GEN_DATA: python/data
 
 jobs:
   Rsync:
@@ -172,7 +172,7 @@ jobs:
           set -e
           export CI=true
           source /mnt/cache/share/platform/env/camb_ci_diopi_impl && cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}
-          rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/conformance/
+          rsync -a ${CLUSTER_1984}:${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/data ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1}/python/
           srun --job-name=${GITHUB_JOB} --partition=${SLURM_PAR_CAMB} --time=40 --gres=gpu:${GPU_REQUESTS} bash -c 'cd python && python main.py --mode run_test' \
           || ( cd ${NFS_PATH}/${GITHUB_RUN_NUMBER}/${BUILD_TEST1} && git clean -df . && exit 1 )
           """
