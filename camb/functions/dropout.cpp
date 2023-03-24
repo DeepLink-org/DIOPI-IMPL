@@ -16,9 +16,8 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         auto input_tensor = DiopiTensor(input);
         auto output_tensor = DiopiTensor(out);
         auto mask_tensor = DiopiTensor(mask);
-        std::cout << input_tensor.dtype() << std::endl;
 
-        DIOPI_CHECK(((DiopiDataType::isFloatPoint(input_tensor.dtype()) || p == 0)), "result type Float can't be cast to the desired output type");
+        DIOPI_CHECK(((DiopiDataType::isFloatPoint(input_tensor.dtype()) || p == 0)), "result type Float can't be cast to the desired type");
         std::vector<DiopiTensor*> pTensors{&input_tensor, &output_tensor};
         std::set<diopiDtype_t> supportedDtypes{
             diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
