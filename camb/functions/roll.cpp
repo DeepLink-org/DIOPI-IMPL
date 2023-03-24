@@ -36,6 +36,7 @@ DIOPI_API diopiError_t diopiRoll(diopiContextHandle_t ctx, diopiTensorHandle_t o
                             workspace_size,
                             out_desc.get(),
                             out_tensor.data()));
+    return diopiSuccess;
 }
 
 }  // extern "C"
