@@ -4,37 +4,37 @@
 
 namespace impl {
 namespace camb {
-
-template <typename T>
-void PrintVec(std::vector<T> vec) {
-    for (int i = 0; i < vec.size(); i++) {
-        std::cout << vec[i] << std::endl;
-    }
-}
 extern "C" {
-
 DIOPI_API diopiError_t diopiStack(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t* tensors, int64_t numTensors, int64_t dim) {
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
+    std::vector<CnnlTensorDesc> inputsDesc(numTensors);
+    std::vector<cnnlTensorDescriptor_t> inputs_desc(numTensors);
+    std::vector<const void*> inputs_data(numTensors);
+
+    // add a new dim for input_tensors
     for (int i = 0; i < numTensors; i++) {
-        auto temp_tensor = DiopiTensor(tensors[i]);                    // 从tensors得到元素并构造DiopiTensor temp_tensor
-        std::vector<int64_t> temp_tensor_shape = temp_tensor.shape();  // 得到temp_tensor_shape
-        std::vector<int64_t> cat_shape = temp_tensor_shape;
-        cat_shape.insert(cat_shape.begin(), 1);  // cat_shape为temp_tensor_shape在指定维度插入1
-        std::cout << "cat_shape" << std::endl;
-        PrintVec(cat_shape);
-        temp_tensor.reshape(cat_shape);  // 将temp_tensor reshape为cat_shape
-        std::cout << "temp_tensor.shape()" << std::endl;
-        PrintVec(temp_tensor.shape());  // 查看temp_tensor.shape(), 修改成功！！
-        std::cout << "just check" << std::endl;
-        PrintVec(DiopiTensor(diopiConstTensorHandle_t(temp_tensor)).shape()); // 查看反复转换的结果, 修改失败！！
+        auto temp_tensor = DiopiTensor(tensors[i]);
+        std::vector<int64_t> cat_shape = temp_tensor.shape();
+        if (dim == -1) {
+            dim = temp_tensor.shape().size();
+        }
+        cat_shape.insert(cat_shape.begin() + dim, 1);
+        temp_tensor.reshape(cat_shape);
+        inputsDesc[i].set(temp_tensor, CNNL_LAYOUT_ARRAY);
+        inputs_desc[i] = inputsDesc[i].get();
+        inputs_data[i] = temp_tensor.data();
     }
-    std::cout << "input_shape" << std::endl;
-    PrintVec(DiopiTensor(tensors[0]).shape());  // 查看tensor[0]的shape，修改不成功！！
-    std::cout << "out_shape" << std::endl;
-    PrintVec(DiopiTensor(out).shape());
-    diopiCat(ctx, out, tensors, numTensors, dim);
+    size_t workspace_size(0);
+    DIOPI_CALLCNNL(cnnlGetConcatWorkspaceSize(handle, numTensors, &workspace_size));
+    void* workspace = nullptr;
+    if (0 != workspace_size) {
+        workspace = requiresBuffer(ctx, workspace_size).data();
+    }
+    auto out_tensor = DiopiTensor(out);
+    CnnlTensorDesc out_desc(out_tensor, CNNL_LAYOUT_ARRAY);
+    DIOPI_CALLCNNL(cnnlConcat(handle, numTensors, dim, inputs_desc.data(), inputs_data.data(), workspace, workspace_size, out_desc.get(), out_tensor.data()));
     return diopiSuccess;
 }
 }  // extern "C"
-
 }  // namespace camb
 }  // namespace impl
