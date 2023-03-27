@@ -30,7 +30,7 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx, diopiTensor
         if (workspace_size != 0) {
             workspace = requiresBuffer(ctx, workspace_size).data();
         }
-        
+
         DIOPI_CALLCNNL(cnnlBiasAdd(handle, &scale_b, b_desc.get(), b.data(), workspace, workspace_size, &scale_a, a_desc.get(), a.data()));
         return diopiSuccess;
     };
