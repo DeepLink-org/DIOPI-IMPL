@@ -19,7 +19,7 @@ env:
   BUILD_TEST1: build_test
   BUILD_TEST2: build_test_dy
   GEN_DATA: python/data
-  CAMB_EXCLUSIVE_HOST: ${{ secrets.CAMB_EXCLUSIVE_HOST }}
+  CAMB_EXCLUSIVE_HOST: ${{ vars.CAMB_EXCLUSIVE_HOST }}
 
 jobs:
   Rsync:
