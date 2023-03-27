@@ -1,3 +1,9 @@
+/**
+ * @file assign_score_withk.cu
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #include <cuda_runtime.h>
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>

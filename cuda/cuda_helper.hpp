@@ -1,3 +1,9 @@
+/**
+ * @file cuda_helper.hpp
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #ifndef IMPL_CUDA_CUDA_HELPER_HPP_
 #define IMPL_CUDA_CUDA_HELPER_HPP_
 

@@ -1,9 +1,8 @@
-/**************************************************************************************************
- * Copyright (c) 2022, SenseTime Inc.
- * License
- * Author
- *
- *************************************************************************************************/
+/**
+ * @file conform_test.cpp
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
 #include <diopi/diopirt.h>
 #include <diopi_register.h>
 #include <cuda_runtime.h>

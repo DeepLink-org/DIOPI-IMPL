@@ -1,9 +1,8 @@
-/**************************************************************************************************
- * Copyright (c) 2022, SenseTime Inc.
- * License
- * Author
- *
- *************************************************************************************************/
+/**
+ * @file functions.cu
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
 
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
