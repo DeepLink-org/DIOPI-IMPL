@@ -2282,7 +2282,6 @@ diopiError_t diopiConvolution3dBackward(diopiContextHandle_t ctx, diopiTensorHan
 }
 
 diopiError_t diopiExpand(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input) {
-
     diopiSize_t size;
     diopiGetTensorShape(out, &size);
     camb::aten::setCurCtx(ctx);
