@@ -128,30 +128,6 @@ __device__ void bilinear_interpolate_gradient(const int height,
     return;
 }
 
-#define dispatch_dtype(fun, dtype, gridSize, blockSize, stream, ...)                                                                        \
-    if (diopi_dtype_int32 == dtype) {                                                                                                       \
-        fun<int32_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                      \
-    } else if (diopi_dtype_uint32 == dtype) {                                                                                               \
-        fun<uint32_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                     \
-    } else if (diopi_dtype_int16 == dtype) {                                                                                                \
-        fun<int16_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                      \
-    } else if (diopi_dtype_uint16 == dtype) {                                                                                               \
-        fun<uint16_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                     \
-    } else if (diopi_dtype_int8 == dtype) {                                                                                                 \
-        fun<int8_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                       \
-    } else if (diopi_dtype_uint8 == dtype) {                                                                                                \
-        fun<uint8_t><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                      \
-    } else if (diopi_dtype_float32 == dtype) {                                                                                              \
-        fun<float><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                        \
-    } else if (diopi_dtype_float64 == dtype) {                                                                                              \
-        fun<double><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                       \
-    } else if (diopi_dtype_bool == dtype) {                                                                                                 \
-        fun<bool><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                         \
-    } else {                                                                                                                                \
-        fprintf(stderr, "%s:%s: %s<%s %d><<<%d,%d>>>(%s)", __FILE__, __FUNCTION__, #fun, #dtype, dtype, gridSize, blockSize, #__VA_ARGS__); \
-        return diopiDtypeNotSupported;                                                                                                      \
-    }
-
 #define dispatch_float_types_and_half(fun, dtype, gridSize, blockSize, stream, ...)                                                         \
     if (diopi_dtype_float32 == dtype) {                                                                                                     \
         fun<float><<<gridSize, blockSize, 0, stream>>>(__VA_ARGS__);                                                                        \
