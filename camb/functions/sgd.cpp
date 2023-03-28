@@ -7,6 +7,17 @@
 namespace impl {
 namespace camb {
 
+namespace{
+    struct DescData
+    {
+        int dim;
+        uint64_t total_num;
+        uint64_t total_size;
+        int dims[8];
+    };
+    
+}
+
 extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
                                            diopiTensorHandle_t w,
                                            diopiTensorHandle_t dw,
@@ -24,6 +35,9 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
 
     CnnlTensorDesc w_desc(w_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc dw_desc(dw_tensor, CNNL_LAYOUT_ARRAY);
+    DescData *desc_ptr = (DescData*)dw_desc.get();
+
+    std::cout <<__LINE__ << ":"<<  desc_ptr->dim << "\n";
 
     // a = a * scale_a + b * scale_b;
     auto add_mul_func = [&](auto &a, float scale_a, auto b, float scale_b) {
@@ -45,8 +59,11 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
         return diopiSuccess;
     };
 
+    std::cout <<__LINE__ << ":"<<  desc_ptr->dim << "\n";
     if (weight_decay != 0) {
+        std::cout <<__LINE__ << ":"<<  desc_ptr->dim << "\n";
         DIOPI_CALL(add_mul_func(dw_tensor, 1.0, w_tensor, weight_decay));
+        std::cout <<__LINE__ << ":"<<  desc_ptr->dim << "\n";
     }
     if (momentum != 0) {
         if (buf == nullptr) {
