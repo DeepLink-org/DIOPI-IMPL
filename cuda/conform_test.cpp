@@ -1,8 +1,9 @@
 /**
- * @file conform_test.cpp
+ * @file
  * @author DeepLink
  * @copyright  (c) 2023, DeepLink.
  */
+
 #include <diopi/diopirt.h>
 #include <diopi_register.h>
 #include <cuda_runtime.h>

@@ -1,8 +1,9 @@
 /**
- * @file functions.cpp
+ * @file
  * @author DeepLink
- * @copyright  (c) 2023, DeepLink.
+ * @copyright  (c) 2023, DeepLink
  */
+
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
 #include <cuda_runtime.h>
