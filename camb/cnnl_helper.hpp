@@ -61,14 +61,6 @@ protected:
     T resource_{0};
 };
 
-class CnnlTensorDescriptorDeleter {
-public:
-    void operator()(cnnlTensorDescriptor_t t) {
-        if (t != nullptr) {
-            DIOPI_CHECK_ABORT(cnnlDestroyTensorDescriptor(t) == CNNL_STATUS_SUCCESS, "%s", "cnnl failed to destroy cnnlTensorDescriptor_t object");
-        }
-    }
-};
 
 template <typename T, ::cnnlStatus_t (*fnCreate)(T*), ::cnnlStatus_t (*fnDestroy)(T)>
 class CnnlDescBase {
