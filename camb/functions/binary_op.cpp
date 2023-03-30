@@ -18,8 +18,9 @@
 
 namespace impl {
 namespace camb {
+extern "C" {
 
-extern "C" DIOPI_API diopiError_t
+DIOPI_API diopiError_t
 diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
     auto trInput = DiopiTensor(input);
     auto trOther = DiopiTensor(other);
@@ -63,6 +64,7 @@ diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
             *reinterpret_cast<float*>(pAlphaIn.get()) = static_cast<float>(alpha->fval);
         }
     }
+    std::cout << "add:" << *reinterpret_cast<float*>(pAlphaIn.get()) << std::endl;
     DIOPI_CALLCNNL(
         cnnlTransform_v2(handle, CNNL_POINTER_MODE_HOST, pAlphaIn.get(), descOther.get(), trOther.data(), pBetaIn.get(), descOther.get(), trOther.data()));
     const cnnlTensorDescriptor_t inputDescs[2] = {descInput.get(), descOther.get()};
@@ -80,19 +82,19 @@ diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
     return diopiSuccess;
 }
 
-extern "C" DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
+DIOPI_API diopiError_t diopiAddInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
     diopiAdd(ctx, input, input, other, alpha);
     return diopiSuccess;
 }
 
-extern "C" DIOPI_API diopiError_t
+DIOPI_API diopiError_t
 diopiAddScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other, const diopiScalar_t* alpha) {
     DiopiTensor trOther = makeTensorFromScalar(ctx, other);
     DIOPI_CALL(diopiAdd(ctx, out, input, static_cast<diopiTensorHandle_t>(trOther), alpha));
     return diopiSuccess;
 }
 
-extern "C" DIOPI_API diopiError_t diopiAddInpScalar(diopiContextHandle_t ctx,
+DIOPI_API diopiError_t diopiAddInpScalar(diopiContextHandle_t ctx,
                                                     diopiTensorHandle_t input,
                                                     const diopiScalar_t* other,
                                                     const diopiScalar_t* alpha) {
@@ -100,5 +102,80 @@ extern "C" DIOPI_API diopiError_t diopiAddInpScalar(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
+DIOPI_API diopiError_t diopiSub(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input,
+                                diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
+    std::cout << "diopiSub" << std::endl;
+    std::cout << "int:" << static_cast<int>(alpha->ival) << std::endl;
+    std::cout << "float:" << static_cast<float>(alpha->fval) << std::endl;
+    diopiScalar_t neg_alpha;
+    neg_alpha.stype = alpha->stype;
+    if(alpha->stype <= 7) {
+        neg_alpha.ival = -alpha->ival;
+    }
+    else {
+        neg_alpha.fval = -alpha->fval;
+    }
+    diopiAdd(ctx, out, input, other, &neg_alpha);
+    return diopiSuccess;
+}
+
+DIOPI_API diopiError_t diopiSubInp(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+                                   diopiConstTensorHandle_t other, const diopiScalar_t* alpha) {
+    std::cout << "diopiSubInp" << std::endl;
+    std::cout << "int:" << static_cast<int>(alpha->ival) << std::endl;
+    std::cout << "float:" << static_cast<float>(alpha->fval) << std::endl;
+    diopiScalar_t neg_alpha;
+    neg_alpha.stype = alpha->stype;
+    if(alpha->stype <= 7) {
+        neg_alpha.ival = -alpha->ival;
+        std::cout << neg_alpha.ival << std::endl;
+    }
+    else {
+        neg_alpha.fval = -alpha->fval;
+        std::cout << neg_alpha.fval << std::endl;
+    }
+    diopiAddInp(ctx, input, other, &neg_alpha); // correct
+    // diopiAdd(ctx, input, input, other, alpha);
+    // diopiSub(ctx, input, input, other, alpha);
+    return diopiSuccess;
+}
+
+DIOPI_API diopiError_t diopiSubScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input,
+                                      const diopiScalar_t* other, const diopiScalar_t* alpha) {
+    std::cout << "diopiSubScalar" << std::endl;
+    std::cout << "int:" << static_cast<int>(alpha->ival) << std::endl;
+    std::cout << "float:" << static_cast<float>(alpha->fval) << std::endl;
+    diopiScalar_t neg_alpha;
+    neg_alpha.stype = alpha->stype;
+    if(alpha->stype <= 7) {
+        neg_alpha.ival = -alpha->ival;
+        // std::cout << neg_alpha.ival << std::endl;
+    }
+    else {
+        neg_alpha.fval = -alpha->fval;
+        // std::cout << neg_alpha.fval << std::endl;
+    }
+    diopiAddScalar(ctx, out, input, other, &neg_alpha);
+    return diopiSuccess;
+}
+
+DIOPI_API diopiError_t diopiSubInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input,
+                                         const diopiScalar_t* other, const diopiScalar_t* alpha) {
+    std::cout << "diopiSubInpScalar" << std::endl;
+    // std::cout << "int:" << static_cast<int>(alpha->ival) << std::endl;
+    // std::cout << "float:" << static_cast<float>(alpha->fval) << std::endl;
+    //     diopiScalar_t neg_alpha;
+    // neg_alpha.stype = alpha->stype;
+    // if(alpha->stype <= 7) {
+    //     neg_alpha.ival = -alpha->ival;
+    // }
+    // else {
+    //     neg_alpha.fval = -alpha->fval;
+    // }
+    // diopiAddScalar(ctx, input, input, other, &neg_alpha);
+    diopiSubScalar(ctx, input, input, other, alpha);
+    return diopiSuccess;
+}
+}  // extern "C"
 }  // namespace camb
 }  // namespace impl
