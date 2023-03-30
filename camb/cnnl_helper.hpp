@@ -70,14 +70,31 @@ public:
     }
 };
 
-class CnnlTensorDesc {
+template <typename T, ::cnnlStatus_t (*fnCreate)(T*), ::cnnlStatus_t (*fnDestroy)(T)>
+class CnnlDescBase {
 public:
-    CnnlTensorDesc() : desc_(createTensorDescriptor()) {}
+    CnnlDescBase() { DIOPI_CHECKCNNL(fnCreate(&resource_)); }
+
+    virtual ~CnnlDescBase() { DIOPI_CHECKCNNL(fnDestroy(resource_)); }
+
+    T& get() { return resource_; }
+
+protected:
+    T resource_{0};
+};
+
+class CnnlTensorDesc : public CnnlDescBase<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> {
+public:
+    CnnlTensorDesc() = default;
 
     template <typename... Args>
-    CnnlTensorDesc(Args&&... args) : desc_(createTensorDescriptor()) {
+    CnnlTensorDesc(Args&&... args) {
         DIOPI_CHECK_ABORT(set(std::forward<Args>(args)...) == diopiSuccess, "%s", "cnnl failed to set cnnlTensorDescriptor_t object");
     }
+
+    CnnlTensorDesc(const CnnlTensorDesc& other) = delete;
+    CnnlTensorDesc(CnnlTensorDesc&& other) = delete;
+    CnnlTensorDesc& operator=(const CnnlTensorDesc& other) = delete;
 
     template <typename T>
     diopiError_t set(T& t, cnnlTensorLayout_t layout) {
@@ -90,7 +107,7 @@ public:
 
         if (!dim) {
             std::vector<int> dim_array(1, 1);
-            DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(desc_.get(), CNNL_LAYOUT_ARRAY, dtype, 1, dim_array.data(), dim_array.data()));
+            DIOPI_CALLCNNL(cnnlSetTensorDescriptorEx(get(), CNNL_LAYOUT_ARRAY, dtype, 1, dim_array.data(), dim_array.data()));
             return diopiSuccess;
         }
 
@@ -111,7 +128,7 @@ public:
                 shape[i] = dimSize[i];
             }
         }
-        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(desc_.get(), layout, dtype, shape.size(), shape.data()));
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), layout, dtype, shape.size(), shape.data()));
         return diopiSuccess;
     }
 
@@ -119,20 +136,8 @@ public:
     diopiError_t set(T& t, cnnlTensorLayout_t layout, std::vector<int> dims) {
         cnnlDataType_t dtype;
         DIOPI_CALL(CnnlDataType::convertToCnnlType(&dtype, t.dtype()));
-        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(desc_.get(), layout, dtype, dims.size(), dims.data()));
+        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(get(), layout, dtype, dims.size(), dims.data()));
         return diopiSuccess;
-    }
-
-    cnnlTensorDescriptor_t get() const { return desc_.get(); }
-
-private:
-    std::unique_ptr<std::remove_pointer_t<cnnlTensorDescriptor_t>, CnnlTensorDescriptorDeleter> desc_;
-    CnnlTensorDesc(const CnnlTensorDesc& other);
-    CnnlTensorDesc& operator=(const CnnlTensorDesc& other);
-    cnnlTensorDescriptor_t createTensorDescriptor() {
-        cnnlTensorDescriptor_t t = nullptr;
-        DIOPI_CHECK_ABORT(cnnlCreateTensorDescriptor(&t) == CNNL_STATUS_SUCCESS, "%s", "cnnl failed to create cnnlTensorDescriptor_t object");
-        return t;
     }
 };
 
@@ -166,19 +171,6 @@ public:
 private:
     std::unordered_map<cnrtQueue_t, cnnlHandle_t> cnnlHandlePool_;
     std::mutex mutex_;
-};
-
-template <typename T, ::cnnlStatus_t (*fnCreate)(T*), ::cnnlStatus_t (*fnDestroy)(T)>
-class CnnlDescBase {
-public:
-    CnnlDescBase() { DIOPI_CHECKCNNL(fnCreate(&resource_)); }
-
-    ~CnnlDescBase() { DIOPI_CHECKCNNL(fnDestroy(resource_)); }
-
-    T& get() { return resource_; }
-
-protected:
-    T resource_{0};
 };
 
 class CnnlTransposeDescriptor final : public CnnlDescBase<cnnlTransposeDescriptor_t, cnnlCreateTransposeDescriptor, cnnlDestroyTransposeDescriptor> {
