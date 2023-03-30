@@ -34,7 +34,7 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
     void* value_ptr;
     switch (input_tensor_temp.dtype()) {
         case diopi_dtype_bool: {
-            auto temp = bool(value_scalar);
+            auto temp = static_cast<bool>(value_scalar);
             value_ptr = &temp;
             break;
         }
@@ -79,7 +79,7 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
             break;
         }
         case diopi_dtype_float32: {
-            auto temp = float(value_scalar);
+            auto temp = static_cast<float>(value_scalar);
             value_ptr = &temp;
             break;
         }

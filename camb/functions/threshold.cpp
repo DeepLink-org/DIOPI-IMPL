@@ -7,35 +7,6 @@ namespace impl {
 namespace camb {
 extern "C" {
 
-void displayTensor(diopiContextHandle_t ctx, DiopiTensor tensor) {
-    void* ptr = (malloc(tensor.numel() * tensor.elemsize()));
-    cnrtQueue_t queue = getStream(ctx);
-    // cnrtMemcpy(ptr, tensor.data(), tensor.numel() * tensor.elemsize(), cnrtMemcpyDevToHost);
-    cnrtQueueSync(queue);
-    cnrtMemcpy(ptr, tensor.data(), tensor.numel() * tensor.elemsize(), cnrtMemcpyDevToHost);
-
-    for (int i = 0; i < tensor.numel(); i++) {
-        if (tensor.dtype() == diopi_dtype_int32) {
-            int32_t* temp = (int32_t*)ptr;
-            std::printf("%d ", temp[i]);
-        } else if (tensor.dtype() == diopi_dtype_int16) {
-            int16_t* temp = (int16_t*)ptr;
-            std::printf("%d ", temp[i]);
-        } else if (tensor.dtype() == diopi_dtype_int8) {
-            int8_t* temp = (int8_t*)ptr;
-            std::printf("%d ", temp[i]);
-        } else if (tensor.dtype() == diopi_dtype_float32) {
-            float* temp = (float*)ptr;
-            std::printf("%3.4f ", temp[i]);
-        } else if (tensor.dtype() == diopi_dtype_float64) {
-            double* temp = (double*)ptr;
-            std::printf("%3.4f ", temp[i]);
-        }
-    }
-    std::printf("\n");
-    free(ptr);
-}
-
 DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* threshold,
                                       const diopiScalar_t* value) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
@@ -100,8 +71,8 @@ DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandl
         //     break;
         // }
         case diopi_dtype_float32: {
-            auto temp1 = float(threshold_scalar);
-            auto temp2 = float(value_scalar);
+            auto temp1 = static_cast<float>(threshold_scalar);
+            auto temp2 = static_cast<float>(value_scalar);
             threshold_val = &temp1;
             value_val = &temp2;
             break;
@@ -157,7 +128,7 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
         //     break;
         // }
         case diopi_dtype_float32: {
-            auto temp = float(threshold_scalar);
+            auto temp = static_cast<float>(threshold_scalar);
             threshold_val = &temp;
             break;
         }
