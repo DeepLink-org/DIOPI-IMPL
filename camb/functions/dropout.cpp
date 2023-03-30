@@ -55,12 +55,11 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         cnnlRandMakeMTGP32Constants(handle, params, kernel_params);
         int rand_seed = time(NULL);
         cnnlRandMakeMTGP32KernelState(handle, state, params, kernel_params, rand_seed);
-        float p_ = float(p);
         DIOPI_CALLCNNL(cnnlFusedDropout_v2(handle,
                                            generator,
                                            input_desc.get(),
                                            input_tensor.data(),
-                                           p_,
+                                           p,
                                            state,
                                            mask_desc.get(),
                                            mask_tensor.data(),
