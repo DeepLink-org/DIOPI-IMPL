@@ -80,7 +80,7 @@ public:
     CnnlTensorDesc() = default;
 
     template <typename... Args>
-    CnnlTensorDesc(Args&&... args) {
+    explicit CnnlTensorDesc(Args&&... args) {
         DIOPI_CHECK_ABORT(set(std::forward<Args>(args)...) == diopiSuccess, "%s", "cnnl failed to set cnnlTensorDescriptor_t object");
     }
 
