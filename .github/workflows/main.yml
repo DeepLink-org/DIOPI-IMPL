@@ -122,7 +122,7 @@ jobs:
   Op-test-Mmcv-Ext-nv:
     name: Rt-test-camb
     runs-on:  github-diopi-ci
-    needs: [Build-Mmcv-Ext]
+    needs: [Build-Mmcv-Ext-nv]
     steps:
       - name: test
         run: |
