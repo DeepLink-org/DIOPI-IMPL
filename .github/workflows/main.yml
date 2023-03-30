@@ -105,7 +105,7 @@ jobs:
           """
 
   Build-Mmcv-Ext-nv:
-    name: Build-Mmcv-Ext
+    name: Build-Mmcv-Ext-nv
     runs-on:  github-diopi-ci
     needs: [Rsync]
     steps:
@@ -120,7 +120,7 @@ jobs:
           """
 
   Op-test-Mmcv-Ext-nv:
-    name: Rt-test-camb
+    name: Op-test-Mmcv-Ext-nv
     runs-on:  github-diopi-ci
     needs: [Build-Mmcv-Ext-nv]
     steps:
