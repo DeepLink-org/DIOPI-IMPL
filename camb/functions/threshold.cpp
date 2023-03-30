@@ -1,8 +1,5 @@
 #include <diopi/functions.h>
 
-#include <iostream>
-#include <typeinfo>
-
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 
@@ -96,8 +93,8 @@ DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandl
         }
         // half wille be supported in the future
         // case diopi_dtype_float16: {
-        //     auto temp1 = float(threshold_scalar);
-        //     auto temp2 = float(value_scalar);
+        //     auto temp1 = half(threshold_scalar);
+        //     auto temp2 = half(value_scalar);
         //     threshold_val = &temp1;
         //     value_val = &temp2;
         //     break;
@@ -138,9 +135,6 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float32};
     autoCastTensorType(ctx, pTensors, supportedDtypes);
 
-    std::cout << "grad_output_tensor = ";
-    displayTensor(ctx, grad_output_tensor);
-
     DiopiTensor grad_input_tensor_temp;
     if (grad_input_tensor.dtype() != input_tensor.dtype()) {
         grad_input_tensor_temp = dataTypeCast(ctx, grad_input_tensor, input_tensor.dtype());
@@ -153,12 +147,12 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
     CnnlTensorDesc grad_output_desc(grad_output_tensor, CNNL_LAYOUT_ARRAY);
 
     double threshold_scalar = DiopiDataType::isInteger(threshold->stype) ? threshold->ival : threshold->fval;
-   
+
     void* threshold_val;
     switch (input_tensor.dtype()) {
         // half will be supported in the future
         // case diopi_dtype_float16: {
-        //     auto temp = float(threshold_scalar);
+        //     auto temp = half(threshold_scalar);
         //     threshold_val = &temp;
         //     break;
         // }
@@ -179,16 +173,6 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
                                          threshold_val,
                                          grad_input_desc.get(),
                                          grad_input_tensor_temp.data()))
-    std::cout << "input_tensor = ";
-    displayTensor(ctx, input_tensor);
-
-    std::cout << "threshold = " << threshold_scalar << std::endl;
-
-    std::cout << "after cnnlbackward" << std::endl;
-    std::cout << "grad_input_tensor_temp = ";
-    displayTensor(ctx, grad_input_tensor_temp);
-
-    std::cout << "####################" << std::endl;
 
     if (grad_input_tensor_temp.dtype() != grad_input_tensor.dtype()) {
         dataTypeCast(ctx, grad_input_tensor, grad_input_tensor_temp);
