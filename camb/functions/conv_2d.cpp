@@ -28,9 +28,9 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
     auto output_tensor = DiopiTensor(out);
     auto weight_tensor = DiopiTensor(weight);
 
-    diopiTensorHandle_t input_t;
-    diopiTensorHandle_t weight_t;
-    diopiTensorHandle_t output_t;
+    diopiTensorHandle_t input_t = nullptr;
+    diopiTensorHandle_t weight_t = nullptr;
+    diopiTensorHandle_t output_t = nullptr;
 
     auto permute_to_nhwc = [&](auto src, auto &dst) {
         std::vector<int64_t> axis{0, 2, 3, 1};
@@ -57,8 +57,8 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
 
     const void *bias_ptr = nullptr;
     CnnlTensorDesc bias_desc;
+    auto bias_tensor = DiopiTensor(bias);
     if (nullptr != bias) {
-        auto bias_tensor = DiopiTensor(bias);
         DIOPI_CALL(bias_desc.set(bias_tensor, CNNL_LAYOUT_ARRAY));
         bias_ptr = bias_tensor.data();
     }
@@ -94,8 +94,8 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                           DiopiTensor(input_t).data(),
                                           weight_desc.get(),
                                           DiopiTensor(weight_t).data(),
-                                          bias_desc.get(),
-                                          bias_ptr,
+                                          bias_tensor.defined()?bias_desc.get() : nullptr,
+                                          bias_tensor.defined()?bias_tensor.data() : nullptr,
                                           workspace,
                                           workspace_size,
                                           NULL,
@@ -130,11 +130,11 @@ extern "C" diopiError_t diopiConvolution2dBackward(diopiContextHandle_t ctx,
     auto grad_input_tensor = DiopiTensor(grad_input);
     auto grad_weight_tensor = DiopiTensor(grad_weight);
 
-    diopiTensorHandle_t input_t;
-    diopiTensorHandle_t weight_t;
-    diopiTensorHandle_t grad_output_t;
-    diopiTensorHandle_t grad_input_t;
-    diopiTensorHandle_t grad_weight_t;
+    diopiTensorHandle_t input_t = nullptr;
+    diopiTensorHandle_t weight_t = nullptr;
+    diopiTensorHandle_t grad_output_t = nullptr;
+    diopiTensorHandle_t grad_input_t = nullptr;
+    diopiTensorHandle_t grad_weight_t = nullptr;
 
     auto permute_to_nhwc = [&](auto src, auto &dst) {
         std::vector<int64_t> axis{0, 2, 3, 1};
