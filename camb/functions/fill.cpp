@@ -8,6 +8,7 @@
 
 #include <vector>
 
+#include "../../third_party/half/include/half.hpp"
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 
@@ -21,8 +22,8 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
     auto input_tensor = DiopiTensor(input);
     DiopiTensor input_tensor_temp;
 
-    // float16 and float64 are not supported yet
-    if (input_tensor.dtype() == diopi_dtype_float16 || input_tensor.dtype() == diopi_dtype_float64) {
+    // float64 not supported yet
+    if (input_tensor.dtype() == diopi_dtype_float64) {
         input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_float32);
     } else {
         input_tensor_temp = DiopiTensor(input);
@@ -75,6 +76,11 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
         }
         case diopi_dtype_uint64: {
             auto temp = uint64_t(value_scalar);
+            value_ptr = &temp;
+            break;
+        }
+        case diopi_dtype_float16: {
+            auto temp = half_float::half(value_scalar);
             value_ptr = &temp;
             break;
         }

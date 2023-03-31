@@ -1,5 +1,6 @@
 #include <diopi/functions.h>
 
+#include "../../third_party/half/include/half.hpp"
 #include "../cnnl_helper.hpp"
 #include "../common/common.hpp"
 
@@ -14,8 +15,7 @@ DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandl
     auto out_tensor = DiopiTensor(out);
 
     std::vector<DiopiTensor*> pTensors{&input_tensor};
-    // diopi_dtype_float16 will be supported in the future
-    std::set<diopiDtype_t> supportedDtypes{diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float32};
+    std::set<diopiDtype_t> supportedDtypes{diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
     autoCastTensorType(ctx, pTensors, supportedDtypes);
 
     DiopiTensor out_tensor_temp;
@@ -62,14 +62,13 @@ DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandl
             value_val = &temp2;
             break;
         }
-        // half wille be supported in the future
-        // case diopi_dtype_float16: {
-        //     auto temp1 = half(threshold_scalar);
-        //     auto temp2 = half(value_scalar);
-        //     threshold_val = &temp1;
-        //     value_val = &temp2;
-        //     break;
-        // }
+        case diopi_dtype_float16: {
+            auto temp1 = half_float::half(threshold_scalar);
+            auto temp2 = half_float::half(value_scalar);
+            threshold_val = &temp1;
+            value_val = &temp2;
+            break;
+        }
         case diopi_dtype_float32: {
             auto temp1 = static_cast<float>(threshold_scalar);
             auto temp2 = static_cast<float>(value_scalar);
@@ -102,8 +101,7 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
     auto grad_output_tensor = DiopiTensor(grad_output);
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &grad_output_tensor};
-    // diopi_dtype_float16 will be supported in the future
-    std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float32};
+    std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
     autoCastTensorType(ctx, pTensors, supportedDtypes);
 
     DiopiTensor grad_input_tensor_temp;
@@ -121,12 +119,11 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
 
     void* threshold_val;
     switch (input_tensor.dtype()) {
-        // half will be supported in the future
-        // case diopi_dtype_float16: {
-        //     auto temp = half(threshold_scalar);
-        //     threshold_val = &temp;
-        //     break;
-        // }
+        case diopi_dtype_float16: {
+            auto temp = half_float::half(threshold_scalar);
+            threshold_val = &temp;
+            break;
+        }
         case diopi_dtype_float32: {
             auto temp = static_cast<float>(threshold_scalar);
             threshold_val = &temp;
