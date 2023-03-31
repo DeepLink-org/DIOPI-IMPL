@@ -2531,6 +2531,20 @@ diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiTensorHandl
     return diopiSuccess;
 }
 
+diopiError_t diopiMeshGrid(diopiContextHandle_t ctx, diopiTensorHandle_t* outs, int64_t outsNum, diopiConstTensorHandle_t* inputs, int64_t inputsNum) {
+    impl::aten::setCurCtx(ctx);
+    DIOPI_CHECK_PTR(outs);
+    DIOPI_CHECK_PTR(inputs);
+    auto atInputs = impl::aten::buildATenList(inputs,inputsNum);
+    auto atOuts = impl::aten::buildATenList(outs,outsNum);
+    atOuts = at::meshgrid(atInputs);
+    for (int i = 0; i < outsNum; ++i) {
+        impl::aten::updateATen2Tensor(ctx, atOuts[i].contiguous(), outs[i]);
+    }
+    impl::aten::unsetCurCtx();
+    return diopiSuccess;
+}
+
 diopiError_t diopiAdamW(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiTensorHandle_t grad,
                         diopiTensorHandle_t exp_avg, diopiTensorHandle_t exp_avg_sq, diopiTensorHandle_t max_exp_avg_sq,
                         float lr, float beta1, float beta2, float eps, float weight_decay, int64_t step, bool amsgrad) {
