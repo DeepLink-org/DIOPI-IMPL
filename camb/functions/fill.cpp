@@ -8,8 +8,8 @@
 
 #include <vector>
 
-#include "../../third_party/half/include/half.hpp"
 #include "../cnnl_helper.hpp"
+#include "../common/float16.hpp"
 #include "../common/common.hpp"
 
 namespace impl {
