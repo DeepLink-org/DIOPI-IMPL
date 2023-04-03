@@ -2537,10 +2537,11 @@ diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiTensorHandl
     return diopiSuccess;
 }
 
-diopiError_t diopiMeshGrid(diopiContextHandle_t ctx, diopiTensorHandle_t* outs, int64_t outsNum, diopiConstTensorHandle_t* inputs, int64_t inputsNum) {
+diopiError_t diopiMeshGrid(diopiContextHandle_t ctx, diopiTensorHandle_t* outs, diopiConstTensorHandle_t* inputs, int64_t inputsNum) {
     impl::aten::setCurCtx(ctx);
     DIOPI_CHECK_PTR(outs);
     DIOPI_CHECK_PTR(inputs);
+    auto outsNum = inputsNum;
     auto atInputs = impl::aten::buildATenList(inputs,inputsNum);
     auto atOuts = impl::aten::buildATenList(outs,outsNum);
     atOuts = at::meshgrid(atInputs);
