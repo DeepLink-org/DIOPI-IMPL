@@ -2389,6 +2389,16 @@ diopiError_t diopiRandperm(diopiContextHandle_t ctx, diopiTensorHandle_t out, in
     return diopiSuccess;
 }
 
+diopiError_t diopiRandn(diopiContextHandle_t ctx, diopiTensorHandle_t out) {
+    impl::aten::setCurCtx(ctx);
+    auto atOut = impl::aten::buildATen(out);
+    auto atSize = atOut.sizes();
+    at::randn_out(atOut, atSize, c10::nullopt);
+    impl::aten::unsetCurCtx();
+    return diopiSuccess;
+}
+
+
 diopiError_t diopiUniformInp(diopiContextHandle_t ctx, diopiTensorHandle_t inout, double from, double to, int64_t idx) {
     impl::aten::setCurCtx(ctx);
     auto atInOut = impl::aten::buildATen(inout);
