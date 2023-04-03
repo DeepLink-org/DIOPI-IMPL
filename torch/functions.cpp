@@ -2542,8 +2542,8 @@ diopiError_t diopiMeshGrid(diopiContextHandle_t ctx, diopiTensorHandle_t* outs, 
     DIOPI_CHECK_PTR(outs);
     DIOPI_CHECK_PTR(inputs);
     auto outsNum = inputsNum;
-    auto atInputs = impl::aten::buildATenList(inputs,inputsNum);
-    auto atOuts = impl::aten::buildATenList(outs,outsNum);
+    auto atInputs = impl::aten::buildATenList(inputs, inputsNum);
+    auto atOuts = impl::aten::buildATenList(outs, outsNum);
     atOuts = at::meshgrid(atInputs);
     for (int i = 0; i < outsNum; ++i) {
         impl::aten::updateATen2Tensor(ctx, atOuts[i].contiguous(), outs[i]);
