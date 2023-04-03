@@ -7,6 +7,8 @@
 #ifndef IMPL_CUDA_ERROR_HPP_
 #define IMPL_CUDA_ERROR_HPP_
 
+#include <utility>
+
 extern "C" {
 
 void _set_last_error_string(const char *err);
