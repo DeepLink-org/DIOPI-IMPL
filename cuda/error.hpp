@@ -6,12 +6,17 @@
 
 #ifndef IMPL_CUDA_ERROR_HPP_
 #define IMPL_CUDA_ERROR_HPP_
-namespace impl {
 
-namespace cuda {
+extern "C" {
 
 void _set_last_error_string(const char *err);
 const char* cuda_get_last_error_string();
+
+}  // extern "C"
+
+namespace impl {
+
+namespace cuda {
 
 template<typename...Types>
 void set_last_error_string(const char* szFmt, Types&&...args) {

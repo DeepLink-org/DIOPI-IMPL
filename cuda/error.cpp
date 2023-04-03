@@ -8,9 +8,8 @@
 #include <mutex>
 
 #include "error.hpp"
-namespace impl {
 
-namespace cuda {
+extern "C" {
 
 static char strLastError[4096] = {0};
 static char strLastErrorOther[2048] = {0};
@@ -29,6 +28,4 @@ void _set_last_error_string(const char *err) {
     sprintf(strLastErrorOther, "%s", err);
 }
 
-}  // namespace cuda
-
-}  // namespace impl
+}  // extern "C"
