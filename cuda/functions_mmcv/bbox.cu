@@ -111,7 +111,7 @@ diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
 
     // // at::cuda::CUDAGuard device_guard(bboxes1.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::bbox_overlaps_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::bbox_overlaps_cuda_kernel,
                                   bboxes1.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK,

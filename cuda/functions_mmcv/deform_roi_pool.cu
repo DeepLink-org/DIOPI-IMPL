@@ -207,7 +207,7 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
 
     // at::cuda::CUDAGuard device_guard(input.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::deform_roi_pool_forward_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::deform_roi_pool_forward_cuda_kernel,
                                   input.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK,
@@ -255,7 +255,7 @@ diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
 
     // at::cuda::CUDAGuard device_guard(grad_output.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::deform_roi_pool_backward_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::deform_roi_pool_backward_cuda_kernel,
                                   grad_output.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK,

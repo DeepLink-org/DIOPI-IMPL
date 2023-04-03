@@ -172,7 +172,7 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
     dim3 blocks(GET_BLOCKS(B * O * N1 * K, THREADS_PER_BLOCK));
     dim3 threads(THREADS_PER_BLOCK);
 
-    dispatch_float_types_and_half(impl::cuda::assign_score_withk_forward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_forward_cuda_kernel_diopi,
                                   points.scalar_type(),
                                   blocks,
                                   threads,
@@ -225,7 +225,7 @@ diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx,
     dim3 blocks2(GET_BLOCKS(B * N1 * K * M, THREADS_PER_BLOCK));
     dim3 threads2(THREADS_PER_BLOCK);
 
-    dispatch_float_types_and_half(impl::cuda::assign_score_withk_points_backward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_points_backward_cuda_kernel_diopi,
                                   grad_out.scalar_type(),
                                   blocks1,
                                   threads1,
@@ -243,7 +243,7 @@ diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx,
                                   grad_points.data(),
                                   grad_centers.data());
 
-    dispatch_float_types_and_half(impl::cuda::assign_score_withk_scores_backward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_scores_backward_cuda_kernel_diopi,
                                   grad_out.scalar_type(),
                                   blocks2,
                                   threads2,

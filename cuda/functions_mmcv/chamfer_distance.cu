@@ -130,7 +130,7 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
     int m = xyz2.size(1);
     // at::cuda::CUDAGuard device_guard(xyz1.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
                                   xyz1.dtype(),
                                   GET_BLOCKS(batch_size * n),
                                   THREADS_PER_BLOCK,
@@ -142,7 +142,7 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
                                   xyz2.data(),
                                   dist1.data(),
                                   static_cast<int*>(idx1.data()));
-    dispatch_float_types_and_half(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
                                   xyz1.dtype(),
                                   GET_BLOCKS(batch_size * m),
                                   THREADS_PER_BLOCK,
@@ -179,7 +179,7 @@ extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx,
     int m = xyz2.size(1);
     // at::cuda::CUDAGuard device_guard(xyz1.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
                                   xyz1.dtype(),
                                   GET_BLOCKS(batch_size * n),
                                   THREADS_PER_BLOCK / 2,
@@ -193,7 +193,7 @@ extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx,
                                   static_cast<const int*>(idx1.data()),
                                   grad_xyz1.data(),
                                   grad_xyz2.data());
-    dispatch_float_types_and_half(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
                                   xyz1.dtype(),
                                   GET_BLOCKS(batch_size * m),
                                   THREADS_PER_BLOCK / 2,

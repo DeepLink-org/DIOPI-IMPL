@@ -803,7 +803,7 @@ diopiError_t diopiConvexIou(diopiContextHandle_t ctx, diopiConstTensorHandle_t p
 
     // at::cuda::CUDAGuard device_guard(pointsets.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::convex_iou_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::convex_iou_cuda_kernel,
                                   pointsets.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK / 2,
@@ -827,7 +827,7 @@ diopiError_t diopiConvexGiou(diopiContextHandle_t ctx, diopiConstTensorHandle_t 
 
     // at::cuda::CUDAGuard device_guard(pointsets.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::convex_giou_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::convex_giou_cuda_kernel,
                                   pointsets.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK / 2,

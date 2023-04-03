@@ -125,7 +125,7 @@ diopiError_t diopiKnn(diopiContextHandle_t ctx,
     dim3 blocks(GET_BLOCKS(m, THREADS_PER_BLOCK), b);
     dim3 threads(THREADS_PER_BLOCK);
 
-    dispatch_float_types_and_half(impl::cuda::knn_forward_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::knn_forward_cuda_kernel,
                                   new_xyz.scalar_type(),
                                   blocks,
                                   threads,

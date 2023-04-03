@@ -97,7 +97,7 @@ extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
 
     // // at::cuda::CUDAGuard device_guard(input.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::active_rotated_filter_forward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::active_rotated_filter_forward_cuda_kernel_diopi,
                                   input.dtype(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK,
@@ -133,7 +133,7 @@ extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ct
 
     // // at::cuda::CUDAGuard device_guard(indices.device());
     auto stream = impl::cuda::getStream(ctx);
-    dispatch_float_types_and_half(impl::cuda::active_rotated_filter_backward_cuda_kernel_diopi,
+    DISPATCH_FLOAT_TYPES(impl::cuda::active_rotated_filter_backward_cuda_kernel_diopi,
                                   grad_out.scalar_type(),
                                   GET_BLOCKS(output_size),
                                   THREADS_PER_BLOCK,

@@ -234,7 +234,7 @@ diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(input.device());
     auto stream = impl::cuda::getStream(ctx);
     dim3 block(128, 4);
-    dispatch_float_types_and_half(impl::cuda::border_align_forward_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::border_align_forward_cuda_kernel,
                                   input.scalar_type(),
                                   GET_BLOCKS(nthreads),
                                   block,
@@ -274,7 +274,7 @@ diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(grad_output.device());
     auto stream = impl::cuda::getStream(ctx);
     dim3 block(128, 4);
-    dispatch_float_types_and_half(impl::cuda::border_align_backward_cuda_kernel,
+    DISPATCH_FLOAT_TYPES(impl::cuda::border_align_backward_cuda_kernel,
                                   grad_output.scalar_type(),
                                   GET_BLOCKS(nthreads),
                                   block,
