@@ -109,7 +109,7 @@ extern "C" diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t o
     diopiSize_t othShape = trOther.shape();
     int gridSize  = (trOut.numel() + blockSize - 1) / blockSize;
     if (compareShape(inShape, othShape)) {
-        DISPATCH_TYPES(vecAdd, trInput.dtype(), gridSize, blockSize, stream,
+        DISPATCH_DTYPE(vecAdd, trInput.dtype(), gridSize, blockSize, stream,
             trInput.data(), trOther.data(), trOut.data(), trInput.numel(), coff);
     } else {
         diopiSize_t outShape = trOut.shape();
@@ -128,7 +128,7 @@ extern "C" diopiError_t diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t o
         cudaMemcpyAsync(othStride.data(), othStrideHost.data(), nbytes, cudaMemcpyHostToDevice, stream);
         cudaMemcpyAsync(outStride.data(), outStrideHost.data, nbytes, cudaMemcpyHostToDevice, stream);
 
-        DISPATCH_TYPES(vecAddBroadcast, trInput.dtype(), gridSize, blockSize, stream,
+        DISPATCH_DTYPE(vecAddBroadcast, trInput.dtype(), gridSize, blockSize, stream,
            trInput.data(), trOther.data(), trOut.data(), trOut.numel(), coff, static_cast<const int64_t*>(inStride.data()),
            static_cast<const int64_t*>(othStride.data()), static_cast<const int64_t*>(outStride.data()), len);
     }
@@ -151,7 +151,7 @@ extern "C" diopiError_t diopiAddScalar(diopiContextHandle_t ctx, diopiTensorHand
         otherVal = other->fval;
     }
     int gridSize = (trInput.numel() + blockSize - 1) / blockSize;
-    DISPATCH_TYPES(vecAddScalar, trInput.dtype(), gridSize, blockSize, stream,
+    DISPATCH_DTYPE(vecAddScalar, trInput.dtype(), gridSize, blockSize, stream,
         trInput.data(), otherVal, trOut.data(), trInput.numel(), coff);
     return diopiSuccess;
 }
@@ -183,7 +183,7 @@ extern "C" diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t 
     } else {
         int blockSize = 256;
         int gridSize  = (numel + blockSize - 1) / blockSize;
-        DISPATCH_TYPES(vecFill, dtype, gridSize, blockSize, stream, tr.data(), val, numel);
+        DISPATCH_DTYPE(vecFill, dtype, gridSize, blockSize, stream, tr.data(), val, numel);
     }
 
     return diopiSuccess;
