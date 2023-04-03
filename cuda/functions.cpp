@@ -5,7 +5,6 @@
  */
 
 #include <diopi/functions.h>
-#include <diopi/functions_mmcv.h>
 #include <cuda_runtime.h>
 #include <cudnn.h>
 #include <cstdio>
