@@ -4,11 +4,11 @@
  * @copyright  (c) 2023, DeepLink.
  */
 
+#include <assert.h>
 #include <cuda_runtime.h>
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
 #include <stdio.h>
-#include<assert.h>
 
 #include <iostream>
 #include <vector>
@@ -20,18 +20,9 @@ namespace impl {
 
 namespace cuda {
 template <typename T>
-__global__ void assign_score_withk_forward_cuda_kernel_diopi(const int B,
-                                                             const int N0,
-                                                             const int N1,
-                                                             const int M,
-                                                             const int K,
-                                                             const int O,
-                                                             const int aggregate,
-                                                             const void* points_,
-                                                             const void* centers_,
-                                                             const void* scores_,
-                                                             const int64_t* knn_idx,
-                                                             void* output_) {
+__global__ void assign_score_withk_forward_cuda_kernel_diopi(const int B, const int N0, const int N1, const int M, const int K, const int O,
+                                                             const int aggregate, const void* points_, const void* centers_, const void* scores_,
+                                                             const int64_t* knn_idx, void* output_) {
     const T* points = static_cast<const T*>(points_);
     const T* centers = static_cast<const T*>(centers_);
     const T* scores = static_cast<const T*>(scores_);
@@ -64,18 +55,9 @@ __global__ void assign_score_withk_forward_cuda_kernel_diopi(const int B,
 }
 
 template <typename T>
-__global__ void assign_score_withk_points_backward_cuda_kernel_diopi(const int B,
-                                                                     const int N0,
-                                                                     const int N,
-                                                                     const int M,
-                                                                     const int K,
-                                                                     const int O,
-                                                                     const int aggregate,
-                                                                     const void* grad_out_,
-                                                                     const void* scores_,
-                                                                     const int64_t* knn_idx,
-                                                                     void* grad_points_,
-                                                                     void* grad_centers_) {
+__global__ void assign_score_withk_points_backward_cuda_kernel_diopi(const int B, const int N0, const int N, const int M, const int K, const int O,
+                                                                     const int aggregate, const void* grad_out_, const void* scores_, const int64_t* knn_idx,
+                                                                     void* grad_points_, void* grad_centers_) {
     const T* grad_out = static_cast<const T*>(grad_out_);
     const T* scores = static_cast<const T*>(scores_);
     T* grad_points = static_cast<T*>(grad_points_);
@@ -105,18 +87,9 @@ __global__ void assign_score_withk_points_backward_cuda_kernel_diopi(const int B
 }
 
 template <typename T>
-__global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B,
-                                                                     const int N0,
-                                                                     const int N,
-                                                                     const int M,
-                                                                     const int K,
-                                                                     const int O,
-                                                                     const int aggregate,
-                                                                     const void* grad_out_,
-                                                                     const void* points_,
-                                                                     const void* centers_,
-                                                                     const int64_t* knn_idx,
-                                                                     void* grad_scores_) {
+__global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B, const int N0, const int N, const int M, const int K, const int O,
+                                                                     const int aggregate, const void* grad_out_, const void* points_, const void* centers_,
+                                                                     const int64_t* knn_idx, void* grad_scores_) {
     const T* grad_out = static_cast<const T*>(grad_out_);
     const T* points = static_cast<const T*>(points_);
     const T* centers = static_cast<const T*>(centers_);
@@ -147,19 +120,9 @@ __global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B
 
 }  // namespace impl
 
-diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
-                                   diopiConstTensorHandle_t points_,
-                                   diopiConstTensorHandle_t centers_,
-                                   diopiConstTensorHandle_t scores_,
-                                   diopiConstTensorHandle_t knn_idx_,
-                                   diopiTensorHandle_t output_,
-                                   int64_t B,
-                                   int64_t N0,
-                                   int64_t N1,
-                                   int64_t M,
-                                   int64_t K,
-                                   int64_t O,
-                                   int64_t aggregate) {
+diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx, diopiConstTensorHandle_t points_, diopiConstTensorHandle_t centers_,
+                                   diopiConstTensorHandle_t scores_, diopiConstTensorHandle_t knn_idx_, diopiTensorHandle_t output_, int64_t B, int64_t N0,
+                                   int64_t N1, int64_t M, int64_t K, int64_t O, int64_t aggregate) {
     auto points = impl::cuda::makeTensor(points_);
     auto centers = impl::cuda::makeTensor(centers_);
     auto scores = impl::cuda::makeTensor(scores_);
@@ -173,41 +136,29 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
     dim3 threads(THREADS_PER_BLOCK);
 
     DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_forward_cuda_kernel_diopi,
-                                  points.scalar_type(),
-                                  blocks,
-                                  threads,
-                                  stream,
-                                  B,
-                                  N0,
-                                  N1,
-                                  M,
-                                  K,
-                                  O,
-                                  aggregate,
-                                  points.data(),
-                                  centers.data(),
-                                  scores.data(),
-                                  static_cast<const int64_t*>(knn_idx.data()),
-                                  output.data());
+                         points.scalar_type(),
+                         blocks,
+                         threads,
+                         stream,
+                         B,
+                         N0,
+                         N1,
+                         M,
+                         K,
+                         O,
+                         aggregate,
+                         points.data(),
+                         centers.data(),
+                         scores.data(),
+                         static_cast<const int64_t*>(knn_idx.data()),
+                         output.data());
     return diopiSuccess;
 }
 
-diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx,
-                                           diopiConstTensorHandle_t grad_out_,
-                                           diopiConstTensorHandle_t points_,
-                                           diopiConstTensorHandle_t centers_,
-                                           diopiConstTensorHandle_t scores_,
-                                           diopiConstTensorHandle_t knn_idx_,
-                                           diopiTensorHandle_t grad_points_,
-                                           diopiTensorHandle_t grad_centers_,
-                                           diopiTensorHandle_t grad_scores_,
-                                           int64_t B,
-                                           int64_t N0,
-                                           int64_t N1,
-                                           int64_t M,
-                                           int64_t K,
-                                           int64_t O,
-                                           int64_t aggregate) {
+diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_out_, diopiConstTensorHandle_t points_,
+                                           diopiConstTensorHandle_t centers_, diopiConstTensorHandle_t scores_, diopiConstTensorHandle_t knn_idx_,
+                                           diopiTensorHandle_t grad_points_, diopiTensorHandle_t grad_centers_, diopiTensorHandle_t grad_scores_, int64_t B,
+                                           int64_t N0, int64_t N1, int64_t M, int64_t K, int64_t O, int64_t aggregate) {
     auto grad_out = impl::cuda::makeTensor(grad_out_);
     auto points = impl::cuda::makeTensor(points_);
     auto centers = impl::cuda::makeTensor(centers_);
@@ -226,40 +177,40 @@ diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx,
     dim3 threads2(THREADS_PER_BLOCK);
 
     DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_points_backward_cuda_kernel_diopi,
-                                  grad_out.scalar_type(),
-                                  blocks1,
-                                  threads1,
-                                  stream,
-                                  B,
-                                  N0,
-                                  N1,
-                                  M,
-                                  K,
-                                  O,
-                                  aggregate,
-                                  grad_out.data(),
-                                  scores.data(),
-                                  static_cast<const int64_t*>(knn_idx.data()),
-                                  grad_points.data(),
-                                  grad_centers.data());
+                         grad_out.scalar_type(),
+                         blocks1,
+                         threads1,
+                         stream,
+                         B,
+                         N0,
+                         N1,
+                         M,
+                         K,
+                         O,
+                         aggregate,
+                         grad_out.data(),
+                         scores.data(),
+                         static_cast<const int64_t*>(knn_idx.data()),
+                         grad_points.data(),
+                         grad_centers.data());
 
     DISPATCH_FLOAT_TYPES(impl::cuda::assign_score_withk_scores_backward_cuda_kernel_diopi,
-                                  grad_out.scalar_type(),
-                                  blocks2,
-                                  threads2,
-                                  stream,
-                                  B,
-                                  N0,
-                                  N1,
-                                  M,
-                                  K,
-                                  O,
-                                  aggregate,
-                                  grad_out.data(),
-                                  points.data(),
-                                  centers.data(),
-                                  static_cast<const int64_t*>(knn_idx.data()),
-                                  grad_scores.data());
+                         grad_out.scalar_type(),
+                         blocks2,
+                         threads2,
+                         stream,
+                         B,
+                         N0,
+                         N1,
+                         M,
+                         K,
+                         O,
+                         aggregate,
+                         grad_out.data(),
+                         points.data(),
+                         centers.data(),
+                         static_cast<const int64_t*>(knn_idx.data()),
+                         grad_scores.data());
 
     return diopiSuccess;
 }

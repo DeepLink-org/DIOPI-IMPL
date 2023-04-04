@@ -312,12 +312,12 @@ diopiError_t diopiMinAreaPolygons(diopiContextHandle_t ctx, diopiConstTensorHand
     // at::cuda::CUDAGuard device_guard(pointsets.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::min_area_polygons_cuda_kernel,
-                                  pointsets.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  num_pointsets,
-                                  pointsets.data(),
-                                  polygons.data());
+                         pointsets.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         num_pointsets,
+                         pointsets.data(),
+                         polygons.data());
     return diopiSuccess;
 }

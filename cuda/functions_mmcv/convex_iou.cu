@@ -646,10 +646,10 @@ __device__ inline float devrIoU(T const* const p, T const* const q, T* point_gra
         int grad_point = points_to_convex_ind[i];
         grad_point_temp[2 * grad_point] =
             static_cast<float>((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i] - iou / union_area * grad_A[2 * i] -
-                    1 / polygon_area * (grad_AB[2 * i] - grad_A[2 * i]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i]);
+                               1 / polygon_area * (grad_AB[2 * i] - grad_A[2 * i]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i]);
         grad_point_temp[2 * grad_point + 1] =
             static_cast<float>((union_area + inter_area) / (union_area * union_area) * grad_AB[2 * i + 1] - iou / union_area * grad_A[2 * i + 1] -
-                    1 / polygon_area * (grad_AB[2 * i + 1] - grad_A[2 * i + 1]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i + 1]);
+                               1 / polygon_area * (grad_AB[2 * i + 1] - grad_A[2 * i + 1]) - (union_area) / polygon_area / polygon_area * grad_C[2 * i + 1]);
     }
 
     for (int i = 0; i < 9; i++) {
@@ -804,15 +804,15 @@ diopiError_t diopiConvexIou(diopiContextHandle_t ctx, diopiConstTensorHandle_t p
     // at::cuda::CUDAGuard device_guard(pointsets.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::convex_iou_cuda_kernel,
-                                  pointsets.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK / 2,
-                                  stream,
-                                  num_pointsets,
-                                  num_polygons,
-                                  pointsets.data(),
-                                  polygons.data(),
-                                  ious.data());
+                         pointsets.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK / 2,
+                         stream,
+                         num_pointsets,
+                         num_polygons,
+                         pointsets.data(),
+                         polygons.data(),
+                         ious.data());
     return diopiSuccess;
 }
 
@@ -828,14 +828,14 @@ diopiError_t diopiConvexGiou(diopiContextHandle_t ctx, diopiConstTensorHandle_t 
     // at::cuda::CUDAGuard device_guard(pointsets.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::convex_giou_cuda_kernel,
-                                  pointsets.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK / 2,
-                                  stream,
-                                  num_pointsets,
-                                  num_polygons,
-                                  pointsets.data(),
-                                  polygons.data(),
-                                  output.data());
+                         pointsets.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK / 2,
+                         stream,
+                         num_pointsets,
+                         num_polygons,
+                         pointsets.data(),
+                         polygons.data(),
+                         output.data());
     return diopiSuccess;
 }

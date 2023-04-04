@@ -20,15 +20,9 @@ namespace impl {
 namespace cuda {
 
 template <typename scalar_t>
-__global__ void active_rotated_filter_forward_cuda_kernel_diopi(const int nthreads,
-                                                                const void* weight_data_,
-                                                                const int* indices_data,
-                                                                const int num_input_planes,
-                                                                const int num_output_planes,
-                                                                const int num_orientations,
-                                                                const int num_rotations,
-                                                                const int nEntry,
-                                                                void* output_data_) {
+__global__ void active_rotated_filter_forward_cuda_kernel_diopi(const int nthreads, const void* weight_data_, const int* indices_data,
+                                                                const int num_input_planes, const int num_output_planes, const int num_orientations,
+                                                                const int num_rotations, const int nEntry, void* output_data_) {
     const scalar_t* weight_data = static_cast<const scalar_t*>(weight_data_);
     scalar_t* output_data = static_cast<scalar_t*>(output_data_);
     CUDA_1D_KERNEL_LOOP(index, nthreads) {
@@ -46,15 +40,9 @@ __global__ void active_rotated_filter_forward_cuda_kernel_diopi(const int nthrea
 }
 
 template <typename scalar_t>
-__global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthreads,
-                                                                 const void* gradWeight_data_,
-                                                                 const int* indices_data,
-                                                                 const int num_input_planes,
-                                                                 const int num_output_planes,
-                                                                 const int num_orientations,
-                                                                 const int num_rotations,
-                                                                 const int nEntry,
-                                                                 void* weight_data_) {
+__global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthreads, const void* gradWeight_data_, const int* indices_data,
+                                                                 const int num_input_planes, const int num_output_planes, const int num_orientations,
+                                                                 const int num_rotations, const int nEntry, void* weight_data_) {
     const scalar_t* gradWeight_data = static_cast<const scalar_t*>(gradWeight_data_);
     scalar_t* weight_data = static_cast<scalar_t*>(weight_data_);
     CUDA_1D_KERNEL_LOOP(index, nthreads) {
@@ -78,9 +66,7 @@ __global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthre
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
-                                                 diopiConstTensorHandle_t input_,
-                                                 diopiConstTensorHandle_t indices_,
+extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx, diopiConstTensorHandle_t input_, diopiConstTensorHandle_t indices_,
                                                  diopiTensorHandle_t output_) {
     auto input = impl::cuda::makeTensor(input_);
     auto indices = impl::cuda::makeTensor(indices_);
@@ -98,25 +84,23 @@ extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
     // // at::cuda::CUDAGuard device_guard(input.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::active_rotated_filter_forward_cuda_kernel_diopi,
-                                  input.dtype(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  output_size,
-                                  input.data(),
-                                  static_cast<const int*>(indices.data()),
-                                  num_input_planes,
-                                  num_output_planes,
-                                  num_orientations,
-                                  num_rotations,
-                                  nEntry,
-                                  output.data());
+                         input.dtype(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         output_size,
+                         input.data(),
+                         static_cast<const int*>(indices.data()),
+                         num_input_planes,
+                         num_output_planes,
+                         num_orientations,
+                         num_rotations,
+                         nEntry,
+                         output.data());
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ctx,
-                                                         diopiConstTensorHandle_t grad_out_,
-                                                         diopiConstTensorHandle_t indices_,
+extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_out_, diopiConstTensorHandle_t indices_,
                                                          diopiTensorHandle_t grad_in_) {
     auto grad_out = impl::cuda::makeTensor(grad_out_);
     auto indices = impl::cuda::makeTensor(indices_);
@@ -134,18 +118,18 @@ extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ct
     // // at::cuda::CUDAGuard device_guard(indices.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::active_rotated_filter_backward_cuda_kernel_diopi,
-                                  grad_out.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  output_size,
-                                  grad_out.data(),
-                                  static_cast<const int*>(indices.data()),
-                                  num_input_planes,
-                                  num_output_planes,
-                                  num_orientations,
-                                  num_rotations,
-                                  nEntry,
-                                  grad_in.data());
+                         grad_out.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         output_size,
+                         grad_out.data(),
+                         static_cast<const int*>(indices.data()),
+                         num_input_planes,
+                         num_output_planes,
+                         num_orientations,
+                         num_rotations,
+                         nEntry,
+                         grad_in.data());
     return diopiSuccess;
 }

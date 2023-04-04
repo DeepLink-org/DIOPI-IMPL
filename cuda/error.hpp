@@ -11,7 +11,7 @@
 
 extern "C" {
 
-void _set_last_error_string(const char *err);
+void _set_last_error_string(const char* err);
 const char* cuda_get_last_error_string();
 
 }  // extern "C"
@@ -20,8 +20,8 @@ namespace impl {
 
 namespace cuda {
 
-template<typename...Types>
-void set_last_error_string(const char* szFmt, Types&&...args) {
+template <typename... Types>
+void set_last_error_string(const char* szFmt, Types&&... args) {
     char szBuf[4096] = {0};
     sprintf(szBuf, szFmt, std::forward<Types>(args)...);
     _set_last_error_string(szBuf);

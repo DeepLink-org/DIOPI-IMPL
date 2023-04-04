@@ -19,19 +19,9 @@ namespace impl {
 
 namespace cuda {
 template <typename T>
-__global__ void deform_roi_pool_forward_cuda_kernel(const int nthreads,
-                                                    const void* input_,
-                                                    const void* rois_,
-                                                    const void* offset_,
-                                                    void* output_,
-                                                    const int pooled_height,
-                                                    const int pooled_width,
-                                                    const T spatial_scale,
-                                                    const int sampling_ratio,
-                                                    const T gamma,
-                                                    const int channels,
-                                                    const int height,
-                                                    const int width) {
+__global__ void deform_roi_pool_forward_cuda_kernel(const int nthreads, const void* input_, const void* rois_, const void* offset_, void* output_,
+                                                    const int pooled_height, const int pooled_width, const T spatial_scale, const int sampling_ratio,
+                                                    const T gamma, const int channels, const int height, const int width) {
     const T* input = static_cast<const T*>(input_);
     const T* rois = static_cast<const T*>(rois_);
     const T* offset = static_cast<const T*>(offset_);
@@ -89,20 +79,9 @@ __global__ void deform_roi_pool_forward_cuda_kernel(const int nthreads,
 }
 
 template <typename T>
-__global__ void deform_roi_pool_backward_cuda_kernel(const int nthreads,
-                                                     const void* grad_output_,
-                                                     const void* input_,
-                                                     const void* rois_,
-                                                     const void* offset_,
-                                                     void* grad_input_,
-                                                     void* grad_offset_,
-                                                     const int pooled_height,
-                                                     const int pooled_width,
-                                                     const T spatial_scale,
-                                                     const int sampling_ratio,
-                                                     const T gamma,
-                                                     const int channels,
-                                                     const int height,
+__global__ void deform_roi_pool_backward_cuda_kernel(const int nthreads, const void* grad_output_, const void* input_, const void* rois_, const void* offset_,
+                                                     void* grad_input_, void* grad_offset_, const int pooled_height, const int pooled_width,
+                                                     const T spatial_scale, const int sampling_ratio, const T gamma, const int channels, const int height,
                                                      const int width) {
     const T* grad_output = static_cast<const T*>(grad_output_);
     const T* input = static_cast<const T*>(input_);
@@ -186,15 +165,8 @@ __global__ void deform_roi_pool_backward_cuda_kernel(const int nthreads,
 
 }  // namespace impl
 
-diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
-                                diopiTensorHandle_t input_,
-                                diopiTensorHandle_t rois_,
-                                diopiTensorHandle_t offset_,
-                                diopiTensorHandle_t output_,
-                                int64_t pooled_height,
-                                int64_t pooled_width,
-                                float spatial_scale,
-                                int64_t sampling_ratio,
+diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_, diopiTensorHandle_t rois_, diopiTensorHandle_t offset_,
+                                diopiTensorHandle_t output_, int64_t pooled_height, int64_t pooled_width, float spatial_scale, int64_t sampling_ratio,
                                 float gamma) {
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);
@@ -208,39 +180,30 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(input.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::deform_roi_pool_forward_cuda_kernel,
-                                  input.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  output_size,
-                                  input.data(),
-                                  rois.data(),
-                                  offset.data(),
-                                  output.data(),
-                                  pooled_height,
-                                  pooled_width,
-                                  spatial_scale,
-                                  sampling_ratio,
-                                  gamma,
-                                  channels,
-                                  height,
-                                  width);
+                         input.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         output_size,
+                         input.data(),
+                         rois.data(),
+                         offset.data(),
+                         output.data(),
+                         pooled_height,
+                         pooled_width,
+                         spatial_scale,
+                         sampling_ratio,
+                         gamma,
+                         channels,
+                         height,
+                         width);
 
     return diopiSuccess;
 }
 
-diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
-                                        diopiTensorHandle_t grad_output_,
-                                        diopiTensorHandle_t input_,
-                                        diopiTensorHandle_t rois_,
-                                        diopiTensorHandle_t offset_,
-                                        diopiTensorHandle_t grad_input_,
-                                        diopiTensorHandle_t grad_offset_,
-                                        int64_t pooled_height,
-                                        int64_t pooled_width,
-                                        float spatial_scale,
-                                        int64_t sampling_ratio,
-                                        float gamma) {
+diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_output_, diopiTensorHandle_t input_, diopiTensorHandle_t rois_,
+                                        diopiTensorHandle_t offset_, diopiTensorHandle_t grad_input_, diopiTensorHandle_t grad_offset_, int64_t pooled_height,
+                                        int64_t pooled_width, float spatial_scale, int64_t sampling_ratio, float gamma) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);
@@ -256,24 +219,24 @@ diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(grad_output.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::deform_roi_pool_backward_cuda_kernel,
-                                  grad_output.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  output_size,
-                                  grad_output.data(),
-                                  input.data(),
-                                  rois.data(),
-                                  offset.data(),
-                                  grad_input.data(),
-                                  grad_offset.data(),
-                                  pooled_height,
-                                  pooled_width,
-                                  spatial_scale,
-                                  sampling_ratio,
-                                  gamma,
-                                  channels,
-                                  height,
-                                  width);
+                         grad_output.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         output_size,
+                         grad_output.data(),
+                         input.data(),
+                         rois.data(),
+                         offset.data(),
+                         grad_input.data(),
+                         grad_offset.data(),
+                         pooled_height,
+                         pooled_width,
+                         spatial_scale,
+                         sampling_ratio,
+                         gamma,
+                         channels,
+                         height,
+                         width);
     return diopiSuccess;
 }

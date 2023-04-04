@@ -36,8 +36,8 @@ __device__ __forceinline__ void load_bbox<float>(const float* bbox, const int ba
 }
 
 template <typename T>
-__global__ void bbox_overlaps_cuda_kernel(
-    const void* bbox1_, const void* bbox2_, void* ious_, const int num_bbox1, const int num_bbox2, const int mode, const bool aligned, const int offset) {
+__global__ void bbox_overlaps_cuda_kernel(const void* bbox1_, const void* bbox2_, void* ious_, const int num_bbox1, const int num_bbox2, const int mode,
+                                          const bool aligned, const int offset) {
     const T* bbox1 = static_cast<const T*>(bbox1_);
     const T* bbox2 = static_cast<const T*>(bbox2_);
     T* ious = static_cast<T*>(ious_);
@@ -95,13 +95,8 @@ __global__ void bbox_overlaps_cuda_kernel(
 
 }  // namespace impl
 
-diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
-                               diopiConstTensorHandle_t bboxes1_,
-                               diopiConstTensorHandle_t bboxes2_,
-                               diopiTensorHandle_t ious_,
-                               const int64_t mode,
-                               const bool aligned,
-                               const int64_t offset) {
+diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx, diopiConstTensorHandle_t bboxes1_, diopiConstTensorHandle_t bboxes2_, diopiTensorHandle_t ious_,
+                               const int64_t mode, const bool aligned, const int64_t offset) {
     auto bboxes1 = impl::cuda::makeTensor(bboxes1_);
     auto bboxes2 = impl::cuda::makeTensor(bboxes2_);
     auto ious = impl::cuda::makeTensor(ious_);
@@ -112,17 +107,17 @@ diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
     // // at::cuda::CUDAGuard device_guard(bboxes1.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::bbox_overlaps_cuda_kernel,
-                                  bboxes1.scalar_type(),
-                                  GET_BLOCKS(output_size),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  bboxes1.data(),
-                                  bboxes2.data(),
-                                  ious.data(),
-                                  num_bbox1,
-                                  num_bbox2,
-                                  mode,
-                                  aligned,
-                                  offset);
+                         bboxes1.scalar_type(),
+                         GET_BLOCKS(output_size),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         bboxes1.data(),
+                         bboxes2.data(),
+                         ious.data(),
+                         num_bbox1,
+                         num_bbox2,
+                         mode,
+                         aligned,
+                         offset);
     return diopiSuccess;
 }

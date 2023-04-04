@@ -54,7 +54,7 @@ else()
     message(FATAL_ERROR "Not found CUDNN.")
 endif()
 
-file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions/*.cu)
+file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions_mmcv/*.cu)
 list(APPEND IMPL_SRC functions.cpp)
 list(APPEND IMPL_SRC functions.cu)
 list(APPEND IMPL_SRC error.cpp)

@@ -100,15 +100,8 @@ __global__ void knn_forward_cuda_kernel(int b, int n, int m, int nsample, const 
 
 }  // namespace impl
 
-diopiError_t diopiKnn(diopiContextHandle_t ctx,
-                      diopiTensorHandle_t xyz_,
-                      diopiTensorHandle_t new_xyz_,
-                      diopiTensorHandle_t idx_,
-                      diopiTensorHandle_t dist2_,
-                      int64_t b,
-                      int64_t n,
-                      int64_t m,
-                      int64_t nsample) {
+diopiError_t diopiKnn(diopiContextHandle_t ctx, diopiTensorHandle_t xyz_, diopiTensorHandle_t new_xyz_, diopiTensorHandle_t idx_, diopiTensorHandle_t dist2_,
+                      int64_t b, int64_t n, int64_t m, int64_t nsample) {
     // param new_xyz: (B, m, 3)
     // param xyz: (B, n, 3)
     // param idx: (B, m, nsample)
@@ -126,18 +119,18 @@ diopiError_t diopiKnn(diopiContextHandle_t ctx,
     dim3 threads(THREADS_PER_BLOCK);
 
     DISPATCH_FLOAT_TYPES(impl::cuda::knn_forward_cuda_kernel,
-                                  new_xyz.scalar_type(),
-                                  blocks,
-                                  threads,
-                                  stream,
-                                  b,
-                                  n,
-                                  m,
-                                  nsample,
-                                  xyz.data(),
-                                  new_xyz.data(),
-                                  static_cast<int *>(idx.data()),
-                                  dist2.data());
+                         new_xyz.scalar_type(),
+                         blocks,
+                         threads,
+                         stream,
+                         b,
+                         n,
+                         m,
+                         nsample,
+                         xyz.data(),
+                         new_xyz.data(),
+                         static_cast<int *>(idx.data()),
+                         dist2.data());
 
     return diopiSuccess;
 }

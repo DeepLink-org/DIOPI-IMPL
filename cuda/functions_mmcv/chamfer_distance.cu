@@ -86,8 +86,8 @@ __global__ void chamfer_distance_forward_cuda_kernel_diopi(int b, int n, const v
 }
 
 template <typename scalar_t>
-__global__ void chamfer_distance_backward_cuda_kernel_diopi(
-    int b, int n, const void* xyz1, int m, const void* xyz2, const void* grad_dist1, const int* idx1, void* grad_xyz1, void* grad_xyz2) {
+__global__ void chamfer_distance_backward_cuda_kernel_diopi(int b, int n, const void* xyz1, int m, const void* xyz2, const void* grad_dist1, const int* idx1,
+                                                            void* grad_xyz1, void* grad_xyz2) {
     const scalar_t* xyz1_ = static_cast<const scalar_t*>(xyz1);
     const scalar_t* xyz2_ = static_cast<const scalar_t*>(xyz2);
     const scalar_t* grad_dist1_ = static_cast<const scalar_t*>(grad_dist1);
@@ -112,12 +112,8 @@ __global__ void chamfer_distance_backward_cuda_kernel_diopi(
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
-                                             diopiConstTensorHandle_t xyz1_in,
-                                             diopiConstTensorHandle_t xyz2_in,
-                                             diopiTensorHandle_t dist1_out,
-                                             diopiTensorHandle_t dist2_out,
-                                             diopiTensorHandle_t idx1_out,
+extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in, diopiConstTensorHandle_t xyz2_in,
+                                             diopiTensorHandle_t dist1_out, diopiTensorHandle_t dist2_out, diopiTensorHandle_t idx1_out,
                                              diopiTensorHandle_t idx2_out) {
     auto xyz1 = impl::cuda::makeTensor(xyz1_in);
     auto xyz2 = impl::cuda::makeTensor(xyz2_in);
@@ -131,40 +127,35 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(xyz1.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
-                                  xyz1.dtype(),
-                                  GET_BLOCKS(batch_size * n),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  batch_size,
-                                  n,
-                                  xyz1.data(),
-                                  m,
-                                  xyz2.data(),
-                                  dist1.data(),
-                                  static_cast<int*>(idx1.data()));
+                         xyz1.dtype(),
+                         GET_BLOCKS(batch_size * n),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         batch_size,
+                         n,
+                         xyz1.data(),
+                         m,
+                         xyz2.data(),
+                         dist1.data(),
+                         static_cast<int*>(idx1.data()));
     DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_forward_cuda_kernel_diopi,
-                                  xyz1.dtype(),
-                                  GET_BLOCKS(batch_size * m),
-                                  THREADS_PER_BLOCK,
-                                  stream,
-                                  batch_size,
-                                  m,
-                                  xyz2.data(),
-                                  n,
-                                  xyz1.data(),
-                                  dist2.data(),
-                                  static_cast<int*>(idx2.data()));
+                         xyz1.dtype(),
+                         GET_BLOCKS(batch_size * m),
+                         THREADS_PER_BLOCK,
+                         stream,
+                         batch_size,
+                         m,
+                         xyz2.data(),
+                         n,
+                         xyz1.data(),
+                         dist2.data(),
+                         static_cast<int*>(idx2.data()));
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx,
-                                                     diopiConstTensorHandle_t xyz1_in,
-                                                     diopiConstTensorHandle_t xyz2_in,
-                                                     diopiConstTensorHandle_t idx1_in,
-                                                     diopiConstTensorHandle_t idx2_in,
-                                                     diopiConstTensorHandle_t grad_dist1_in,
-                                                     diopiConstTensorHandle_t grad_dist2_in,
-                                                     diopiTensorHandle_t grad_xyz1_out,
+extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in, diopiConstTensorHandle_t xyz2_in,
+                                                     diopiConstTensorHandle_t idx1_in, diopiConstTensorHandle_t idx2_in, diopiConstTensorHandle_t grad_dist1_in,
+                                                     diopiConstTensorHandle_t grad_dist2_in, diopiTensorHandle_t grad_xyz1_out,
                                                      diopiTensorHandle_t grad_xyz2_out) {
     auto xyz1 = impl::cuda::makeTensor(xyz1_in);
     auto xyz2 = impl::cuda::makeTensor(xyz2_in);
@@ -180,32 +171,32 @@ extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx,
     // at::cuda::CUDAGuard device_guard(xyz1.device());
     auto stream = impl::cuda::getStream(ctx);
     DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
-                                  xyz1.dtype(),
-                                  GET_BLOCKS(batch_size * n),
-                                  THREADS_PER_BLOCK / 2,
-                                  stream,
-                                  batch_size,
-                                  m,
-                                  xyz1.data(),
-                                  n,
-                                  xyz2.data(),
-                                  grad_dist1.data(),
-                                  static_cast<const int*>(idx1.data()),
-                                  grad_xyz1.data(),
-                                  grad_xyz2.data());
+                         xyz1.dtype(),
+                         GET_BLOCKS(batch_size * n),
+                         THREADS_PER_BLOCK / 2,
+                         stream,
+                         batch_size,
+                         m,
+                         xyz1.data(),
+                         n,
+                         xyz2.data(),
+                         grad_dist1.data(),
+                         static_cast<const int*>(idx1.data()),
+                         grad_xyz1.data(),
+                         grad_xyz2.data());
     DISPATCH_FLOAT_TYPES(impl::cuda::chamfer_distance_backward_cuda_kernel_diopi,
-                                  xyz1.dtype(),
-                                  GET_BLOCKS(batch_size * m),
-                                  THREADS_PER_BLOCK / 2,
-                                  stream,
-                                  batch_size,
-                                  n,
-                                  xyz2.data(),
-                                  m,
-                                  xyz1.data(),
-                                  grad_dist2.data(),
-                                  static_cast<const int*>(idx2.data()),
-                                  grad_xyz2.data(),
-                                  grad_xyz1.data());
+                         xyz1.dtype(),
+                         GET_BLOCKS(batch_size * m),
+                         THREADS_PER_BLOCK / 2,
+                         stream,
+                         batch_size,
+                         n,
+                         xyz2.data(),
+                         m,
+                         xyz1.data(),
+                         grad_dist2.data(),
+                         static_cast<const int*>(idx2.data()),
+                         grad_xyz2.data(),
+                         grad_xyz1.data());
     return diopiSuccess;
 }

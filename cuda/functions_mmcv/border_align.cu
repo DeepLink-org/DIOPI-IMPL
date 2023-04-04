@@ -4,12 +4,12 @@
  * @copyright  (c) 2023, DeepLink.
  */
 
+#include <assert.h>
 #include <cuda_runtime.h>
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
 #include <float.h>
 #include <stdio.h>
-#include<assert.h>
 
 #include <iostream>
 #include <vector>
@@ -24,16 +24,8 @@ enum BorderMode { Top = 0, Left = 1, Bottom = 2, Right = 3 };
 
 /*** Forward ***/
 template <typename T>
-__global__ void border_align_forward_cuda_kernel(const int nthreads,
-                                                 const void* input_,
-                                                 const void* boxes_,
-                                                 void* output_,
-                                                 int* argmax_idx,
-                                                 const int channels,
-                                                 const int box_size,
-                                                 const int height,
-                                                 const int width,
-                                                 const int pool_size) {
+__global__ void border_align_forward_cuda_kernel(const int nthreads, const void* input_, const void* boxes_, void* output_, int* argmax_idx, const int channels,
+                                                 const int box_size, const int height, const int width, const int pool_size) {
     const T* input = static_cast<const T*>(input_);
     const T* boxes = static_cast<const T*>(boxes_);
     T* output = static_cast<T*>(output_);
@@ -120,16 +112,8 @@ __global__ void border_align_forward_cuda_kernel(const int nthreads,
 
 /*** Backward ***/
 template <typename T>
-__global__ void border_align_backward_cuda_kernel(const int nthreads,
-                                                  const void* grad_output_,
-                                                  const void* boxes_,
-                                                  const int* argmax_idx,
-                                                  void* grad_input_,
-                                                  const int channels,
-                                                  const int box_size,
-                                                  const int height,
-                                                  const int width,
-                                                  const int pool_size) {
+__global__ void border_align_backward_cuda_kernel(const int nthreads, const void* grad_output_, const void* boxes_, const int* argmax_idx, void* grad_input_,
+                                                  const int channels, const int box_size, const int height, const int width, const int pool_size) {
     const T* grad_output = static_cast<const T*>(grad_output_);
     const T* boxes = static_cast<const T*>(boxes_);
     T* grad_input = static_cast<T*>(grad_input_);
@@ -207,12 +191,8 @@ __global__ void border_align_backward_cuda_kernel(const int nthreads,
 
 }  // namespace impl
 
-diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
-                              diopiConstTensorHandle_t input_,
-                              diopiConstTensorHandle_t boxes_,
-                              diopiTensorHandle_t output_,
-                              diopiTensorHandle_t argmax_idx_,
-                              const int64_t pool_size) {
+diopiError_t diopiBorderAlign(diopiContextHandle_t ctx, diopiConstTensorHandle_t input_, diopiConstTensorHandle_t boxes_, diopiTensorHandle_t output_,
+                              diopiTensorHandle_t argmax_idx_, const int64_t pool_size) {
     auto input = impl::cuda::makeTensor(input_);
     auto boxes = impl::cuda::makeTensor(boxes_);
     auto output = impl::cuda::makeTensor(output_);
@@ -235,29 +215,25 @@ diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
     auto stream = impl::cuda::getStream(ctx);
     dim3 block(128, 4);
     DISPATCH_FLOAT_TYPES(impl::cuda::border_align_forward_cuda_kernel,
-                                  input.scalar_type(),
-                                  GET_BLOCKS(nthreads),
-                                  block,
-                                  stream,
-                                  nthreads,
-                                  input.data(),
-                                  boxes.data(),
-                                  output.data(),
-                                  static_cast<int*>(argmax_idx.data()),
-                                  channels,
-                                  box_size,
-                                  height,
-                                  width,
-                                  pool_size);
+                         input.scalar_type(),
+                         GET_BLOCKS(nthreads),
+                         block,
+                         stream,
+                         nthreads,
+                         input.data(),
+                         boxes.data(),
+                         output.data(),
+                         static_cast<int*>(argmax_idx.data()),
+                         channels,
+                         box_size,
+                         height,
+                         width,
+                         pool_size);
     return diopiSuccess;
 }
 
-diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
-                                      diopiConstTensorHandle_t grad_output_,
-                                      diopiConstTensorHandle_t boxes_,
-                                      diopiConstTensorHandle_t argmax_idx_,
-                                      diopiTensorHandle_t grad_input_,
-                                      const int64_t pool_size) {
+diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_output_, diopiConstTensorHandle_t boxes_,
+                                      diopiConstTensorHandle_t argmax_idx_, diopiTensorHandle_t grad_input_, const int64_t pool_size) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto boxes = impl::cuda::makeTensor(boxes_);
     auto argmax_idx = impl::cuda::makeTensor(argmax_idx_);
@@ -275,19 +251,19 @@ diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
     auto stream = impl::cuda::getStream(ctx);
     dim3 block(128, 4);
     DISPATCH_FLOAT_TYPES(impl::cuda::border_align_backward_cuda_kernel,
-                                  grad_output.scalar_type(),
-                                  GET_BLOCKS(nthreads),
-                                  block,
-                                  stream,
-                                  nthreads,
-                                  grad_output.data(),
-                                  boxes.data(),
-                                  static_cast<const int*>(argmax_idx.data()),
-                                  grad_input.data(),
-                                  channels,
-                                  box_size,
-                                  height,
-                                  width,
-                                  pool_size);
+                         grad_output.scalar_type(),
+                         GET_BLOCKS(nthreads),
+                         block,
+                         stream,
+                         nthreads,
+                         grad_output.data(),
+                         boxes.data(),
+                         static_cast<const int*>(argmax_idx.data()),
+                         grad_input.data(),
+                         channels,
+                         box_size,
+                         height,
+                         width,
+                         pool_size);
     return diopiSuccess;
 }
