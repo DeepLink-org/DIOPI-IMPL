@@ -15,7 +15,7 @@ DIOPI_API diopiError_t diopiPowTensor(diopiContextHandle_t ctx, diopiTensorHandl
 
     std::vector<DiopiTensor*> pTensors_in{&input_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors_in, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors_in, supportedDtypes));
     DiopiTensor input_tensor_tmp = *pTensors_in[0];
     DiopiTensor out_tensor_tmp = out_tensor;
     DIOPI_CALL(dataTypeCast(ctx, out_tensor_tmp, input_tensor_tmp.dtype()));
@@ -25,9 +25,9 @@ DIOPI_API diopiError_t diopiPowTensor(diopiContextHandle_t ctx, diopiTensorHandl
 
     std::vector<DiopiTensor*> pTensors_exp{&exponent_tensor};
     if (input_tensor.dtype() == diopi_dtype_float16) {
-        autoCastTensorType(ctx, pTensors_exp, {diopi_dtype_float16, diopi_dtype_int16});
+        DIOPI_CALL(autoCastTensorType(ctx, pTensors_exp, {diopi_dtype_float16, diopi_dtype_int16}));
     } else if (input_tensor.dtype() == diopi_dtype_float32) {
-        autoCastTensorType(ctx, pTensors_exp, {diopi_dtype_float32, diopi_dtype_int16});
+        DIOPI_CALL(autoCastTensorType(ctx, pTensors_exp, {diopi_dtype_float32, diopi_dtype_int16}));
     } else {
         DIOPI_CHECK(false, "input datatype not supported, only float16, float32 supported");
     }

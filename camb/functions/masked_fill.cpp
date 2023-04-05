@@ -25,8 +25,8 @@ DIOPI_API diopiError_t diopiMaskedFill(diopiContextHandle_t ctx, diopiTensorHand
     std::vector<DiopiTensor*> MTensors{&mask_tensor};
     std::set<diopiDtype_t> supportedDtypes_mask{diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_bool};
 
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
-    autoCastTensorType(ctx, MTensors, supportedDtypes_mask);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
+    DIOPI_CALL(autoCastTensorType(ctx, MTensors, supportedDtypes_mask));
 
     DiopiTensor input_tensor_tmp = *pTensors[0];
     DiopiTensor value_tensor_tmp = *pTensors[1];

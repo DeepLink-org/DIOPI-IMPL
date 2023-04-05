@@ -292,7 +292,7 @@ DIOPI_API diopiError_t diopiMSELoss(diopiContextHandle_t ctx, diopiTensorHandle_
     auto trOut = DiopiTensor(out);
     std::vector<DiopiTensor*> pTensors{&trInput, &trTarget};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     cnnlMSELossReduction_t cnnl_reduction;
     if (reduction == ReductionMean) {
@@ -339,7 +339,7 @@ DIOPI_API diopiError_t diopiMSELossBackward(diopiContextHandle_t ctx, diopiTenso
 
     std::vector<DiopiTensor*> pTensors{&trInput, &trGradOutput, &trTarget};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     cnnlMSELossReduction_t cnnl_reduction;
     if (reduction == ReductionMean) {

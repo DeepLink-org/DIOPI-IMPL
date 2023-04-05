@@ -28,7 +28,7 @@ DIOPI_API diopiError_t diopiAddmm(diopiContextHandle_t ctx, diopiTensorHandle_t 
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &mat1_tensor, &mat2_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
     DiopiTensor input_tensor_tmp = *pTensors[0];
     DiopiTensor mat1_tensor_tmp = *pTensors[1];
     DiopiTensor mat2_tensor_tmp = *pTensors[2];

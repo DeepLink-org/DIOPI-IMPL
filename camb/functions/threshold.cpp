@@ -16,7 +16,7 @@ DIOPI_API diopiError_t diopiThreshold(diopiContextHandle_t ctx, diopiTensorHandl
 
     std::vector<DiopiTensor*> pTensors{&input_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     DiopiTensor out_tensor_temp = out_tensor;
     if (out_tensor.dtype() != input_tensor.dtype()) {
@@ -100,7 +100,7 @@ DIOPI_API diopiError_t diopiThresholdBackward(diopiContextHandle_t ctx, diopiTen
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &grad_output_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     DiopiTensor grad_input_tensor_temp = grad_input_tensor;
     if (grad_input_tensor.dtype() != input_tensor.dtype()) {

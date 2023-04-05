@@ -27,7 +27,7 @@ diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
     std::vector<DiopiTensor*> pTensors{&trInput, &trOther};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int32};
 
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;

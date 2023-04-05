@@ -22,7 +22,7 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         std::vector<DiopiTensor*> pTensors{&input_tensor};
         std::set<diopiDtype_t> supportedDtypes{
             diopi_dtype_int8, diopi_dtype_uint8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32};
-        autoCastTensorType(ctx, pTensors, supportedDtypes);
+        DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
         DiopiTensor output_tensor_temp = output_tensor;
         if ((output_tensor.dtype() != input_tensor.dtype())) {

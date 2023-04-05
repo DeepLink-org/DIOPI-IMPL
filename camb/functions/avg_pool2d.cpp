@@ -38,7 +38,7 @@ DIOPI_API diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandl
     DIOPI_CHECK(input_tensor.dim() == 3 || input_tensor.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
     std::vector<DiopiTensor*> pTensors{&input_tensor};
-    autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32});
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32}));
     DiopiTensor input_tensor_tmp = *pTensors[0];
     DiopiTensor out_tensor_tmp = out_tensor;
     DIOPI_CALL(dataTypeCast(ctx, out_tensor_tmp, input_tensor_tmp.dtype()));
@@ -114,7 +114,7 @@ DIOPI_API diopiError_t diopiAvgPool2dBackward(diopiContextHandle_t ctx, diopiTen
     DIOPI_CHECK(input_tensor.dim() == 3 || input_tensor.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &grad_output_tensor};
-    autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32});
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32}));
     DiopiTensor input_tensor_tmp = *pTensors[0];
     DiopiTensor grad_output_tensor_tmp = *pTensors[1];
     DiopiTensor grad_input_tensor_tmp = grad_input_tensor;
