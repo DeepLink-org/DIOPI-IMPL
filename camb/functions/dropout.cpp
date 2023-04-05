@@ -45,14 +45,14 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         void* state = nullptr;
         state = requiresBuffer(ctx, size_state).data();
         cnnlMTGP32FastParams_t params;
-        cnnlRandGetMTGP32HostParam(generator, &params);
+        DIOPI_CALLCNNL(cnnlRandGetMTGP32HostParam(generator, &params));
         size_t size_kernel = 0;
-        cnnlRandGetMTGP32KernelParamSize(generator, &size_kernel);
+        DIOPI_CALLCNNL(cnnlRandGetMTGP32KernelParamSize(generator, &size_kernel));
         void* kernel_params = nullptr;
         kernel_params = requiresBuffer(ctx, size_kernel).data();
-        cnnlRandMakeMTGP32Constants(handle, params, kernel_params);
+        DIOPI_CALLCNNL(cnnlRandMakeMTGP32Constants(handle, params, kernel_params));
         int rand_seed = time(NULL);
-        cnnlRandMakeMTGP32KernelState(handle, state, params, kernel_params, rand_seed);
+        DIOPI_CALLCNNL(cnnlRandMakeMTGP32KernelState(handle, state, params, kernel_params, rand_seed));
         DIOPI_CALLCNNL(cnnlFusedDropout_v2(handle,
                                            generator,
                                            input_desc.get(),

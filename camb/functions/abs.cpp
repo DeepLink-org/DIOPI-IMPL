@@ -19,7 +19,7 @@ extern "C" diopiError_t diopiAbsInp(diopiContextHandle_t ctx, diopiTensorHandle_
         auto input_tensor_f32 = input_tensor;
         DIOPI_CALL(dataTypeCast(ctx, input_tensor_f32, diopi_dtype_float32));
         CnnlTensorDesc f32_desc(input_tensor_f32, CNNL_LAYOUT_ARRAY);
-        cnnlAbs(handle, f32_desc.get(), input_tensor_f32.data(), f32_desc.get(), input_tensor_f32.data());
+        DIOPI_CALLCNNL(cnnlAbs(handle, f32_desc.get(), input_tensor_f32.data(), f32_desc.get(), input_tensor_f32.data()));
         DIOPI_CALL(dataTypeCast(ctx, input_tensor, input_tensor_f32));
     } else {
         CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_ARRAY);

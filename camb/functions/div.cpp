@@ -34,7 +34,7 @@ diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
     CnnlTensorDesc other_desc(other_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc out_desc(out_tensor_temp, CNNL_LAYOUT_ARRAY);
     size_t workspace_size = 0;
-    cnnlGetDivWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size);
+    DIOPI_CALLCNNL(cnnlGetDivWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size));
     void* workspace = nullptr;
     workspace = requiresBuffer(ctx, workspace_size).data();
 
