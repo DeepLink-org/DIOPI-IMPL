@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "../cnnl_helper.hpp"
-#include "../error.hpp"
 
 namespace impl {
 namespace camb {

@@ -27,8 +27,6 @@ diopiDropout(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiTensorHandl
         DiopiTensor output_tensor_temp = output_tensor;
         if ((output_tensor.dtype() != input_tensor.dtype())) {
             dataTypeCast(ctx, output_tensor_temp, input_tensor.dtype());
-        } else {
-            output_tensor_temp = DiopiTensor(out);
         }
 
         CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_ARRAY);

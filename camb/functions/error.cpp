@@ -18,30 +18,12 @@ std::mutex mtxLastError;
 const char* camb_get_last_error_string() {
     // consider cnrt version cnrtGetLastErr or cnrtGetLaislhhstError
     ::cnrtRet_t err = ::cnrtGetLastError();
-    std::lock_guard<std::mutex> lock(mtxLastError);
+std::lock_guard<std::mutex> lock(mtxLastError);
     sprintf(strLastError, "camb error: %s, more infos: %s", ::cnrtGetErrorStr(err), strLastErrorOther);
     return strLastError;
 }
 
 extern "C" DIOPI_RT_API const char* diopiGetLastErrorString() { return camb_get_last_error_string(); }
-
-
-
-
-// diopiSuccess                                      = 0,
-//     diopiErrorOccurred                                = 1,
-//     diopiNotInited                                    = 2,
-//     diopiNoRegisteredStreamCreateFunction             = 3,
-//     diopiNoRegisteredStreamDestoryFunction            = 4,
-//     diopiNoRegisteredStreamSyncFunction               = 5,
-//     diopiNoRegisteredDeviceMemoryMallocFunction       = 6,
-//     diopiNoRegisteredDeviceMemoryFreeFunction         = 7,
-//     diopiNoRegisteredDevice2DdeviceMemoryCopyFunction = 8,
-//     diopiNoRegisteredDevice2HostMemoryCopyFunction    = 9,
-//     diopiNoRegisteredHost2DeviceMemoryCopyFunction    = 10,
-//     diopiNoRegisteredGetLastErrorFunction             = 11,
-//     diopi5DNotSupported                               = 12,
-//     diopiDtypeNotSupported
 
 const std::string getDiopiErrorStr(diopiError_t err) {
     switch (err) {

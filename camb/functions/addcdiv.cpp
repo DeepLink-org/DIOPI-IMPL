@@ -22,8 +22,6 @@ DIOPI_API diopiError_t diopiAddcdiv(diopiContextHandle_t ctx, diopiTensorHandle_
     DiopiTensor out_tensor_temp = out_tensor;
     if (out_tensor.dtype() != input_tensor.dtype()) {
         dataTypeCast(ctx, out_tensor_temp, input_tensor.dtype());
-    } else {
-        out_tensor_temp = DiopiTensor(out);
     }
 
     CnnlTensorDesc input_tensor_desc(input_tensor, CNNL_LAYOUT_ARRAY);

@@ -22,8 +22,6 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     DiopiTensor out_tensor_tmp = out_tensor;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
         dataTypeCast(ctx, out_tensor_tmp, diopi_dtype_float16);
-    } else {
-        out_tensor_tmp = DiopiTensor(out);
     }
     dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
     dataTypeCast(ctx, other_tensor, out_tensor_tmp.dtype());
