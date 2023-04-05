@@ -11,16 +11,17 @@
 #include <vector>
 
 #include "../cnnl_helper.hpp"
+#include "../error.hpp"
 
 namespace impl {
 namespace camb {
 
 
-DiopiTensor dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensor& src, diopiDtype_t destDtype);
+diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtype_t destDtype);
 
 DiopiTensor makeTensorFromScalar(diopiContextHandle_t ctx, const diopiScalar_t* scalar);
 
-void dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src);
+diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src);
 
 diopiDtype_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes);
 

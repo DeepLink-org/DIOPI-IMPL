@@ -32,7 +32,7 @@ diopiError_t diopiNLLLoss(diopiContextHandle_t ctx,
     DIOPI_CHECK(input_tr.numel() != 0, "input tensor is empty")
 
     if (target_tr.dtype() != diopi_dtype_int32) {
-        target_tr = dataTypeCast(ctx, target_tr, diopi_dtype_int32);
+        dataTypeCast(ctx, target_tr, diopi_dtype_int32);
     }
     if (!weight_tr.defined()) {
         weight_tr = ones(ctx, {input_tr.shape()[1]}, input_tr.dtype());
@@ -147,7 +147,7 @@ diopiError_t diopiNLLLossBackward(diopiContextHandle_t ctx,
     DIOPI_CHECK(input_tr.numel() != 0, "input tensor is empty")
 
     if (target_tr.dtype() != diopi_dtype_int32) {
-        target_tr = dataTypeCast(ctx, target_tr, diopi_dtype_int32);
+        dataTypeCast(ctx, target_tr, diopi_dtype_int32);
     }
     if (!weight_tr.defined()) {
         weight_tr = ones(ctx, {input_tr.shape()[1]}, input_tr.dtype());

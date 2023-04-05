@@ -108,7 +108,6 @@ const std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeM
     {{diopi_dtype_float16, diopi_dtype_int32}, CNNL_CAST_HALF_TO_INT32},
     {{diopi_dtype_float16, diopi_dtype_int64}, CNNL_CAST_HALF_TO_INT64},
     {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
-    {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
 
     // CNNL_CAST_FLOAT_TO_HALF_IEEE754 = 219, /*!< Converts float to half for ieee754. */
     {{diopi_dtype_float32, diopi_dtype_bool}, CNNL_CAST_FLOAT_TO_BOOL},
