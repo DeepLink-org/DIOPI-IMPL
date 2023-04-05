@@ -65,23 +65,17 @@ diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const Dio
 static diopiError_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes, diopiDtype_t* dtype) {
     if (opSupportedDtypes.find(diopi_dtype_float32) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_float32;
-    }
-    else if (opSupportedDtypes.find(diopi_dtype_float16) != opSupportedDtypes.end()) {
+    } else if (opSupportedDtypes.find(diopi_dtype_float16) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_float16;
-    }
-    else if (opSupportedDtypes.find(diopi_dtype_int32) != opSupportedDtypes.end()) {
+    } else if (opSupportedDtypes.find(diopi_dtype_int32) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_int32;
-    }
-    else if (opSupportedDtypes.find(diopi_dtype_int16) != opSupportedDtypes.end()) {
+    } else if (opSupportedDtypes.find(diopi_dtype_int16) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_int16;
-    }
-    else if (opSupportedDtypes.find(diopi_dtype_int8) != opSupportedDtypes.end()) {
+    } else if (opSupportedDtypes.find(diopi_dtype_int8) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_int8;
-    }
-    else if (opSupportedDtypes.find(diopi_dtype_bool) != opSupportedDtypes.end()) {
+    } else if (opSupportedDtypes.find(diopi_dtype_bool) != opSupportedDtypes.end()) {
         *dtype = diopi_dtype_bool;
-    }
-    else{
+    } else {
         set_last_error_string("this operator does not support bool, int8, int16, int32, float16, float32");
         return diopiDtypeNotSupported;
     }

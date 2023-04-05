@@ -18,7 +18,7 @@ DIOPI_API diopiError_t diopiPowTensor(diopiContextHandle_t ctx, diopiTensorHandl
     autoCastTensorType(ctx, pTensors_in, supportedDtypes);
     DiopiTensor input_tensor_tmp = *pTensors_in[0];
     DiopiTensor out_tensor_tmp = out_tensor;
-    dataTypeCast(ctx, out_tensor_tmp, input_tensor_tmp.dtype());
+    DIOPI_CALL(dataTypeCast(ctx, out_tensor_tmp, input_tensor_tmp.dtype()));
 
     CnnlTensorDesc input_desc(input_tensor_tmp, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc out_desc(out_tensor_tmp, CNNL_LAYOUT_ARRAY);
@@ -52,7 +52,7 @@ DIOPI_API diopiError_t diopiPowTensor(diopiContextHandle_t ctx, diopiTensorHandl
                             workspace_size,
                             out_desc.get(),
                             out_tensor_tmp.data()));
-    dataTypeCast(ctx, out_tensor, out_tensor_tmp);
+    DIOPI_CALL(dataTypeCast(ctx, out_tensor, out_tensor_tmp));
     return diopiSuccess;
 }
 

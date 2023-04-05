@@ -75,7 +75,7 @@ diopiAdd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
 
     DIOPI_CALLCNNL(cnnlAddN_v2(handle, inputDescs, inputs, inputNum, descOut.get(), trOutTmp.data(), pWorkspace, workspaceSize));
     if (trOutTmp.dtype() != trOut.dtype()) {
-        dataTypeCast(ctx, trOut, trOutTmp);
+        DIOPI_CALL(dataTypeCast(ctx, trOut, trOutTmp));
     }
     return diopiSuccess;
 }

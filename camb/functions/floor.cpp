@@ -45,7 +45,7 @@ extern "C" DIOPI_API diopiError_t diopiFloor(diopiContextHandle_t ctx, diopiTens
 
     DIOPI_CALLCNNL(cnnlFloor(handle, descInput.get(), trInput.data(), descOut.get(), trOutTmp.data()));
     if (trOutTmp.dtype() != trOut.dtype()) {
-        dataTypeCast(ctx, trOut, trOutTmp);
+        DIOPI_CALL(dataTypeCast(ctx, trOut, trOutTmp));
     }
     return diopiSuccess;
 }
