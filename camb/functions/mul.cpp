@@ -26,8 +26,10 @@ DIOPI_API diopiError_t diopiMul(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     dataTypeCast(ctx, input_tensor, out_tensor_tmp.dtype());
     dataTypeCast(ctx, other_tensor, out_tensor_tmp.dtype());
 
-    DiopiTensor bcast_input_tensor = broadcastHelper(ctx, input_tensor, out_tensor_tmp);
-    DiopiTensor bcast_other_tensor = broadcastHelper(ctx, other_tensor, out_tensor_tmp);
+    DiopiTensor bcast_input_tensor;
+    broadcastHelper(ctx, input_tensor, out_tensor_tmp, &bcast_input_tensor);
+    DiopiTensor bcast_other_tensor;
+    broadcastHelper(ctx, other_tensor, out_tensor_tmp, &bcast_other_tensor);
 
     CnnlTensorDesc bcast_input_desc(bcast_input_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc bcast_other_desc(bcast_other_tensor, CNNL_LAYOUT_ARRAY);
