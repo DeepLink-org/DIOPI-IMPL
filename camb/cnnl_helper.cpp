@@ -148,7 +148,7 @@ diopiError_t cnnl_transpose(
     CnnlTensorDesc outDesc(out, layoutOut);
     CnnlTransposeDescriptor transDesc(order.size(), order.data());
     size_t workspace_size = 0;
-    DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
+    DIOPI_CALLCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
 
     void* workspace_ptr = workspace_size == 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
     DIOPI_CALLCNNL(cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(), in.data(), outDesc.get(), out.data(), workspace_ptr, workspace_size));

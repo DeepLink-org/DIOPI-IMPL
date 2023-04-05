@@ -11,6 +11,7 @@
 #include <diopi/diopirt.h>
 
 #include <mutex>
+#include <string>
 #include <utility>
 
 namespace impl {

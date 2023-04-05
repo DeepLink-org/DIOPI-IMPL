@@ -33,7 +33,7 @@ diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtyp
     cnnlCastDataType_t cnnlCastDtype = gCnnlCastDataTypeMapping.at({srcDtype, destDtype});
     CnnlTensorDesc descSrc(src, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc descDest(dest, CNNL_LAYOUT_ARRAY);
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensor&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
+    DIOPI_CALLCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensor&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
     src = dest;
     return diopiSuccess;
 }
@@ -58,7 +58,7 @@ diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const Dio
         return diopiDtypeNotSupported;
     }
     cnnlCastDataType_t cnnlCastDtype = gCnnlCastDataTypeMapping.at({srcDtype, destDtype});
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensor&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
+    DIOPI_CALLCNNL(cnnlCastDataType(handle, descSrc.get(), const_cast<DiopiTensor&>(src).data(), cnnlCastDtype, descDest.get(), dest.data()));
     return diopiSuccess;
 }
 

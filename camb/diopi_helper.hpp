@@ -23,10 +23,10 @@
 namespace impl {
 namespace camb {
 
-#define DIOPI_CHECK(cond, str)                                             \
+#define DIOPI_CHECK(cond, fmt, args...)                                             \
     do {                                                                   \
         if (!(cond)) {                                                     \
-            set_last_error_string("%s at %s:%d", str, __FILE__, __LINE__); \
+            set_last_error_string(#fmt" at %s:%d", ##args, __FILE__, __LINE__); \
             return diopiErrorOccurred;                                     \
         }                                                                  \
     } while (false);
@@ -51,7 +51,7 @@ namespace camb {
     do {                                                                                                            \
         diopiError_t ret = Expr;                                                                                    \
         if (diopiSuccess != ret) {                                                                                  \
-            set_last_error_string("%s\n%s, %s:%d\n", camb_get_last_error_string(), "error at", __FILE__, __LINE__); \
+            set_last_error_string("%s at %s:%d\n", getDiopiErrorStr(ret), __FILE__, __LINE__); \
             return ret;                                                                                             \
         }                                                                                                           \
     } while (false);
@@ -225,9 +225,9 @@ public:
         return p;
     }
 
-    diopiTensorHandle_t tensor_handle() { return tensor_; }
+    diopiTensorHandle_t tensorHandle() { return tensor_; }
 
-    diopiConstTensorHandle_t tensor_handle() const { return tensor_; }
+    diopiConstTensorHandle_t tensorHandle() const { return tensor_; }
 
 protected:
     diopiTensorHandle_t tensor_ = 0;

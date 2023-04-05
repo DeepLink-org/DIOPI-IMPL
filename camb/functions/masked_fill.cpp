@@ -90,14 +90,16 @@ DIOPI_API diopiError_t diopiMaskedFillInp(diopiContextHandle_t ctx, diopiTensorH
 
 DIOPI_API diopiError_t diopiMaskedFillScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mask,
                                              const diopiScalar_t* value) {
-    auto value_tensor = makeTensorFromScalar(ctx, value);
+    DiopiTensor value_tensor;
+    makeTensorFromScalar(ctx, value, value_tensor);
     DIOPI_CALL(diopiMaskedFill(ctx, out, input, mask, static_cast<diopiTensorHandle_t>(value_tensor)));
     return diopiSuccess;
 }
 
 DIOPI_API diopiError_t diopiMaskedFillInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t mask,
                                                 const diopiScalar_t* value) {
-    auto value_tensor = makeTensorFromScalar(ctx, value);
+    DiopiTensor value_tensor;
+    makeTensorFromScalar(ctx, value, value_tensor);
     DIOPI_CALL(diopiMaskedFill(ctx, input, input, mask, static_cast<diopiTensorHandle_t>(value_tensor)));
     return diopiSuccess;
 }

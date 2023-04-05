@@ -28,7 +28,7 @@ diopiError_t diopiCopyInp(diopiContextHandle_t ctx, diopiConstTensorHandle_t src
     CnnlTensorDesc input_desc(input_tr, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc src_desc(src_tr, CNNL_LAYOUT_ARRAY);
 
-    DIOPI_CHECKCNNL(cnnlCopy(handle, src_desc.get(), src_tr.data(), input_desc.get(), input_tr.data()));
+    DIOPI_CALLCNNL(cnnlCopy(handle, src_desc.get(), src_tr.data(), input_desc.get(), input_tr.data()));
 
     return diopiSuccess;
 }

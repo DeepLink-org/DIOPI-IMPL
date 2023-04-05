@@ -37,7 +37,7 @@ DIOPI_API diopiError_t diopiCumsum(diopiContextHandle_t ctx, diopiTensorHandle_t
 
     int axis = getDim(input_tensor, dim);
 
-    DIOPI_CHECKCNNL(
+    DIOPI_CALLCNNL(
         cnnlCumsum(handle, input_desc.get(), input_tensor_tmp.data(), axis, false, false, CNNL_PROPAGATE_NAN, out_desc.get(), out_tensor_tmp.data()));
     dataTypeCast(ctx, out_tensor, out_tensor_tmp);
     return diopiSuccess;

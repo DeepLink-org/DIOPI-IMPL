@@ -60,7 +60,9 @@ DIOPI_API diopiError_t
 diopiDivScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other, diopiRoundMode_t rounding_mode) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     auto input_tensor = DiopiTensor(input);
-    auto other_tensor = makeTensorFromScalar(ctx, other);
+    DiopiTensor other_tensor_tmp;
+    makeTensorFromScalar(ctx, other, other_tensor_tmp);
+    auto other_tensor = other_tensor_tmp.tensorHandle();
     auto out_tensor = DiopiTensor(out);
     diopiDiv(ctx, out, input, diopiTensorHandle_t(other_tensor), rounding_mode);
     return diopiSuccess;
