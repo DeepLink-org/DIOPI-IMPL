@@ -29,7 +29,7 @@ diopiError_t diopiFill(diopiContextHandle_t ctx, diopiTensorHandle_t input, cons
 
     CnnlTensorDesc input_tensor_desc(input_tensor_temp, CNNL_LAYOUT_ARRAY);
 
-    auto value_scalar = DiopiDataType::isInteger(value->stype) ? value->ival : value->fval;
+    double value_scalar = DiopiDataType::isInteger(value->stype) ? value->ival : value->fval;
     void* value_ptr;
     bool temp_bool = 0;
     int8_t temp_i8 = 0;
