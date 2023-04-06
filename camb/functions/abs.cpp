@@ -31,15 +31,15 @@ static diopiError_t abs(diopiContextHandle_t ctx, DiopiTensor input, DiopiTensor
 }
 
 extern "C" diopiError_t diopiAbsInp(diopiContextHandle_t ctx, diopiTensorHandle_t input) {
-    auto input_tensor = DiopiTensor(input);
+    DiopiTensor input_tensor(input);
     DIOPI_CALL(abs(ctx, input_tensor, input_tensor));
     return diopiSuccess;
 }
 
 extern "C" diopiError_t diopiAbs(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto output_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor output_tensor(out);
     DIOPI_CALL(abs(ctx, input_tensor, output_tensor));
     return diopiSuccess;
 }
