@@ -134,18 +134,6 @@ diopiError_t diopiSelectBackward(diopiContextHandle_t ctx, diopiTensorHandle_t g
     return diopiSuccess;
 }
 
-// !
-diopiError_t diopiSelectScatter(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t src, int64_t dim,
-                                int64_t index) {
-    return diopiSuccess;
-}
-
-// !
-diopiError_t diopiSliceScatter(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t src, int64_t dim,
-                               int64_t start, int64_t end, int64_t step) {
-    return diopiSuccess;
-}
-
 diopiError_t diopiSlice(diopiContextHandle_t ctx, diopiTensorHandle_t null_out, diopiConstTensorHandle_t input, int64_t dim, int64_t start, int64_t end,
                         int64_t step) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
