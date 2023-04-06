@@ -2491,6 +2491,16 @@ diopiError_t diopiNormalTensor(diopiContextHandle_t ctx, diopiTensorHandle_t out
     return diopiSuccess;
 }
 
+diopiError_t diopiNormalize(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, double p, int64_t dim, double eps) {
+    impl::aten::setCurCtx(ctx);
+    auto atOut = impl::aten::buildATen(out);
+    auto atInput = impl::aten::buildATen(input);
+    namespace F = torch::nn::functional;
+    F::normalize(atInput, F::NormalizeFuncOptions().p(p).dim(dim).eps(eps).out(atOut));
+    impl::aten::unsetCurCtx();
+    return diopiSuccess;
+}
+
 diopiError_t diopiMaskedFill(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input,
                              diopiConstTensorHandle_t mask, diopiConstTensorHandle_t value) {
     impl::aten::setCurCtx(ctx);
