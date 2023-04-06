@@ -15,7 +15,7 @@ namespace impl {
 namespace camb {
 
 extern "C" diopiError_t diopiSplitWithSizes(diopiContextHandle_t ctx, diopiTensorHandle_t* outs, int64_t num_outs, diopiConstTensorHandle_t input,
-                                 const diopiSize_t splitSizes, int64_t dim) {
+                                            const diopiSize_t splitSizes, int64_t dim) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto input_tensor = DiopiTensor(input);
@@ -38,7 +38,7 @@ extern "C" diopiError_t diopiSplitWithSizes(diopiContextHandle_t ctx, diopiTenso
     if (worksapce_size != 0) {
         worksapce = requiresBuffer(ctx, worksapce_size).data();
     }
-cnnlCdistForward
+
     DIOPI_CALLCNNL(cnnlSplit(handle, num_outs, dim, input_desc.get(), input_tensor.data(), worksapce, worksapce_size, desc_ptrs, data_ptrs));
 
     delete[] desc_ptrs;
