@@ -22,25 +22,25 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
                                  bool largest,
                                  bool sorted) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto indices_tensor = DiopiTensor(indices);
-    auto values_tensor = DiopiTensor(values);
+    DiopiTensor input_tensor(input);
+    DiopiTensor indices_tensor(indices);
+    DiopiTensor values_tensor(values);
 
-    DiopiTensor values_tensor_temp;
-    DiopiTensor input_tensor_temp;
+    DiopiTensor values_tensor_temp = values_tensor;
+    DiopiTensor input_tensor_temp = input_tensor;
     if (input_tensor.dtype() == diopi_dtype_float64) {
-        input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_float32);
-        values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_float32);
+        DIOPI_CALL(dataTypeCast(ctx, input_tensor_temp, diopi_dtype_float32));
+        DIOPI_CALL(dataTypeCast(ctx, values_tensor_temp, diopi_dtype_float32));
     } else if (input_tensor.dtype() == diopi_dtype_int64) {
-        input_tensor_temp = dataTypeCast(ctx, input_tensor, diopi_dtype_int32);
-        values_tensor_temp = dataTypeCast(ctx, values_tensor, diopi_dtype_int32);
+        DIOPI_CALL(dataTypeCast(ctx, input_tensor_temp, diopi_dtype_int32));
+        DIOPI_CALL(dataTypeCast(ctx, values_tensor_temp, diopi_dtype_int32));
     } else {
         input_tensor_temp = DiopiTensor(input);
         values_tensor_temp = DiopiTensor(values);
     }
 
-    DiopiTensor indices_tensor_temp;
-    indices_tensor_temp = dataTypeCast(ctx, indices_tensor, diopi_dtype_int32);
+    DiopiTensor indices_tensor_temp = indices_tensor;
+    DIOPI_CALL(dataTypeCast(ctx, indices_tensor_temp, diopi_dtype_int32));
     CnnlTensorDesc input_desc(input_tensor_temp, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc values_desc(values_tensor_temp, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc indices_desc(indices_tensor_temp, CNNL_LAYOUT_ARRAY);
@@ -67,11 +67,11 @@ DIOPI_API diopiError_t diopiTopk(diopiContextHandle_t ctx,
                                      indices_desc.get(),
                                      indices_tensor_temp.data()))
     if (values_tensor_temp.dtype() != values_tensor.dtype()) {
-        dataTypeCast(ctx, values_tensor, values_tensor_temp);
+        DIOPI_CALL(dataTypeCast(ctx, values_tensor, values_tensor_temp));
     }
 
     if (indices_tensor_temp.dtype() != indices_tensor.dtype()) {
-        dataTypeCast(ctx, indices_tensor, indices_tensor_temp);
+        DIOPI_CALL(dataTypeCast(ctx, indices_tensor, indices_tensor_temp));
     }
 
     return diopiSuccess;

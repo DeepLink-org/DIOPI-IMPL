@@ -24,9 +24,9 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
                                            bool nesterov) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto w_tensor = DiopiTensor(w);
-    auto dw_tensor = DiopiTensor(dw);
-    auto buf_tensor = DiopiTensor(buf);
+    DiopiTensor w_tensor(w);
+    DiopiTensor dw_tensor(dw);
+    DiopiTensor buf_tensor(buf);
 
     CnnlTensorDesc w_desc(w_tensor, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc dw_desc(dw_tensor, CNNL_LAYOUT_ARRAY);
@@ -82,7 +82,7 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
         CnnlResourceGuard<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> lr_half_desc;
         std::vector<int> shape{1};
         DIOPI_CALLCNNL(cnnlSetTensorDescriptor(lr_half_desc.get(), CNNL_LAYOUT_ARRAY, CNNL_DTYPE_HALF, 1, shape.data()));
-        cnnlCastDataType(handle, lr_desc.get(), lr_tensor.data(), CNNL_CAST_FLOAT_TO_HALF, lr_half_desc.get(), lr_tensor.data());
+        DIOPI_CALLCNNL(cnnlCastDataType(handle, lr_desc.get(), lr_tensor.data(), CNNL_CAST_FLOAT_TO_HALF, lr_half_desc.get(), lr_tensor.data()));
     }
     DIOPI_CALLCNNL(cnnlGradientDescent(handle, dw_desc.get(), dw_tensor.data(), lr_tensor.data(), w_desc.get(), w_tensor.data()));
     return diopiSuccess;
