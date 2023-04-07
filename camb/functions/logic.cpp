@@ -20,9 +20,9 @@ extern "C" {
 DIOPI_API diopiError_t Logic(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other,
                              cnnlLogicOp_t logic_op) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto other_tensor = DiopiTensor(other);
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor other_tensor(other);
+    DiopiTensor out_tensor(out);
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &other_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float32};
@@ -66,15 +66,15 @@ DIOPI_API diopiError_t LogicInp(diopiContextHandle_t ctx, diopiTensorHandle_t in
 DIOPI_API diopiError_t LogicScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other,
                                    cnnlLogicOp_t logic_op) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor out_tensor(out);
 
     diopiTensorHandle_t other_t;
     diopiSize_t input_shape;
     DIOPI_CALL(diopiGetTensorShape(input, &input_shape));
     DIOPI_CALL(diopiRequireTensor(ctx, &other_t, &input_shape, nullptr, input_tensor.dtype(), diopi_device));
     DIOPI_CALL(diopiFill(ctx, other_t, other));
-    auto other_t_tensor = DiopiTensor(other_t);
+    DiopiTensor other_t_tensor(other_t);
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &other_t_tensor};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float32};
