@@ -16,17 +16,17 @@ diopiError_t bitwiseCommon(
     diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, cnnlBitComputeOp_t optype) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor out_tensor(out);
     auto out32_tensor = out_tensor;
     if (diopi_dtype_int64 == out_tensor.dtype()) {
-        out32_tensor = dataTypeCast(ctx, out_tensor, diopi_dtype_int32);
+        DIOPI_CALL(dataTypeCast(ctx, out32_tensor, diopi_dtype_int32));
     }
     CnnlTensorDesc outDesc(out32_tensor, CNNL_LAYOUT_ARRAY);
 
     diopiTensorHandle_t input1 = const_cast<diopiTensorHandle_t>(input);
-    auto input1_tensor = DiopiTensor(input1);
+    DiopiTensor input1_tensor(input1);
     if (input1_tensor.dtype() != out32_tensor.dtype()) {
-        input1_tensor = dataTypeCast(ctx, input1_tensor, out32_tensor.dtype());
+        DIOPI_CALL(dataTypeCast(ctx, input1_tensor, out32_tensor.dtype()));
     }
     CnnlTensorDesc input1Desc(input1_tensor, CNNL_LAYOUT_ARRAY);
 
@@ -35,9 +35,9 @@ diopiError_t bitwiseCommon(
     CnnlTensorDesc input2Desc;
     cnnlTensorDescriptor_t input2_desc = nullptr;
     if (nullptr != other) {
-        auto input2_tensor = DiopiTensor(input2);
+        DiopiTensor input2_tensor(input2);
         if (input2_tensor.dtype() != out32_tensor.dtype()) {
-            input2_tensor = dataTypeCast(ctx, input2_tensor, out32_tensor.dtype());
+            DIOPI_CALL(dataTypeCast(ctx, input2_tensor, out32_tensor.dtype()));
         }
         input2_ptr = input2_tensor.data();
         input2Desc.set(input2_tensor, CNNL_LAYOUT_ARRAY);
@@ -54,7 +54,7 @@ diopiError_t bitwiseCommon(
     DIOPI_CALLCNNL(cnnlBitCompute_v2(
         handle, optype, input1Desc.get(), input1_tensor.data(), input2_desc, input2_ptr, outDesc.get(), out32_tensor.data(), workspace, workspace_size));
     if (out_tensor.dtype() != out32_tensor.dtype()) {
-        dataTypeCast(ctx, out_tensor, out32_tensor);
+        DIOPI_CALL(dataTypeCast(ctx, out_tensor, out32_tensor));
     }
 
     return diopiSuccess;
@@ -69,12 +69,16 @@ diopiError_t diopiBitwiseAndInp(diopiContextHandle_t ctx, diopiTensorHandle_t in
 }
 
 diopiError_t diopiBitwiseAndScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
-    diopiTensorHandle_t input2 = diopiTensorHandle_t(makeTensorFromScalar(ctx, other));
+    DiopiTensor otherTensor;
+    makeTensorFromScalar(ctx, other, otherTensor);
+    diopiTensorHandle_t input2 = otherTensor.tensorHandle();
     return bitwiseCommon(ctx, out, input, diopiTensorHandle_t(input2), CNNL_CYCLE_BAND_OP);
 }
 
 diopiError_t diopiBitwiseAndInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
-    diopiTensorHandle_t input2 = diopiTensorHandle_t(makeTensorFromScalar(ctx, other));
+    DiopiTensor otherTensor;
+    makeTensorFromScalar(ctx, other, otherTensor);
+    diopiTensorHandle_t input2 = otherTensor.tensorHandle();
     return bitwiseCommon(ctx, input, input, input2, CNNL_CYCLE_BAND_OP);
 }
 
@@ -87,12 +91,16 @@ diopiError_t diopiBitwiseOrInp(diopiContextHandle_t ctx, diopiTensorHandle_t inp
 }
 
 diopiError_t diopiBitwiseOrScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other) {
-    diopiTensorHandle_t input2 = diopiTensorHandle_t(makeTensorFromScalar(ctx, other));
+    DiopiTensor otherTensor;
+    makeTensorFromScalar(ctx, other, otherTensor);
+    diopiTensorHandle_t input2 = otherTensor.tensorHandle();
     return bitwiseCommon(ctx, out, input, input2, CNNL_CYCLE_BOR_OP);
 }
 
 diopiError_t diopiBitwiseOrInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other) {
-    diopiTensorHandle_t input2 = diopiTensorHandle_t(makeTensorFromScalar(ctx, other));
+    DiopiTensor otherTensor;
+    makeTensorFromScalar(ctx, other, otherTensor);
+    diopiTensorHandle_t input2 = otherTensor.tensorHandle();
     return bitwiseCommon(ctx, input, input, input2, CNNL_CYCLE_BOR_OP);
 }
 
