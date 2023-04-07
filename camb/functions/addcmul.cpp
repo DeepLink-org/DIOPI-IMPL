@@ -10,20 +10,18 @@ extern "C" {
 DIOPI_API diopiError_t diopiAddcmul(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t tensor1,
                                     diopiConstTensorHandle_t tensor2, const diopiScalar_t* value) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto other_tensor1 = DiopiTensor(tensor1);
-    auto other_tensor2 = DiopiTensor(tensor2);
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor other_tensor1(tensor1);
+    DiopiTensor other_tensor2(tensor2);
+    DiopiTensor out_tensor(out);
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &other_tensor1, &other_tensor2};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float32, diopi_dtype_float16};
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
-    DiopiTensor out_tensor_temp;
+    DiopiTensor out_tensor_temp = out_tensor;
     if (out_tensor.dtype() != input_tensor.dtype()) {
-        out_tensor_temp = dataTypeCast(ctx, out_tensor, input_tensor.dtype());
-    } else {
-        out_tensor_temp = DiopiTensor(out);
+        DIOPI_CALL(dataTypeCast(ctx, out_tensor_temp, input_tensor.dtype()));
     }
 
     CnnlTensorDesc input_tensor_desc(input_tensor, CNNL_LAYOUT_ARRAY);
@@ -55,7 +53,7 @@ DIOPI_API diopiError_t diopiAddcmul(diopiContextHandle_t ctx, diopiTensorHandle_
                                out_tensor_desc.get(),
                                out_tensor_temp.data()))
     if (out_tensor_temp.dtype() != out_tensor.dtype()) {
-        dataTypeCast(ctx, out_tensor, out_tensor_temp);
+        DIOPI_CALL(dataTypeCast(ctx, out_tensor, out_tensor_temp));
     }
     return diopiSuccess;
 }

@@ -32,15 +32,16 @@ DIOPI_API diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandl
                                       diopiSize_t stride, diopiSize_t padding, bool ceil_mode, bool count_include_pad, const int64_t* divisor_override) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = DiopiTensor(input);
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor out_tensor(out);
 
     DIOPI_CHECK(input_tensor.dim() == 3 || input_tensor.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
     std::vector<DiopiTensor*> pTensors{&input_tensor};
-    autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32});
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32}));
     DiopiTensor input_tensor_tmp = *pTensors[0];
-    DiopiTensor out_tensor_tmp = dataTypeCast(ctx, out_tensor, input_tensor_tmp.dtype());
+    DiopiTensor out_tensor_tmp = out_tensor;
+    DIOPI_CALL(dataTypeCast(ctx, out_tensor_tmp, input_tensor_tmp.dtype()));
 
     std::vector<int> input_dim = getDim(input_tensor_tmp);
     std::vector<int> out_dim = getDim(out_tensor_tmp);
@@ -96,7 +97,7 @@ DIOPI_API diopiError_t diopiAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandl
     const void* beta = nullptr;
     DIOPI_CALLCNNL(cnnlPoolingForward(
         handle, pool_desc, alpha, input_desc.get(), input_tensor_tmp.data(), beta, out_desc.get(), out_tensor_tmp.data(), workspace, workspace_size));
-    dataTypeCast(ctx, out_tensor, out_tensor_tmp);
+    DIOPI_CALL(dataTypeCast(ctx, out_tensor, out_tensor_tmp));
 
     return diopiSuccess;
 }
@@ -106,24 +107,25 @@ DIOPI_API diopiError_t diopiAvgPool2dBackward(diopiContextHandle_t ctx, diopiTen
                                               bool count_include_pad, const int64_t* divisor_override) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = DiopiTensor(input);
-    auto grad_input_tensor = DiopiTensor(grad_input);
-    auto grad_output_tensor = DiopiTensor(grad_output);
+    DiopiTensor input_tensor(input);
+    DiopiTensor grad_input_tensor(grad_input);
+    DiopiTensor grad_output_tensor(grad_output);
 
     DIOPI_CHECK(input_tensor.dim() == 3 || input_tensor.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
     std::vector<DiopiTensor*> pTensors{&input_tensor, &grad_output_tensor};
-    autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32});
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, {diopi_dtype_float16, diopi_dtype_float32}));
     DiopiTensor input_tensor_tmp = *pTensors[0];
     DiopiTensor grad_output_tensor_tmp = *pTensors[1];
-    DiopiTensor grad_input_tensor_tmp = dataTypeCast(ctx, grad_input_tensor, input_tensor_tmp.dtype());
+    DiopiTensor grad_input_tensor_tmp = grad_input_tensor;
+    DIOPI_CALL(dataTypeCast(ctx, grad_input_tensor_tmp, input_tensor_tmp.dtype()));
 
     diopiTensorHandle_t input_t = nullptr;
     diopiTensorHandle_t grad_input_t = nullptr;
     diopiTensorHandle_t grad_output_t = nullptr;
 
     auto permute_to_nhwc = [&](auto src, auto& dst) {
-        auto src_tensor = DiopiTensor(src);
+        DiopiTensor src_tensor(src);
         std::vector<int64_t> src_shape_t_64(src_tensor.shape().size());
         std::vector<int64_t> axis{0, 2, 3, 1};
         if (src_tensor.shape().size() == 3) {
@@ -156,9 +158,9 @@ DIOPI_API diopiError_t diopiAvgPool2dBackward(diopiContextHandle_t ctx, diopiTen
     DIOPI_CALL(permute_to_nhwc(static_cast<diopiTensorHandle_t>(grad_input_tensor_tmp), grad_input_t));
     DIOPI_CALL(permute_to_nhwc(static_cast<diopiTensorHandle_t>(grad_output_tensor_tmp), grad_output_t));
 
-    auto input_tensor_t = DiopiTensor(input_t);
-    auto grad_input_tensor_t = DiopiTensor(grad_input_t);
-    auto grad_output_tensor_t = DiopiTensor(grad_output_t);
+    DiopiTensor input_tensor_t(input_t);
+    DiopiTensor grad_input_tensor_t(grad_input_t);
+    DiopiTensor grad_output_tensor_t(grad_output_t);
 
     std::vector<int> input_dim = getDim(input_tensor_t);
     std::vector<int> grad_input_dim = getDim(grad_input_tensor_t);
@@ -233,7 +235,7 @@ DIOPI_API diopiError_t diopiAvgPool2dBackward(diopiContextHandle_t ctx, diopiTen
     } else {
         DIOPI_CHECK(false, "non-empty 3D or 4D (batch mode) tensor expected for input");
     }
-    dataTypeCast(ctx, grad_input_tensor, grad_input_tensor_tmp);
+    DIOPI_CALL(dataTypeCast(ctx, grad_input_tensor, grad_input_tensor_tmp));
 
     return diopiSuccess;
 }
