@@ -95,14 +95,13 @@ extern "C" diopiError_t diopiBmm(diopiContextHandle_t ctx, diopiTensorHandle_t o
     auto output_tensor = DiopiTensor(out);
 
     if (input_tensor.dtype() == diopi_dtype_float64) {
-        auto mat1_f32 = dataTypeCast(ctx, input_tensor, diopi_dtype_float32);
-        auto mat2_f32 = dataTypeCast(ctx, mat2_tensor, diopi_dtype_float32);
-        auto out_f32 = dataTypeCast(ctx, output_tensor, diopi_dtype_float32);
-        DIOPI_CALL(bmm(ctx, mat1_f32, mat2_f32, out_f32));
-        dataTypeCast(ctx, output_tensor, out_f32);
-    } else {
-        DIOPI_CALL(bmm(ctx, input_tensor, mat2_tensor, output_tensor));
+        DIOPI_CALL(dataTypeCast(ctx, input_tensor, diopi_dtype_float32));
+        DIOPI_CALL(dataTypeCast(ctx, mat2_tensor, diopi_dtype_float32));
+        DIOPI_CALL(dataTypeCast(ctx, output_tensor, diopi_dtype_float32));
     }
+    DIOPI_CALL(bmm(ctx, input_tensor, mat2_tensor, output_tensor));
+    auto src_out = DiopiTensor(out);
+    DIOPI_CALL(dataTypeCast(ctx, src_out, output_tensor));
     return diopiSuccess;
 }
 
