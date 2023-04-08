@@ -160,7 +160,7 @@ extern "C" diopiError_t diopiSoftmaxBackward(diopiContextHandle_t ctx, diopiTens
     DiopiTensor grad_input_tensor(grad_input);
     DiopiTensor grad_output_tensor(grad_output);
     DiopiTensor output_tensor(output);
-    softmax_backward(ctx, grad_input_tensor, grad_output_tensor, output_tensor, dim);
+    DIOPI_CALL(softmax_backward(ctx, grad_input_tensor, grad_output_tensor, output_tensor, dim));
     return diopiSuccess;
 }
 
@@ -176,7 +176,7 @@ extern "C" diopiError_t diopiLogSoftmaxBackward(diopiContextHandle_t ctx, diopiT
     DiopiTensor grad_input_tensor(grad_input);
     DiopiTensor grad_output_tensor(grad_output);
     DiopiTensor output_tensor(output);
-    softmax_backward(ctx, grad_input_tensor, grad_output_tensor, output_tensor, dim, true);
+    DIOPI_CALL(softmax_backward(ctx, grad_input_tensor, grad_output_tensor, output_tensor, dim, true));
     return diopiSuccess;
 }
 
