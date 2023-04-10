@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #include <diopi/functions.h>
 
 #include <numeric>
@@ -18,17 +24,17 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                            int64_t groups) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = DiopiTensor(input);
-    auto output_tensor = DiopiTensor(out);
-    auto weight_tensor = DiopiTensor(weight);
+    DiopiTensor input_tensor(input);
+    DiopiTensor output_tensor(out);
+    DiopiTensor weight_tensor(weight);
 
-    diopiTensorHandle_t input_t;
-    diopiTensorHandle_t weight_t;
-    diopiTensorHandle_t output_t;
+    diopiTensorHandle_t input_t = nullptr;
+    diopiTensorHandle_t weight_t = nullptr;
+    diopiTensorHandle_t output_t = nullptr;
 
     auto permute_to_nhwc = [&](auto src, auto &dst) {
         std::vector<int64_t> axis{0, 2, 3, 1};
-        auto src_tensor = DiopiTensor(src);
+        DiopiTensor src_tensor(src);
         std::vector<int64_t> src_shape_t_64(src_tensor.shape().size());
         for (int i = 0; i < src_tensor.shape().size(); ++i) {
             src_shape_t_64[i] = src_tensor.shape()[axis[i]];
@@ -51,8 +57,8 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
 
     const void *bias_ptr = nullptr;
     CnnlTensorDesc bias_desc;
+    DiopiTensor bias_tensor(bias);
     if (nullptr != bias) {
-        auto bias_tensor = DiopiTensor(bias);
         DIOPI_CALL(bias_desc.set(bias_tensor, CNNL_LAYOUT_ARRAY));
         bias_ptr = bias_tensor.data();
     }
@@ -88,8 +94,8 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx,
                                           DiopiTensor(input_t).data(),
                                           weight_desc.get(),
                                           DiopiTensor(weight_t).data(),
-                                          bias_desc.get(),
-                                          bias_ptr,
+                                          bias_tensor.defined()?bias_desc.get() : nullptr,
+                                          bias_tensor.defined()?bias_tensor.data() : nullptr,
                                           workspace,
                                           workspace_size,
                                           NULL,
@@ -118,21 +124,21 @@ extern "C" diopiError_t diopiConvolution2dBackward(diopiContextHandle_t ctx,
                                                    int64_t groups) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = DiopiTensor(input);
-    auto weight_tensor = DiopiTensor(weight);
-    auto grad_output_tensor = DiopiTensor(grad_output);
-    auto grad_input_tensor = DiopiTensor(grad_input);
-    auto grad_weight_tensor = DiopiTensor(grad_weight);
+    DiopiTensor input_tensor(input);
+    DiopiTensor weight_tensor(weight);
+    DiopiTensor grad_output_tensor(grad_output);
+    DiopiTensor grad_input_tensor(grad_input);
+    DiopiTensor grad_weight_tensor(grad_weight);
 
-    diopiTensorHandle_t input_t;
-    diopiTensorHandle_t weight_t;
-    diopiTensorHandle_t grad_output_t;
-    diopiTensorHandle_t grad_input_t;
-    diopiTensorHandle_t grad_weight_t;
+    diopiTensorHandle_t input_t = nullptr;
+    diopiTensorHandle_t weight_t = nullptr;
+    diopiTensorHandle_t grad_output_t = nullptr;
+    diopiTensorHandle_t grad_input_t = nullptr;
+    diopiTensorHandle_t grad_weight_t = nullptr;
 
     auto permute_to_nhwc = [&](auto src, auto &dst) {
         std::vector<int64_t> axis{0, 2, 3, 1};
-        auto src_tensor = DiopiTensor(src);
+        DiopiTensor src_tensor(src);
         std::vector<int64_t> src_shape_t_64(src_tensor.shape().size());
         for (int i = 0; i < src_tensor.shape().size(); ++i) {
             src_shape_t_64[i] = src_tensor.shape()[axis[i]];
@@ -150,11 +156,11 @@ extern "C" diopiError_t diopiConvolution2dBackward(diopiContextHandle_t ctx,
     DIOPI_CALL(permute_to_nhwc(grad_input, grad_input_t));
     DIOPI_CALL(permute_to_nhwc(grad_weight, grad_weight_t));
 
-    auto input_tensor_t = DiopiTensor(input_t);
-    auto weight_tensor_t = DiopiTensor(weight_t);
-    auto grad_output_tensor_t = DiopiTensor(grad_output_t);
-    auto grad_input_tensor_t = DiopiTensor(grad_input_t);
-    auto grad_weight_tensor_t = DiopiTensor(grad_weight_t);
+    DiopiTensor input_tensor_t(input_t);
+    DiopiTensor weight_tensor_t(weight_t);
+    DiopiTensor grad_output_tensor_t(grad_output_t);
+    DiopiTensor grad_input_tensor_t(grad_input_t);
+    DiopiTensor grad_weight_tensor_t(grad_weight_t);
 
     CnnlTensorDesc input_desc(input_tensor, CNNL_LAYOUT_NHWC);
     CnnlTensorDesc weight_desc(weight_tensor, CNNL_LAYOUT_NHWC);
@@ -233,7 +239,7 @@ extern "C" diopiError_t diopiConvolution2dBackward(diopiContextHandle_t ctx,
     DIOPI_CALL(diopiPermute(ctx, grad_weight, grad_weight_t, nhwc2nchw));
 
     if (grad3 != nullptr) {
-        auto bias_grad_tensor = DiopiTensor(grad3);
+        DiopiTensor bias_grad_tensor(grad3);
         CnnlTensorDesc bias_grad_desc;
         DIOPI_CALL(bias_grad_desc.set(bias_grad_tensor, CNNL_LAYOUT_ARRAY));
         std::vector<int64_t> bias_shape{bias_grad_tensor.shape().begin(), bias_grad_tensor.shape().end()};

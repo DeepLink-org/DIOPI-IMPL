@@ -1,9 +1,8 @@
-/**************************************************************************************************
- * Copyright (c) 2022, SenseTime Inc.
- * License
- * Author
- *
- *************************************************************************************************/
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
 
 #ifndef IMPL_CUDA_HELPER_HPP_
 #define IMPL_CUDA_HELPER_HPP_
@@ -11,6 +10,8 @@
 #include <diopi/diopirt.h>
 #include <cuda_runtime.h>
 #include <utility>
+
+#include "error.hpp"
 
 #define DIOPI_CALL(Expr) {                                                              \
     diopiError_t ret = Expr;                                                            \
@@ -58,16 +59,31 @@ public:
         diopiGetTensorDevice(tensor_, &device);
         return device;
     }
+
     diopiDtype_t dtype() const {
         diopiDtype_t dtype;
         diopiGetTensorDtype(tensor_, &dtype);
         return dtype;
     }
 
+    diopiDtype_t scalar_type() const { return dtype(); }
+
     const diopiSize_t& shape() {
         diopiGetTensorShape(tensor_, &shape_);
         return shape_;
     }
+
+    int64_t size(int i) {
+        if (!shape_.data) diopiGetTensorShape(tensor_, &shape_);
+        const int64_t* shape_p = shape_.data;
+        return *(shape_p + i);
+    }
+
+    int64_t ndimension() {
+        if (!shape_.data) diopiGetTensorShape(tensor_, &shape_);
+        return shape_.len;
+    }
+
     const diopiSize_t& stride() {
         diopiGetTensorStride(tensor_, &stride_);
         return stride_;
@@ -118,15 +134,6 @@ inline cudaStream_t getStream(diopiContextHandle_t ctx) {
     diopiStreamHandle_t stream_handle;
     diopiGetStream(ctx, &stream_handle);
     return static_cast<cudaStream_t>(stream_handle);
-}
-
-void _set_last_error_string(const char *err);
-
-template<typename...Types>
-void set_last_error_string(const char* szFmt, Types&&...args) {
-    char szBuf[4096] = {0};
-    sprintf(szBuf, szFmt, std::forward<Types>(args)...);
-    _set_last_error_string(szBuf);
 }
 
 }  // namespace cuda

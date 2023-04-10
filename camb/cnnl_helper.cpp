@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #include "cnnl_helper.hpp"
 
 #include <functional>
@@ -58,7 +64,7 @@ bool CnnlDataType::isInteger(cnnlDataType_t cnnlDT) {
 }
 bool CnnlDataType::isBool(cnnlDataType_t cnnlDT) { return cnnlDT == CNNL_DTYPE_BOOL; }
 
-std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping{
+const std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping{
     {{diopi_dtype_bool, diopi_dtype_float16}, CNNL_CAST_BOOL_TO_HALF},
     {{diopi_dtype_bool, diopi_dtype_float32}, CNNL_CAST_BOOL_TO_FLOAT},
 
@@ -102,7 +108,6 @@ std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping
     {{diopi_dtype_float16, diopi_dtype_int32}, CNNL_CAST_HALF_TO_INT32},
     {{diopi_dtype_float16, diopi_dtype_int64}, CNNL_CAST_HALF_TO_INT64},
     {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
-    {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
 
     // CNNL_CAST_FLOAT_TO_HALF_IEEE754 = 219, /*!< Converts float to half for ieee754. */
     {{diopi_dtype_float32, diopi_dtype_bool}, CNNL_CAST_FLOAT_TO_BOOL},
@@ -143,7 +148,7 @@ diopiError_t cnnl_transpose(
     CnnlTensorDesc outDesc(out, layoutOut);
     CnnlTransposeDescriptor transDesc(order.size(), order.data());
     size_t workspace_size = 0;
-    DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
+    DIOPI_CALLCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
 
     void* workspace_ptr = workspace_size == 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
     DIOPI_CALLCNNL(cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(), in.data(), outDesc.get(), out.data(), workspace_ptr, workspace_size));

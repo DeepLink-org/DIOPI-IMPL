@@ -1,9 +1,8 @@
-/**************************************************************************************************
- * Copyright (c) 2022, SenseTime Inc.
- * License
- * Author
- *
- *************************************************************************************************/
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
 
 #ifndef IMPL_CAMB_DIOPI_HELPER_HPP_
 #define IMPL_CAMB_DIOPI_HELPER_HPP_
@@ -17,16 +16,17 @@
 #include <iostream>
 #include <utility>
 #include <vector>
+#include <string>
 
 #include "error.hpp"
 
 namespace impl {
 namespace camb {
 
-#define DIOPI_CHECK(cond, str)                                             \
+#define DIOPI_CHECK(cond, fmt, args...)                                             \
     do {                                                                   \
         if (!(cond)) {                                                     \
-            set_last_error_string("%s at %s:%d", str, __FILE__, __LINE__); \
+            set_last_error_string(#fmt" at %s:%d", ##args, __FILE__, __LINE__); \
             return diopiErrorOccurred;                                     \
         }                                                                  \
     } while (false);
@@ -47,12 +47,13 @@ namespace camb {
         }                                                        \
     } while (false);
 
-#define DIOPI_CALL(Expr)           \
-    do {                           \
-        diopiError_t ret = Expr;   \
-        if (diopiSuccess != ret) { \
-            return ret;            \
-        }                          \
+#define DIOPI_CALL(Expr)                                                                                            \
+    do {                                                                                                            \
+        diopiError_t ret = Expr;                                                                                    \
+        if (diopiSuccess != ret) {                                                                                  \
+            set_last_error_string("%s at %s:%d\n", getDiopiErrorStr(ret), __FILE__, __LINE__); \
+            return ret;                                                                                             \
+        }                                                                                                           \
     } while (false);
 
 enum class MemoryFormat : size_t { Contiguous = 0, ChannelsLast = 1, ChannelsLast3d = 2, Preserve = 3 };
@@ -61,8 +62,42 @@ class DiopiDataType final {
 public:
     static bool isInteger(diopiDtype_t dtype) { return dtype < 8; }
     static bool isFloatPoint(diopiDtype_t dtype) { return dtype <= 10 && dtype >= 8 || dtype == 12 || dtype == 13; }
+    static std::string dataTypeStr(diopiDtype_t dtype) {
+        switch (dtype) {
+            case diopi_dtype_int8:
+                return "diopi_dtype_int8";
+            case diopi_dtype_uint8:
+                return "diopi_dtype_uint8";
+            case diopi_dtype_int16:
+                return "diopi_dtype_int16";
+            case diopi_dtype_uint16:
+                return "diopi_dtype_uint16";
+            case diopi_dtype_int32:
+                return "diopi_dtype_uint32";
+            case diopi_dtype_uint32:
+                return "diopi_dtype_int32";
+            case diopi_dtype_int64:
+                return "diopi_dtype_int64";
+            case diopi_dtype_uint64:
+                return "diopi_dtype_uint64";
+            case diopi_dtype_float16:
+                return "diopi_dtype_float16";
+            case diopi_dtype_float32:
+                return "diopi_dtype_float32";
+            case diopi_dtype_float64:
+                return "diopi_dtype_float64";
+            case diopi_dtype_bool:
+                return "diopi_dtype_bool";
+            case diopi_dtype_bfloat16:
+                return "diopi_dtype_bfloat16";
+            case diopi_dtype_tfloat32:
+                return "diopi_dtype_tfloat32";
+            default:
+                set_last_error_string("dtype:%d is not support at %s:%d", dtype, __FILE__, __LINE__);
+        }
+        return nullptr;
+    }
 };
-
 class DiopiTensor final {
 public:
     DiopiTensor() = default;
@@ -142,7 +177,7 @@ public:
         }
         diopiSize_t stride_diopi(strides.data(), static_cast<int64_t>(strides.size()));
         diopiSize_t shape_diopi(this->shape().data(), this->shape().size());
-        diopiTensorHandle_t tensor;
+        diopiTensorHandle_t tensor = nullptr;
         diopiRequireTensor(ctx, &tensor, &shape_diopi, &stride_diopi, this->dtype(), this->device());
         return DiopiTensor(tensor);
     }
@@ -190,9 +225,9 @@ public:
         return p;
     }
 
-    diopiTensorHandle_t tensor_handle() { return tensor_; }
+    diopiTensorHandle_t tensorHandle() { return tensor_; }
 
-    diopiConstTensorHandle_t tensor_handle() const { return tensor_; }
+    diopiConstTensorHandle_t tensorHandle() const { return tensor_; }
 
 protected:
     diopiTensorHandle_t tensor_ = 0;
@@ -201,7 +236,7 @@ protected:
 };
 
 inline auto makeTensor(diopiContextHandle_t ctx, const diopiScalar_t* pScalar) -> DiopiTensor {
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     std::vector<int64_t> shape{1};
     diopiSize_t size(shape.data(), 1);
     diopiRequireTensor(ctx, &tensor, &size, nullptr, pScalar->stype, diopi_device);
@@ -209,7 +244,7 @@ inline auto makeTensor(diopiContextHandle_t ctx, const diopiScalar_t* pScalar) -
 }
 
 inline DiopiTensor ones(diopiContextHandle_t ctx, std::vector<int64_t> size, diopiDtype_t dtype) {
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     diopiSize_t size_(size.data(), size.size());
     diopiRequireTensor(ctx, &tensor, &size_, nullptr, dtype, diopi_device);
     diopiScalar_t scalar = {dtype, 1.0};
@@ -219,7 +254,7 @@ inline DiopiTensor ones(diopiContextHandle_t ctx, std::vector<int64_t> size, dio
 }
 
 inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const diopiSize_t& size, diopiDtype_t dtype) {
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     diopiRequireTensor(ctx, &tensor, &size, nullptr, dtype, diopi_device);
     return DiopiTensor(tensor);
 }
@@ -227,20 +262,20 @@ inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const diopiSize_t& s
 inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const std::vector<int64_t>& size, const std::vector<int64_t>& stride, diopiDtype_t dtype) {
     diopiSize_t size_(size.data(), size.size());
     diopiSize_t stride_(stride.data(), stride.size());
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     diopiRequireTensor(ctx, &tensor, &size_, &stride_, dtype, diopi_device);
     return DiopiTensor(tensor);
 }
 
 inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const std::vector<int64_t>& size, diopiDtype_t dtype) {
     diopiSize_t size_(size.data(), size.size());
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     diopiRequireTensor(ctx, &tensor, &size_, nullptr, dtype, diopi_device);
     return DiopiTensor(tensor);
 }
 
 inline DiopiTensor requiresBuffer(diopiContextHandle_t ctx, int64_t num_bytes) {
-    diopiTensorHandle_t tensor;
+    diopiTensorHandle_t tensor = nullptr;
     diopiRequireBuffer(ctx, &tensor, num_bytes, diopi_device);
     return DiopiTensor(tensor);
 }
@@ -260,6 +295,13 @@ inline diopiSize_t vec2diopiSize_t(const std::vector<int64_t>& sizeIn) {
     diopiSize_t diopiSize(sizeIn.data(), sizeIn.size());
     return diopiSize;
 }
+
+inline void syncStreamInCtx(const diopiContextHandle_t ctx) {
+    cnrtQueue_t queue = getStream(ctx);
+    cnrtQueueSync(queue);
+    return;
+}
+
 }  // namespace camb
 
 }  // namespace impl

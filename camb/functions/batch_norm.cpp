@@ -1,3 +1,9 @@
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #include <diopi/functions.h>
 
 #include "../cnnl_helper.hpp"
@@ -11,14 +17,14 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
                                       diopiConstTensorHandle_t bias, diopiTensorHandle_t running_mean,
                                       diopiTensorHandle_t running_var, bool training, double momentum, double eps) {
     /* Generate Tensors */
-    auto save_mean_tr = DiopiTensor(save_mean);
-    auto save_invstd_tr = DiopiTensor(save_invstd);
-    auto input_tr = DiopiTensor(input);
-    auto weight_tr = DiopiTensor(weight);
-    auto bias_tr = DiopiTensor(bias);
-    auto running_mean_tr = DiopiTensor(running_mean);
-    auto running_var_tr = DiopiTensor(running_var);
-    auto output_tr = DiopiTensor(out);
+    DiopiTensor save_mean_tr(save_mean);
+    DiopiTensor save_invstd_tr(save_invstd);
+    DiopiTensor input_tr(input);
+    DiopiTensor weight_tr(weight);
+    DiopiTensor bias_tr(bias);
+    DiopiTensor running_mean_tr(running_mean);
+    DiopiTensor running_var_tr(running_var);
+    DiopiTensor output_tr(out);
 
     /* Some basic check */
     if (running_mean_tr.defined() && running_var_tr.defined()) {
@@ -44,14 +50,14 @@ diopiError_t diopiBatchNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, d
     if (training) {
         // get workspace
         size_t workspace_size = 0;
-        DIOPI_CHECKCNNL(cnnlGetBatchNormForwardWorkspaceSize(handle, input_channel_last_desc.get(), &workspace_size));
+        DIOPI_CALLCNNL(cnnlGetBatchNormForwardWorkspaceSize(handle, input_channel_last_desc.get(), &workspace_size));
 
         void* workspace_ptr = workspace_size == 0 ? nullptr : requiresBuffer(ctx, workspace_size).data();
 
         // set activition part to default
         cnnlActivationMode_t active_mode = CNNL_ACTIVATION_IDENTITY;
         cnnlActivationDescriptor_t activation_desc = nullptr;
-        cnnlCreateActivationDescriptor(&activation_desc);
+        DIOPI_CALLCNNL(cnnlCreateActivationDescriptor(&activation_desc));
         cnnlSetActivationDescriptor_v5(activation_desc, active_mode, CNNL_ACTIVATION_HIGH_PRECISION,
                                                             CNNL_NOT_PROPAGATE_NAN, 1.0, -1, 1.0, 1.0, false);
         DIOPI_CALLCNNL(cnnlBatchNormForwardTraining_v2(
@@ -117,17 +123,17 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx,
                                     diopiConstTensorHandle_t save_invstd,
                                     bool training, double eps) {
     /* Generate diopi Tensors and Handle*/
-    auto grad_input_tr = DiopiTensor(grad_input);
-    auto grad_weight_tr = DiopiTensor(grad_weight);
-    auto grad_bias_tr = DiopiTensor(grad_bias);
-    auto input_tr = DiopiTensor(input);
-    auto weight_tr = DiopiTensor(weight);
-    auto running_mean_tr = DiopiTensor(running_mean);
-    auto running_var_tr = DiopiTensor(running_var);
-    auto save_mean_tr = DiopiTensor(save_mean);
-    auto save_invstd_tr = DiopiTensor(save_invstd);
+    DiopiTensor grad_input_tr(grad_input);
+    DiopiTensor grad_weight_tr(grad_weight);
+    DiopiTensor grad_bias_tr(grad_bias);
+    DiopiTensor input_tr(input);
+    DiopiTensor weight_tr(weight);
+    DiopiTensor running_mean_tr(running_mean);
+    DiopiTensor running_var_tr(running_var);
+    DiopiTensor save_mean_tr(save_mean);
+    DiopiTensor save_invstd_tr(save_invstd);
 
-    auto grad_output_tr = DiopiTensor(grad_output);
+    DiopiTensor grad_output_tr(grad_output);
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
@@ -159,14 +165,14 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx,
     cnnlActivationMode_t active_mode = CNNL_ACTIVATION_IDENTITY;
 
     cnnlActivationDescriptor_t activation_desc = nullptr;
-    cnnlCreateActivationDescriptor(&activation_desc);
+    DIOPI_CALLCNNL(cnnlCreateActivationDescriptor(&activation_desc));
     cnnlSetActivationDescriptor_v5(activation_desc, active_mode, CNNL_ACTIVATION_HIGH_PRECISION,
                                                         CNNL_NOT_PROPAGATE_NAN, 1.0, -1, 1.0, 1.0, false);
 
     if (training) {
         // get workspace
         size_t workspace_size = 0;
-        DIOPI_CHECKCNNL(cnnlGetBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
+        DIOPI_CALLCNNL(cnnlGetBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
 
         void* workspace_ptr = workspace_size == 0 ? nullptr : requiresBuffer(ctx, workspace_size).data();
 
@@ -203,7 +209,7 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx,
             0));
     } else {
         size_t workspace_size = 0;
-        DIOPI_CHECKCNNL(cnnlGetFrozenBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
+        DIOPI_CALLCNNL(cnnlGetFrozenBatchNormBackwardWorkspaceSize(handle, input_desc.get(), &workspace_size));
 
         void* workspace_ptr = workspace_size == 0 ? nullptr : requiresBuffer(ctx, workspace_size).data();
 
@@ -235,7 +241,7 @@ diopiError_t diopiBatchNormBackward(diopiContextHandle_t ctx,
     }
 
     // NHWC -> NCHW
-    cnnl_transpose(ctx, handle, grad_input_channel_last, grad_input_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW);
+    DIOPI_CALL(cnnl_transpose(ctx, handle, grad_input_channel_last, grad_input_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW));
 
     return diopiSuccess;
 }

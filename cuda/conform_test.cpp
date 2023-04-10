@@ -1,9 +1,9 @@
-/**************************************************************************************************
- * Copyright (c) 2022, SenseTime Inc.
- * License
- * Author
- *
- *************************************************************************************************/
+/**
+ * @file
+ * @author DeepLink
+ * @copyright  (c) 2023, DeepLink.
+ */
+
 #include <diopi/diopirt.h>
 #include <diopi_register.h>
 #include <cuda_runtime.h>
@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <mutex>
 
-#include "helper.hpp"
+#include "error.hpp"
 
 
 extern "C" {
@@ -73,18 +73,6 @@ int32_t cuda_memcpy_d2d_async(diopiStreamHandle_t stream_handle,
     return diopiSuccess;
 }
 
-static char strLastError[8192] = {0};
-static char strLastErrorOther[4096] = {0};
-static std::mutex mtxLastError;
-
-const char* cuda_get_last_error_string() {
-    cudaError_t error = cudaGetLastError();
-    std::lock_guard<std::mutex> lock(mtxLastError);
-    sprintf(strLastError, "cuda error: %s; other error: %s",
-            cudaGetErrorString(error), strLastErrorOther);
-    return strLastError;
-}
-
 int32_t initLibrary() {
     diopiRegisterDeviceMallocFunc(cuda_malloc);
     diopiRegisterDevMemFreeFunc(cuda_free);
@@ -104,16 +92,3 @@ int32_t finalizeLibrary() {
 }
 
 }  // extern "C"
-
-namespace impl {
-
-namespace cuda {
-
-void _set_last_error_string(const char *err) {
-    std::lock_guard<std::mutex> lock(mtxLastError);
-    sprintf(strLastErrorOther, "%s", err);
-}
-
-}  // namespace cuda
-
-}  // namespace impl
