@@ -13,12 +13,12 @@ namespace impl {
 namespace camb {
 extern "C" {
 
-DIOPI_API diopiError_t
-diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other, diopiRoundMode_t rounding_mode) {
+DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t other,
+                                diopiRoundMode_t rounding_mode) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
-    auto other_tensor = DiopiTensor(other);
-    auto out_tensor = DiopiTensor(out);
+    DiopiTensor input_tensor(input);
+    DiopiTensor other_tensor(other);
+    DiopiTensor out_tensor(out);
 
     DiopiTensor out_tensor_temp = out_tensor;
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
@@ -47,28 +47,31 @@ diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHand
                workspace,
                workspace_size,
                out_desc.get(),
-               out_tensor.data());
+               out_tensor_temp.data());
+    if (out_tensor_temp.dtype() != out_tensor.dtype()) {
+        DIOPI_CALL(dataTypeCast(ctx, out_tensor, out_tensor_temp));
+    }
     return diopiSuccess;
 }
 
 DIOPI_API diopiError_t diopiDivInp(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiConstTensorHandle_t other, diopiRoundMode_t rounding_mode) {
-    diopiDiv(ctx, input, input, other, rounding_mode);
+    DIOPI_CALL(diopiDiv(ctx, input, input, other, rounding_mode));
     return diopiSuccess;
 }
 
-DIOPI_API diopiError_t
-diopiDivScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other, diopiRoundMode_t rounding_mode) {
+DIOPI_API diopiError_t diopiDivScalar(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* other,
+                                      diopiRoundMode_t rounding_mode) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tensor = DiopiTensor(input);
+    DiopiTensor input_tensor(input);
     DiopiTensor other_tensor_tmp;
-    makeTensorFromScalar(ctx, other, other_tensor_tmp);
+    DIOPI_CALL(makeTensorFromScalar(ctx, other, other_tensor_tmp));
     auto other_tensor = other_tensor_tmp.tensorHandle();
-    auto out_tensor = DiopiTensor(out);
-    diopiDiv(ctx, out, input, diopiTensorHandle_t(other_tensor), rounding_mode);
+    DiopiTensor out_tensor(out);
+    DIOPI_CALL(diopiDiv(ctx, out, input, diopiTensorHandle_t(other_tensor), rounding_mode));
     return diopiSuccess;
 }
 DIOPI_API diopiError_t diopiDivInpScalar(diopiContextHandle_t ctx, diopiTensorHandle_t input, const diopiScalar_t* other, diopiRoundMode_t rounding_mode) {
-    diopiDivScalar(ctx, input, input, other, rounding_mode);
+    DIOPI_CALL(diopiDivScalar(ctx, input, input, other, rounding_mode));
     return diopiSuccess;
 }
 
