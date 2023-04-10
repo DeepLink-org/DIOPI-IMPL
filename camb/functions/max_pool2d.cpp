@@ -15,7 +15,7 @@ namespace camb {
 
 namespace {
 
-std::vector<int> getDim(DiopiTensor tensor) {
+std::vector<int> getDim(const DiopiTensor& tensor) {
     int shape_size = tensor.shape().size();
     std::vector<int> dim;
     for (int i = 0; i < shape_size; i++) {
@@ -257,8 +257,6 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
         std::vector<int64_t> axis{0, 2, 3, 1};
         if (src_tensor.shape().size() == 3) {
             axis.clear();
-        }
-        if (src_tensor.shape().size() == 3) {
             axis.push_back(1);
             axis.push_back(2);
             axis.push_back(0);
@@ -326,8 +324,12 @@ DIOPI_API diopiError_t diopiMaxPool2dBackward(diopiContextHandle_t ctx, diopiTen
     pl = pr = pad_w;
     int height = (grad_output_dim[1] - 1) * stride_h + kernel_h;
     int width = (grad_output_dim[2] - 1) * stride_w + kernel_w;
-    if (pad_h + input_dim[1] >= height) pd = 0;
-    if (pad_w + input_dim[2] >= width) pr = 0;
+    if (pad_h + input_dim[1] >= height) {
+        pd = 0;
+    }
+    if (pad_w + input_dim[2] >= width) {
+        pr = 0;
+    }
     // if ceil_mode is set to true, the pad needs to be filled up.
     if (ceil_mode) {
         pd = height - input_dim[1] - pad_h;
