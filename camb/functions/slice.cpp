@@ -48,7 +48,7 @@ diopiError_t diopiIndexSelectBackward(diopiContextHandle_t ctx, diopiTensorHandl
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     diopiScalar_t zero = {diopi_dtype_int64, 0};
-    diopiFill(ctx, grad_input, &zero);
+    DIOPI_CALL(diopiFill(ctx, grad_input, &zero));
     DiopiTensor grad_input_tensor(grad_input);
     DiopiTensor grad_tensor(grad);
     diopiDtype_t out_dtype = grad_input_tensor.dtype();
@@ -67,7 +67,7 @@ diopiError_t diopiIndexSelectBackward(diopiContextHandle_t ctx, diopiTensorHandl
 
     DiopiTensor index_tensor(index);
     if (index_tensor.dtype() != diopi_dtype_int32) {
-        dataTypeCast(ctx, index_tensor, diopi_dtype_int32);
+        DIOPI_CALL(dataTypeCast(ctx, index_tensor, diopi_dtype_int32));
     }
     CnnlTensorDesc indexDesc(index_tensor, CNNL_LAYOUT_ARRAY);
 
@@ -115,7 +115,7 @@ diopiError_t diopiSelect(diopiContextHandle_t ctx, diopiTensorHandle_t out, diop
     index_scalar.stype = diopi_dtype_int64;
     index_scalar.ival = index;
     DiopiTensor index_tensor;
-    makeTensorFromScalar(ctx, &index_scalar, index_tensor);
+    DIOPI_CALL(makeTensorFromScalar(ctx, &index_scalar, index_tensor));
     DiopiTensor out_tensor(out);
 
     if (dim < 0) {
@@ -147,7 +147,7 @@ diopiError_t diopiSelectBackward(diopiContextHandle_t ctx, diopiTensorHandle_t g
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     diopiScalar_t zero = {diopi_dtype_int64, 0};
-    diopiFill(ctx, grad_input, &zero);
+    DIOPI_CALL(diopiFill(ctx, grad_input, &zero));
     DiopiTensor grad_input_tensor(grad_input);
     diopiDtype_t out_dtype = grad_input_tensor.dtype();
     if (dim < 0) {
@@ -175,9 +175,9 @@ diopiError_t diopiSelectBackward(diopiContextHandle_t ctx, diopiTensorHandle_t g
     index_scalar.stype = diopi_dtype_int64;
     index_scalar.ival = index;
     DiopiTensor index_tensor;
-    makeTensorFromScalar(ctx, &index_scalar, index_tensor);
+    DIOPI_CALL(makeTensorFromScalar(ctx, &index_scalar, index_tensor));
     if (index_tensor.dtype() == diopi_dtype_int64) {
-        dataTypeCast(ctx, index_tensor, diopi_dtype_int32);
+        DIOPI_CALL(dataTypeCast(ctx, index_tensor, diopi_dtype_int32));
     }
     CnnlTensorDesc indexDesc(index_tensor, CNNL_LAYOUT_ARRAY);
 
