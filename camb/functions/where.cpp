@@ -16,7 +16,8 @@ DIOPI_API diopiError_t diopiWhere(diopiContextHandle_t ctx, diopiTensorHandle_t 
     DiopiTensor out_tensor(out);
 
     std::vector<DiopiTensor*> inputs{&input_tensor, &other_tensor, &cond_tensor};
-    std::set<diopiDtype_t> inputs_support_dtype{diopi_dtype_int8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_int64, diopi_dtype_float16, diopi_dtype_float32};
+    std::set<diopiDtype_t> inputs_support_dtype{
+        diopi_dtype_int8, diopi_dtype_int16, diopi_dtype_int32, diopi_dtype_int64, diopi_dtype_float16, diopi_dtype_float32};
     DIOPI_CALL(autoCastTensorType(ctx, inputs, inputs_support_dtype));
     std::vector<DiopiTensor*> cond{&cond_tensor};
     std::set<diopiDtype_t> cond_support_dtype{diopi_dtype_uint8, diopi_dtype_bool};
@@ -38,16 +39,16 @@ DIOPI_API diopiError_t diopiWhere(diopiContextHandle_t ctx, diopiTensorHandle_t 
     workspace = requiresBuffer(ctx, workspace_size).data();
 
     DIOPI_CALLCNNL(cnnlSelectV2(handle,
-                                 cond_desc.get(),
-                                 cond_tensor.data(),
-                                 input_desc.get(),
-                                 input_tensor.data(),
-                                 other_desc.get(),
-                                 other_tensor.data(),
-                                 workspace,
-                                 workspace_size,
-                                 out_desc.get(),
-                                 out_tensor_temp.data()));
+                                cond_desc.get(),
+                                cond_tensor.data(),
+                                input_desc.get(),
+                                input_tensor.data(),
+                                other_desc.get(),
+                                other_tensor.data(),
+                                workspace,
+                                workspace_size,
+                                out_desc.get(),
+                                out_tensor_temp.data()));
 
     if (out_tensor_temp.dtype() != out_tensor.dtype()) {
         DIOPI_CALL(dataTypeCast(ctx, out_tensor, out_tensor_temp));
