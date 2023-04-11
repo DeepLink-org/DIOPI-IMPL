@@ -51,6 +51,7 @@ diopiError_t diopiIndexSelectBackward(diopiContextHandle_t ctx, diopiTensorHandl
     DIOPI_CALL(diopiFill(ctx, grad_input, &zero));
     DiopiTensor grad_input_tensor(grad_input);
     DiopiTensor grad_tensor(grad);
+    DiopiTensor out_tensor(grad_input);
     diopiDtype_t out_dtype = grad_input_tensor.dtype();
     if (grad_input_tensor.dtype() == diopi_dtype_int64) {
         DIOPI_CALL(dataTypeCast(ctx, grad_input_tensor, diopi_dtype_int32));
@@ -97,7 +98,6 @@ diopiError_t diopiIndexSelectBackward(diopiContextHandle_t ctx, diopiTensorHandl
                                     grad_tensor.data(),
                                     grad_inputDesc.get(),
                                     grad_input_tensor.data()));
-        DiopiTensor out_tensor(grad_input);
         DIOPI_CALL(dataTypeCast(ctx, out_tensor, grad_input_tensor));
     }
     return diopiSuccess;
