@@ -1963,7 +1963,7 @@ diopiError_t diopiHardswishInp(diopiContextHandle_t ctx, diopiTensorHandle_t inp
 }
 
 diopiError_t diopiHardswishBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input,
-                                    diopiConstTensorHandle_t grad_output, diopiConstTensorHandle_t input) {
+                            diopiConstTensorHandle_t grad_output, diopiConstTensorHandle_t input) {
     impl::aten::setCurCtx(ctx);
     auto atGradOutput = impl::aten::buildATen(grad_output);
     auto atInput = impl::aten::buildATen(input);
