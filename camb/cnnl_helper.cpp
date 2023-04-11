@@ -67,6 +67,7 @@ bool CnnlDataType::isBool(cnnlDataType_t cnnlDT) { return cnnlDT == CNNL_DTYPE_B
 const std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping{
     {{diopi_dtype_bool, diopi_dtype_float16}, CNNL_CAST_BOOL_TO_HALF},
     {{diopi_dtype_bool, diopi_dtype_float32}, CNNL_CAST_BOOL_TO_FLOAT},
+    {{diopi_dtype_bool, diopi_dtype_int32}, CNNL_CAST_BOOL_TO_INT32},
 
     {{diopi_dtype_int8, diopi_dtype_int16}, CNNL_CAST_INT8_TO_INT16},
     {{diopi_dtype_int8, diopi_dtype_int32}, CNNL_CAST_INT8_TO_INT32},
