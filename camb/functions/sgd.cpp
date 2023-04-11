@@ -9,6 +9,8 @@
 #include <vector>
 
 #include "../cnnl_helper.hpp"
+#include "../common/common.hpp"
+#include "../common/float16.hpp"
 
 namespace impl {
 namespace camb {
@@ -28,7 +30,16 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
     DiopiTensor dw_tensor(dw);
     DiopiTensor buf_tensor(buf);
 
-    CnnlTensorDesc w_desc(w_tensor, CNNL_LAYOUT_ARRAY);
+    std::vector<DiopiTensor *> pTensors{&dw_tensor, &buf_tensor};
+    std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
+
+    DiopiTensor w_tensor_tmp = w_tensor;
+    if (dw_tensor.dtype() != w_tensor_tmp.dtype()) {
+        w_tensor_tmp = requiresTensor(ctx, w_tensor.shape(), dw_tensor.dtype());
+    }
+
+    CnnlTensorDesc w_desc_tmp(w_tensor_tmp, CNNL_LAYOUT_ARRAY);
     CnnlTensorDesc dw_desc(dw_tensor, CNNL_LAYOUT_ARRAY);
 
     // a = a * scale_a + b * scale_b;
@@ -52,7 +63,7 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
     };
 
     if (weight_decay != 0) {
-        DIOPI_CALL(add_mul_func(dw_tensor, 1.0, w_tensor, weight_decay));
+        DIOPI_CALL(add_mul_func(dw_tensor, 1.0, w_tensor_tmp, weight_decay));
     }
     if (momentum != 0) {
         if (buf == nullptr) {
@@ -72,19 +83,12 @@ extern "C" DIOPI_API diopiError_t diopiSgd(diopiContextHandle_t ctx,
 
     std::vector<int64_t> shape{1};
     diopiSize_t size(shape.data(), shape.size());
-    auto lr_tensor = requiresTensor(ctx, size, diopi_dtype_float32);
-
-    float learning_rate = lr;
-    CnnlTensorDesc lr_desc;
-    DIOPI_CALL(lr_desc.set(lr_tensor, CNNL_LAYOUT_ARRAY, {1}));
-    DIOPI_CALLCNNL(cnnlFill_v3(handle, CNNL_POINTER_MODE_HOST, &learning_rate, lr_desc.get(), lr_tensor.data()));
-    if (dw_tensor.dtype() == diopi_dtype_float16) {
-        CnnlResourceGuard<cnnlTensorDescriptor_t, cnnlCreateTensorDescriptor, cnnlDestroyTensorDescriptor> lr_half_desc;
-        std::vector<int> shape{1};
-        DIOPI_CALLCNNL(cnnlSetTensorDescriptor(lr_half_desc.get(), CNNL_LAYOUT_ARRAY, CNNL_DTYPE_HALF, 1, shape.data()));
-        DIOPI_CALLCNNL(cnnlCastDataType(handle, lr_desc.get(), lr_tensor.data(), CNNL_CAST_FLOAT_TO_HALF, lr_half_desc.get(), lr_tensor.data()));
-    }
-    DIOPI_CALLCNNL(cnnlGradientDescent(handle, dw_desc.get(), dw_tensor.data(), lr_tensor.data(), w_desc.get(), w_tensor.data()));
+    DiopiTensor lr_tensor;
+    diopiScalar_t lr_scalar{diopi_dtype_float64, {lr}};
+    makeTensorFromScalar(ctx, &lr_scalar, lr_tensor);
+    dataTypeCast(ctx, lr_tensor, dw_tensor.dtype());
+    DIOPI_CALLCNNL(cnnlGradientDescent(handle, dw_desc.get(), dw_tensor.data(), lr_tensor.data(), w_desc_tmp.get(), w_tensor_tmp.data()));
+    DIOPI_CALL(dataTypeCast(ctx, w_tensor, w_tensor_tmp));
     return diopiSuccess;
 }
 
