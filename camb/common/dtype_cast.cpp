@@ -74,7 +74,6 @@ constexpr uint64_t Int64Int8 = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_int8);
     }
 
 // Cast through middle type
-// TODO(waiting for dispatch), after log system is built, warning here
 #define CAST_TYPE_THROUGH_INT32(TYPE)                   \
     {                                                   \
         dataTypeCast(ctx, input_tr, diopi_dtype_int32); \
