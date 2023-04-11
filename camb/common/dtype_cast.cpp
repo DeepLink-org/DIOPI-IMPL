@@ -84,10 +84,6 @@ constexpr uint64_t Int64Int8 = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_int8);
 
 diopiError_t dataTypeCastInternal(diopiContextHandle_t ctx, DiopiTensor input_tr, DiopiTensor output_tr) {
 
-    if (input_tr.dtype() == output_tr.dtype()) {
-        return diopiSuccess;
-    }
-
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto key = _MAKE_KEY(input_tr.dtype(), output_tr.dtype());
@@ -207,6 +203,9 @@ diopiError_t dataTypeCastInternal(diopiContextHandle_t ctx, DiopiTensor input_tr
 }
 
 diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtype_t destDtype) {
+    if (src.dtype() == destDtype) {
+        return diopiSuccess;
+    }
     DiopiTensor dest = requiresTensor(ctx, src.shape(), destDtype);
     DIOPI_CALL(dataTypeCastInternal(ctx, src, dest));
     src = dest;
@@ -214,6 +213,9 @@ diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtyp
 }
 
 diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src) {
+    if (src.dtype() == dest.dtype()) {
+        return diopiSuccess;
+    }
     // check size of dest and src
     DIOPI_CHECK(src.shape() == dest.shape(), "the shapes of src and dest are not equal");
 
