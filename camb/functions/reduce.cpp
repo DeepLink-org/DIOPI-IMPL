@@ -50,16 +50,16 @@ std::vector<int> infer_desc_shape(std::vector<int64_t> input_dim, std::vector<in
     return output_dim;
 }
 
-std::map<cnnlReduceOp_t, std::vector<diopiDtype_t>> supported_type_table = {
-    {CNNL_REDUCE_ADD, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_AVG, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_MUL, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_int64, diopi_dtype_float64}},
-    {CNNL_REDUCE_MAX, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_MIN, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_AND, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_OR, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_NORM1, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}},
-    {CNNL_REDUCE_NORM2, {diopi_dtype_float16, diopi_dtype_float32, diopi_dtype_float64}}};
+static std::map<cnnlReduceOp_t, std::vector<diopiDtype_t>> supported_type_table = {
+    {CNNL_REDUCE_ADD, {diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_AVG, {diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_MUL, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_MAX, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_MIN, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_AND, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_OR, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_NORM1, {diopi_dtype_float16, diopi_dtype_float32}},
+    {CNNL_REDUCE_NORM2, {diopi_dtype_float16, diopi_dtype_float32}}};
 
 inline diopiDtype_t find_supported_type(cnnlReduceOp_t mode, diopiDtype_t input_type) {
     auto table = supported_type_table.find(mode);
