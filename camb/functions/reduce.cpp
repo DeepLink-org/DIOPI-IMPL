@@ -72,12 +72,8 @@ inline diopiDtype_t find_supported_type(cnnlReduceOp_t mode, diopiDtype_t input_
     return *type;
 }
 
-diopiError_t reduce_internal(diopiContextHandle_t ctx,
-                             DiopiTensor& input_tr,
-                             DiopiTensor& output_tr,
-                             DiopiTensor& index_tr,
-                             const std::vector<int64_t> reduce_dim,
-                             cnnlReduceOp_t reduce_op) {
+diopiError_t reduce_internal(diopiContextHandle_t ctx, DiopiTensor& input_tr, DiopiTensor& output_tr, DiopiTensor& index_tr,
+                             const std::vector<int64_t> reduce_dim, cnnlReduceOp_t reduce_op) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     DIOPI_CHECK(input_tr.numel() > 0, "operation does not have an identity.");
@@ -156,13 +152,8 @@ diopiError_t reduce_impl(diopiContextHandle_t ctx, DiopiTensor& output_tr, Diopi
     return diopiSuccess;
 }
 
-diopiError_t reduce_dim_impl(diopiContextHandle_t ctx,
-                             DiopiTensor& output_tr,
-                             DiopiTensor& index_tr,
-                             DiopiTensor& input_tr,
-                             const std::vector<int64_t> dim_vec,
-                             const bool keepdim,
-                             cnnlReduceOp_t reduce_op) {
+diopiError_t reduce_dim_impl(diopiContextHandle_t ctx, DiopiTensor& output_tr, DiopiTensor& index_tr, DiopiTensor& input_tr, const std::vector<int64_t> dim_vec,
+                             const bool keepdim, cnnlReduceOp_t reduce_op) {
     std::vector<int64_t> reduce_dim = getRealDims(dim_vec, input_tr.dim());
     auto reduce_dtype = find_supported_type(reduce_op, input_tr.dtype());
 
@@ -278,8 +269,7 @@ diopiError_t diopiMaxAll(diopiContextHandle_t ctx, diopiTensorHandle_t max, diop
     return diopiSuccess;
 }
 
-diopiError_t diopiNorm(
-    diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* p, diopiSize_t dim) {
+diopiError_t diopiNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, const diopiScalar_t* p, diopiSize_t dim) {
     float norm = p->fval;
     if (DiopiDataType().isInteger(p->stype)) norm = p->ival;
     DIOPI_CHECK(norm == 1.0 || norm == 2.0, "camb only support L1-Norm as p=1.0 and L2-Norm as p=2.0");
