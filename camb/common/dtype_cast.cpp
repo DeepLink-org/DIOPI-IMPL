@@ -83,7 +83,6 @@ constexpr uint64_t Int64Int8 = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_int8);
     }
 
 diopiError_t dataTypeCastInternal(diopiContextHandle_t ctx, DiopiTensor input_tr, DiopiTensor output_tr) {
-
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     auto key = _MAKE_KEY(input_tr.dtype(), output_tr.dtype());
