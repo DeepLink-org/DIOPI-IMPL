@@ -37,7 +37,6 @@ DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t ou
 
     switch (rounding_mode) {
         case RoundModeFloor:
-            std::cout << "RoundModeFloor" << std::endl;
             DIOPI_CALLCNNL(cnnlGetFloorDivWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size));
             workspace = requiresBuffer(ctx, workspace_size).data();
             DIOPI_CALLCNNL(cnnlFloorDiv_v2(handle,
@@ -56,7 +55,6 @@ DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t ou
             return diopiSuccess;
             break;
         case RoundModeTrunc:
-            std::cout << "RoundModeTrunc" << std::endl;
             DIOPI_CALLCNNL(cnnlGetFloorDivTruncWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size));
             workspace = requiresBuffer(ctx, workspace_size).data();
             DIOPI_CALLCNNL(cnnlFloorDivTrunc(handle,
@@ -75,7 +73,6 @@ DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t ou
             return diopiSuccess;
             break;
         case RoundModeNone:
-            std::cout << "RoundModeNone" << std::endl;
             DIOPI_CALLCNNL(cnnlGetDivWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size));
             workspace = requiresBuffer(ctx, workspace_size).data();
             DIOPI_CALLCNNL(cnnlDiv_v2(handle,
