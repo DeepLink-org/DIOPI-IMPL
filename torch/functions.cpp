@@ -255,7 +255,7 @@ diopiError_t diopiBaddbmmInp(diopiContextHandle_t ctx, diopiTensorHandle_t input
     auto atInput = impl::aten::buildATen(input);
     auto atBatch1 = impl::aten::buildATen(batch1);
     auto atBatch2 = impl::aten::buildATen(batch2);
-    atInput.baddbmm_(atBatch1,atBatch2,beta,alpha);
+    atInput.baddbmm_(atBatch1, atBatch2, beta, alpha);
     impl::aten::unsetCurCtx();
     return diopiSuccess;
 }
