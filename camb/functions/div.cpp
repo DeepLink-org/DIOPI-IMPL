@@ -19,7 +19,8 @@ DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t ou
     DiopiTensor input_tensor(input);
     DiopiTensor other_tensor(other);
     DiopiTensor out_tensor(out);
-    cnnlComputationPreference_t prefer = CNNL_COMPUTATION_ULTRAHIGH_PRECISION;
+    cnnlComputationPreference_t prefer = CNNL_COMPUTATION_HIGH_PRECISION;
+    cnnlComputationPreference_t prefer_floor = CNNL_COMPUTATION_ULTRAHIGH_PRECISION;
 
     DiopiTensor out_tensor_temp = DiopiTensor(out);
     if ((out_tensor.dtype() != diopi_dtype_float16) && (out_tensor.dtype() != diopi_dtype_float32)) {
@@ -40,7 +41,7 @@ DIOPI_API diopiError_t diopiDiv(diopiContextHandle_t ctx, diopiTensorHandle_t ou
             DIOPI_CALLCNNL(cnnlGetFloorDivWorkspaceSize(handle, input_desc.get(), other_desc.get(), out_desc.get(), &workspace_size));
             workspace = requiresBuffer(ctx, workspace_size).data();
             DIOPI_CALLCNNL(cnnlFloorDiv_v2(handle,
-                                           prefer,
+                                           prefer_floor,
                                            input_desc.get(),
                                            input_tensor.data(),
                                            other_desc.get(),
