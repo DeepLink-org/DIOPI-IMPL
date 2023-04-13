@@ -16,78 +16,47 @@ namespace camb {
 
 #define _MAKE_KEY(a, b) (((static_cast<uint64_t>(a) & 0xFFFFFFFF) << 32) | (static_cast<uint64_t>(b) & 0xFFFFFFFF))
 
-// special convert (cnnl doesn't support)
-constexpr uint64_t BoolInt64 = _MAKE_KEY(diopi_dtype_bool, diopi_dtype_int64);
-constexpr uint64_t Int16Int64 = _MAKE_KEY(diopi_dtype_int16, diopi_dtype_int64);
-constexpr uint64_t Uint8Bool = _MAKE_KEY(diopi_dtype_uint8, diopi_dtype_bool);
-constexpr uint64_t Int16Bool = _MAKE_KEY(diopi_dtype_int16, diopi_dtype_bool);
-constexpr uint64_t Int64Bool = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_bool);
-constexpr uint64_t Int8Bool = _MAKE_KEY(diopi_dtype_int8, diopi_dtype_bool);
-constexpr uint64_t Int8Int64 = _MAKE_KEY(diopi_dtype_int8, diopi_dtype_int64);
-constexpr uint64_t Int64Int8 = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_int8);
+inline bool canCastByInt32(uint64_t castType) {
+    // special convert (cnnl doesn't support)
+    constexpr uint64_t BoolInt64 = _MAKE_KEY(diopi_dtype_bool, diopi_dtype_int64);
+    constexpr uint64_t Int16Int64 = _MAKE_KEY(diopi_dtype_int16, diopi_dtype_int64);
+    constexpr uint64_t Uint8Bool = _MAKE_KEY(diopi_dtype_uint8, diopi_dtype_bool);
+    constexpr uint64_t Int16Bool = _MAKE_KEY(diopi_dtype_int16, diopi_dtype_bool);
+    constexpr uint64_t Int64Bool = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_bool);
+    constexpr uint64_t Int8Bool = _MAKE_KEY(diopi_dtype_int8, diopi_dtype_bool);
+    constexpr uint64_t Int8Int64 = _MAKE_KEY(diopi_dtype_int8, diopi_dtype_int64);
+    constexpr uint64_t Int64Int8 = _MAKE_KEY(diopi_dtype_int64, diopi_dtype_int8);
+    return BoolInt64 == castType || Int16Int64 == castType || Uint8Bool == castType || Int16Bool == castType || Int64Bool == castType || Int8Bool == castType ||
+           Int8Int64 == castType || Int64Int8 == castType;
+}
 
-// Cast through middle type
-#define CAST_TYPE_THROUGH_INT32(TYPE)                   \
-    {                                                   \
-        dataTypeCast(ctx, src, diopi_dtype_int32); \
-        cast_type = TYPE;                               \
-        break;                                          \
-    }
-
-diopiError_t dataTypeCastInternal(diopiContextHandle_t ctx, DiopiTensor src, DiopiTensor dest) {
+static diopiError_t dataTypeCastTwice(diopiContextHandle_t ctx, const DiopiTensor& src, DiopiTensor& dest){
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     diopiDtype_t srcDtype = src.dtype();
     diopiDtype_t destDtype = dest.dtype();
     cnnlCastDataType_t cast_type;
-
-    if (gCnnlCastDataTypeMapping.find({srcDtype, destDtype}) != gCnnlCastDataTypeMapping.end()) {
-        // directly cast
-        cast_type = gCnnlCastDataTypeMapping.at({srcDtype, destDtype});
-    } else {
-        // cast through middle
-        auto key = _MAKE_KEY(srcDtype, destDtype);
-        switch (key) {
-            case BoolInt64:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_INT64)
-            case Int16Int64:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_INT64)
-            case Int8Int64:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_INT64)
-            case Uint8Bool:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_BOOL)
-            case Int16Bool:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_BOOL)
-            case Int64Bool:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_BOOL)
-            case Int8Bool:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_BOOL)
-            case Int64Int8:
-                CAST_TYPE_THROUGH_INT32(CNNL_CAST_INT32_TO_INT8)
-
-            default:
-                // TODO(waiting for dispatch) : cast through cpu
-                set_last_error_string("Can not cast from %d to %d at %s:%d ", srcDtype, destDtype, __FILE__, __LINE__);
-                return diopiDtypeNotSupported;
-        }
+    // cast through middle
+    auto key = _MAKE_KEY(srcDtype, destDtype);
+    if (canCastByInt32(key)) {
+       DiopiTensor mid = requiresTensor(ctx, src.shape(), diopi_dtype_int32);
+       DIOPI_CALL(dataTypeCast(ctx, mid, src));
+       DIOPI_CALL(dataTypeCast(ctx, dest, mid));
     }
-
-    CnnlTensorDesc input_desc(src, CNNL_LAYOUT_ARRAY);
-    CnnlTensorDesc output_desc(dest, CNNL_LAYOUT_ARRAY);
-
-    DIOPI_CHECKCNNL(cnnlCastDataType(handle, input_desc.get(), src.data(), cast_type, output_desc.get(), dest.data()));
-
+    else {
+        // TODO(waiting for dispatch) : cast through cpu
+        set_last_error_string("Can not cast from %d to %d at %s:%d ", srcDtype, destDtype, __FILE__, __LINE__);
+        return diopiDtypeNotSupported;
+    }
     return diopiSuccess;
 }
 
 diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtype_t destDtype) {
-    if (src.dtype() == destDtype) {
-        return diopiSuccess;
-    }
     DiopiTensor dest = requiresTensor(ctx, src.shape(), destDtype);
-    DIOPI_CALL(dataTypeCastInternal(ctx, src, dest));
+    DIOPI_CALL(dataTypeCast(ctx, dest, src));
     src = dest;
     return diopiSuccess;
 }
+
 
 diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src) {
     if (src.dtype() == dest.dtype()) {
@@ -96,7 +65,22 @@ diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const Dio
     // check size of dest and src
     DIOPI_CHECK(src.shape() == dest.shape(), "the shapes of src and dest are not equal");
 
-    return dataTypeCastInternal(ctx, src, dest);
+    cnnlHandle_t handle = cnnlHandlePool.get(ctx);
+    diopiDtype_t srcDtype = src.dtype();
+    diopiDtype_t destDtype = dest.dtype();
+
+    auto it = gCnnlCastDataTypeMapping.find({srcDtype, destDtype});
+    if (it != gCnnlCastDataTypeMapping.end()) {
+        CnnlTensorDesc srcDesc(src, CNNL_LAYOUT_ARRAY);
+        CnnlTensorDesc destDesc(dest, CNNL_LAYOUT_ARRAY);
+        cnnlCastDataType_t castType = it->second;
+        DIOPI_CALLCNNL(cnnlCastDataType(handle, srcDesc.get(), src.data(), castType, destDesc.get(), dest.data()));
+    }
+    else{
+        DIOPI_CALL(dataTypeCastTwice(ctx, src, dest));
+    }
+    return diopiSuccess;
+
 }
 
 static diopiError_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes, diopiDtype_t* dtype) {
