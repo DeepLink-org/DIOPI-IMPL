@@ -49,8 +49,10 @@ std::vector<int> infer_desc_shape(std::vector<int64_t> input_dim, std::vector<in
     }
     return output_dim;
 }
-
-static std::map<cnnlReduceOp_t, std::vector<diopiDtype_t>> supported_type_table = {
+struct HashCnnlReduceOp {
+    int64_t operator()(const cnnlReduceOp_t& reduceOp) const { return static_cast<int64_t>(reduceOp); }
+};
+static std::unordered_map<cnnlReduceOp_t, std::vector<diopiDtype_t>, HashCnnlReduceOp> supported_type_table = {
     {CNNL_REDUCE_ADD, {diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_AVG, {diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_MUL, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32}},
@@ -63,7 +65,7 @@ static std::map<cnnlReduceOp_t, std::vector<diopiDtype_t>> supported_type_table 
 
 inline diopiDtype_t find_supported_type(cnnlReduceOp_t mode, diopiDtype_t input_type) {
     auto table = supported_type_table.find(mode);
-    auto type = find(table->second.begin(), table->second.end(), input_type);
+    auto type = std::find(table->second.begin(), table->second.end(), input_type);
     if (type == table->second.end()) {
         // TODO(waiting dispatch): log system to log once only
         // std::cout << "ReduceOp input dtype is not supported, will cast to float for caculation." << std::endl;
