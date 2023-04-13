@@ -54,7 +54,7 @@ diopiError_t CnnlDataType::convertToCnnlType(cnnlDataType_t* cnnlType, diopiDtyp
     }
     return diopiSuccess;
 }
-bool CnnlDataType::isFloat(cnnlDataType_t cnnlDT) {
+bool CnnlDataType::isFloatPoint(cnnlDataType_t cnnlDT) {
     return cnnlDT == CNNL_DTYPE_HALF || cnnlDT == CNNL_DTYPE_FLOAT || cnnlDT == CNNL_DTYPE_DOUBLE || cnnlDT == CNNL_DTYPE_COMPLEX_HALF ||
            cnnlDT == CNNL_DTYPE_COMPLEX_FLOAT;
 }
