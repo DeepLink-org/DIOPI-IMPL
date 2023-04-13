@@ -45,7 +45,7 @@ extern "C" diopiError_t diopiConvTranspose2d(diopiContextHandle_t ctx, diopiTens
     }
     float alpha = 1.0;
     float beta = 1.0;
-    cnnlConvolutionBackwardData(handle,
+    DIOPI_CALLCNNL(cnnlConvolutionBackwardData(handle,
                                 &alpha,
                                 weight_desc.get(),
                                 weight_casted.data(),
@@ -57,7 +57,7 @@ extern "C" diopiError_t diopiConvTranspose2d(diopiContextHandle_t ctx, diopiTens
                                 workspace_size_input,
                                 &beta,
                                 output_desc.get(),
-                                output_casted.data());
+                                output_casted.data()));
 
     DiopiTensor bias_tensor = DiopiTensor(bias);
     if (bias_tensor.defined()) {
