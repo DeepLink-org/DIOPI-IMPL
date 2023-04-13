@@ -30,7 +30,7 @@ inline bool canCastByInt32(uint64_t castType) {
            Int8Int64 == castType || Int64Int8 == castType;
 }
 
-static diopiError_t dataTypeCastTwice(diopiContextHandle_t ctx, const DiopiTensor& src, DiopiTensor& dest){
+static diopiError_t dataTypeCastTwice(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     diopiDtype_t srcDtype = src.dtype();
     diopiDtype_t destDtype = dest.dtype();
@@ -38,11 +38,10 @@ static diopiError_t dataTypeCastTwice(diopiContextHandle_t ctx, const DiopiTenso
     // cast through middle
     auto key = _MAKE_KEY(srcDtype, destDtype);
     if (canCastByInt32(key)) {
-       DiopiTensor mid = requiresTensor(ctx, src.shape(), diopi_dtype_int32);
-       DIOPI_CALL(dataTypeCast(ctx, mid, src));
-       DIOPI_CALL(dataTypeCast(ctx, dest, mid));
-    }
-    else {
+        DiopiTensor mid = requiresTensor(ctx, src.shape(), diopi_dtype_int32);
+        DIOPI_CALL(dataTypeCast(ctx, mid, src));
+        DIOPI_CALL(dataTypeCast(ctx, dest, mid));
+    } else {
         // TODO(waiting for dispatch) : cast through cpu
         set_last_error_string("Can not cast from %d to %d at %s:%d ", srcDtype, destDtype, __FILE__, __LINE__);
         return diopiDtypeNotSupported;
@@ -50,16 +49,20 @@ static diopiError_t dataTypeCastTwice(diopiContextHandle_t ctx, const DiopiTenso
     return diopiSuccess;
 }
 
-diopiError_t dataTypeCast(diopiContextHandle_t& ctx, DiopiTensor& src, diopiDtype_t destDtype) {
+#undef _MAKE_KEY
+
+diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& src, diopiDtype_t destDtype) {
+    if (src.dtype() == destDtype) {
+        return diopiSuccess;
+    }
     DiopiTensor dest = requiresTensor(ctx, src.shape(), destDtype);
-    DIOPI_CALL(dataTypeCast(ctx, dest, src));
+    dataTypeCast(ctx, dest, src);
     src = dest;
     return diopiSuccess;
 }
 
-
 diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src) {
-    if (src.dtype() == dest.dtype()) {
+    if (dest.dtype() == src.dtype()) {
         return diopiSuccess;
     }
     // check size of dest and src
@@ -75,12 +78,10 @@ diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const Dio
         CnnlTensorDesc destDesc(dest, CNNL_LAYOUT_ARRAY);
         cnnlCastDataType_t castType = it->second;
         DIOPI_CALLCNNL(cnnlCastDataType(handle, srcDesc.get(), src.data(), castType, destDesc.get(), dest.data()));
-    }
-    else{
-        DIOPI_CALL(dataTypeCastTwice(ctx, src, dest));
+    } else {
+        DIOPI_CALL(dataTypeCastTwice(ctx, dest, src));
     }
     return diopiSuccess;
-
 }
 
 static diopiError_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes, diopiDtype_t* dtype) {
@@ -104,7 +105,6 @@ static diopiError_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes,
 }
 
 diopiError_t autoCastTensorType(diopiContextHandle_t ctx, const std::vector<DiopiTensor*>& pTensors, const std::set<diopiDtype_t>& opSupportedDtype) {
-    // std::multimap<diopiDtype_t, DiopiTensor*> dtypeAndTensorPtrs;
     std::set<diopiDtype_t> dtypeAndTensorPtrs;
     diopiDtype_t targetType = diopi_dtype_float32;
     for (const auto& pTensor : pTensors) {
