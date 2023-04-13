@@ -90,18 +90,18 @@ diopiError_t bmm(diopiContextHandle_t ctx, DiopiTensor mat1, DiopiTensor mat2, D
 extern "C" diopiError_t diopiBmm(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiConstTensorHandle_t mat2) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
-    auto input_tensor = DiopiTensor(input);
-    auto mat2_tensor = DiopiTensor(mat2);
-    auto output_tensor = DiopiTensor(out);
-    auto tmp_output = output_tensor;
+    DiopiTensor input_tensor = DiopiTensor(input);
+    DiopiTensor mat2_tensor = DiopiTensor(mat2);
+    DiopiTensor output_tensor = DiopiTensor(out);
+    
+    DiopiTensor input_casted = input_tensor;
+    DiopiTensor mat2_casted = mat2_tensor;
+    DiopiTensor output_casted = output_tensor;
 
-    if (input_tensor.dtype() == diopi_dtype_float64) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tensor, diopi_dtype_float32));
-        DIOPI_CALL(dataTypeCast(ctx, mat2_tensor, diopi_dtype_float32));
-        DIOPI_CALL(dataTypeCast(ctx, tmp_output, diopi_dtype_float32));
-    }
-    DIOPI_CALL(bmm(ctx, input_tensor, mat2_tensor, tmp_output));
-    DIOPI_CALL(dataTypeCast(ctx, output_tensor, tmp_output));
+    std::vector<DiopiTensor*> tensors{&input_casted, &mat2_casted, &output_casted};
+    DIOPI_CALL(autoCastTensorType(ctx, tensors, {diopi_dtype_float16, diopi_dtype_float32}));
+    DIOPI_CALL(bmm(ctx, input_casted, mat2_casted, output_casted));
+    DIOPI_CALL(dataTypeCast(ctx, output_tensor, output_casted));
     return diopiSuccess;
 }
 
