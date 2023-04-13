@@ -930,6 +930,14 @@ diopiError_t diopiSilu(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     impl::aten::unsetCurCtx();
     return diopiSuccess;
 }
+diopiError_t diopiSiluBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input, diopiConstTensorHandle_t grad_output, diopiConstTensorHandle_t input) {
+    impl::aten::setCurCtx(ctx);
+    auto atGradOutput = impl::aten::buildATen(grad_output);
+    auto atInput = impl::aten::buildATen(input);
+    impl::aten::invokeATenFuncRet(ctx, at::silu_backward, grad_input, atGradOutput, atInput);
+    impl::aten::unsetCurCtx();
+    return diopiSuccess;
+}
 
 
 diopiError_t diopiExp(diopiContextHandle_t ctx,
