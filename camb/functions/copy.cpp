@@ -15,6 +15,11 @@ namespace camb {
 extern "C" {
 
 diopiError_t diopiCopyInp(diopiContextHandle_t ctx, diopiConstTensorHandle_t src, diopiTensorHandle_t input) {
+    if (src == input) {
+        // the same address of pointers, return earlier
+        return diopiSuccess;
+    }
+
     // TODO(waiting for dispatch): support broadcast, dealing with uncontiguous
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 

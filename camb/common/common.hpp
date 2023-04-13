@@ -30,6 +30,9 @@ diopiError_t broadcastHelper(diopiContextHandle_t ctx, DiopiTensor input_tensor,
 
 void print_backtrace();
 
+diopiError_t contiguous_(diopiContextHandle_t& ctx, DiopiTensor& src, MemoryFormat memory_format);
+
+diopiError_t contiguous_(diopiContextHandle_t& ctx, DiopiTensor& src, MemoryFormat memory_format, cnnlTensorLayout_t layout_in, cnnlTensorLayout_t layout_out);
 }  // namespace camb
 }  // namespace impl
 
