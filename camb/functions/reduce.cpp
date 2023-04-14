@@ -169,7 +169,7 @@ diopiError_t diopiSum(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiCo
 
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
 
-    reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_ADD);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_ADD));
 
     return diopiSuccess;
 }
@@ -181,7 +181,7 @@ diopiError_t diopiMean(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
 
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
 
-    reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_AVG);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_AVG));
     return diopiSuccess;
 }
 
@@ -190,7 +190,7 @@ diopiError_t diopiProd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     DiopiTensor output_tr(out);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    reduce_dim_impl(ctx, output_tr, index_tr, input_tr, {*dim}, false, CNNL_REDUCE_MUL);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tr, input_tr, {*dim}, false, CNNL_REDUCE_MUL));
     return diopiSuccess;
 }
 
@@ -201,7 +201,7 @@ diopiError_t diopiMin(diopiContextHandle_t ctx, diopiTensorHandle_t min, diopiTe
     // Note: camb index out is int32 dtype
     auto index_tmp_tr = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
 
-    reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MIN);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MIN));
 
     DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tmp_tr));
     return diopiSuccess;
@@ -212,7 +212,7 @@ diopiError_t diopiMinAll(diopiContextHandle_t ctx, diopiTensorHandle_t min, diop
     DiopiTensor output_tr(min);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    reduce_impl(ctx, output_tr, index_tr, input_tr, CNNL_REDUCE_MIN);
+    DIOPI_CALL(reduce_impl(ctx, output_tr, index_tr, input_tr, CNNL_REDUCE_MIN));
 
     return diopiSuccess;
 }
@@ -223,7 +223,7 @@ diopiError_t diopiMax(diopiContextHandle_t ctx, diopiTensorHandle_t max, diopiTe
     DiopiTensor index_tr(max_indices);
     auto index_tmp_tr = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
 
-    reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MAX);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MAX));
 
     DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tmp_tr));
     return diopiSuccess;
@@ -234,7 +234,7 @@ diopiError_t diopiMaxAll(diopiContextHandle_t ctx, diopiTensorHandle_t max, diop
     DiopiTensor output_tr(max);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    reduce_impl(ctx, output_tr, index_tr, input_tr, CNNL_REDUCE_MAX);
+    DIOPI_CALL(reduce_impl(ctx, output_tr, index_tr, input_tr, CNNL_REDUCE_MAX));
 
     return diopiSuccess;
 }
@@ -249,7 +249,7 @@ diopiError_t diopiNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
-    reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, norm == 1.0 ? CNNL_REDUCE_NORM1 : CNNL_REDUCE_NORM2);
+    DIOPI_CALL(reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, norm == 1.0 ? CNNL_REDUCE_NORM1 : CNNL_REDUCE_NORM2));
 
     return diopiSuccess;
 }
