@@ -52,7 +52,7 @@ std::vector<int> infer_desc_shape(std::vector<int64_t> input_dim, std::vector<in
 struct HashCnnlReduceOp {
     int64_t operator()(const cnnlReduceOp_t& reduceOp) const { return static_cast<int64_t>(reduceOp); }
 };
-static std::unordered_map<cnnlReduceOp_t, std::vector<diopiDtype_t>, HashCnnlReduceOp> supported_type_table = {
+static std::unordered_map<cnnlReduceOp_t, std::set<diopiDtype_t>, HashCnnlReduceOp> supported_type_table = {
     {CNNL_REDUCE_ADD, {diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_AVG, {diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_MUL, {diopi_dtype_int32, diopi_dtype_float16, diopi_dtype_float32}},
@@ -62,17 +62,6 @@ static std::unordered_map<cnnlReduceOp_t, std::vector<diopiDtype_t>, HashCnnlRed
     {CNNL_REDUCE_OR, {diopi_dtype_bool, diopi_dtype_uint8, diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_NORM1, {diopi_dtype_float16, diopi_dtype_float32}},
     {CNNL_REDUCE_NORM2, {diopi_dtype_float16, diopi_dtype_float32}}};
-
-inline diopiDtype_t find_supported_type(cnnlReduceOp_t mode, diopiDtype_t input_type) {
-    auto table = supported_type_table.find(mode);
-    auto type = std::find(table->second.begin(), table->second.end(), input_type);
-    if (type == table->second.end()) {
-        // TODO(waiting dispatch): log system to log once only
-        // std::cout << "ReduceOp input dtype is not supported, will cast to float for caculation." << std::endl;
-        return diopi_dtype_float32;
-    }
-    return *type;
-}
 
 diopiError_t reduce_internal(diopiContextHandle_t ctx, DiopiTensor& input_tr, DiopiTensor& output_tr, DiopiTensor& index_tr,
                              const std::vector<int64_t> reduce_dim, cnnlReduceOp_t reduce_op) {
@@ -140,14 +129,14 @@ diopiError_t reduce_impl(diopiContextHandle_t ctx, DiopiTensor& output_tr, Diopi
     for (int64_t i = 0; i <= input_tr.dim(); i++) {
         reduce_dim.push_back(i);
     }
-    auto reduce_dtype = find_supported_type(reduce_op, input_tr.dtype());
-    if (input_tr.dtype() != reduce_dtype) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, reduce_dtype));
-    }
+    auto supported_dtypes = supported_type_table.find(reduce_op);
+    std::vector<DiopiTensor*> p_tensors{&input_tr};
+    DIOPI_CALL(autoCastTensorType(ctx, p_tensors, supported_dtypes->second));
+
     if (output_tr.dtype() != input_tr.dtype()) {
-        auto output_tr_t = requiresTensor(ctx, output_tr.shape(), input_tr.dtype());
-        DIOPI_CALL(reduce_internal(ctx, input_tr, output_tr_t, index_tr, reduce_dim, reduce_op));
-        DIOPI_CALL(dataTypeCast(ctx, output_tr, output_tr_t));
+        auto output_tmp_tr = requiresTensor(ctx, output_tr.shape(), input_tr.dtype());
+        DIOPI_CALL(reduce_internal(ctx, input_tr, output_tmp_tr, index_tr, reduce_dim, reduce_op));
+        DIOPI_CALL(dataTypeCast(ctx, output_tr, output_tmp_tr));
     } else {
         DIOPI_CALL(reduce_internal(ctx, input_tr, output_tr, index_tr, reduce_dim, reduce_op));
     }
@@ -157,15 +146,14 @@ diopiError_t reduce_impl(diopiContextHandle_t ctx, DiopiTensor& output_tr, Diopi
 diopiError_t reduce_dim_impl(diopiContextHandle_t ctx, DiopiTensor& output_tr, DiopiTensor& index_tr, DiopiTensor& input_tr, const std::vector<int64_t> dim_vec,
                              const bool keepdim, cnnlReduceOp_t reduce_op) {
     std::vector<int64_t> reduce_dim = getRealDims(dim_vec, input_tr.dim());
-    auto reduce_dtype = find_supported_type(reduce_op, input_tr.dtype());
+    auto supported_dtypes = supported_type_table.find(reduce_op);
+    std::vector<DiopiTensor*> p_tensors{&input_tr};
+    DIOPI_CALL(autoCastTensorType(ctx, p_tensors, supported_dtypes->second));
 
-    if (input_tr.dtype() != reduce_dtype) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, reduce_dtype));
-    }
     if (output_tr.dtype() != input_tr.dtype()) {
-        auto output_tr_t = requiresTensor(ctx, output_tr.shape(), input_tr.dtype());
-        DIOPI_CALL(reduce_internal(ctx, input_tr, output_tr_t, index_tr, reduce_dim, reduce_op));
-        DIOPI_CALL(dataTypeCast(ctx, output_tr, output_tr_t));
+        auto output_tmp_tr = requiresTensor(ctx, output_tr.shape(), input_tr.dtype());
+        DIOPI_CALL(reduce_internal(ctx, input_tr, output_tmp_tr, index_tr, reduce_dim, reduce_op));
+        DIOPI_CALL(dataTypeCast(ctx, output_tr, output_tmp_tr));
     } else {
         DIOPI_CALL(reduce_internal(ctx, input_tr, output_tr, index_tr, reduce_dim, reduce_op));
     }
@@ -179,15 +167,7 @@ diopiError_t diopiSum(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiCo
     DiopiTensor output_tr(out);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    diopiDtype_t dtype = output_tr.dtype();
-
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
-
-    DIOPI_CHECK(dtype != diopi_dtype_int64, "Sum: dtype == int64 is not supported in camb now");
-
-    if (input_tr.dtype() != dtype) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, dtype));
-    }
 
     reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_ADD);
 
@@ -199,13 +179,7 @@ diopiError_t diopiMean(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     DiopiTensor output_tr(out);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    diopiDtype_t dtype = output_tr.dtype();
-
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
-
-    if (input_tr.dtype() != dtype) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, dtype));
-    }
 
     reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, CNNL_REDUCE_AVG);
     return diopiSuccess;
@@ -216,12 +190,6 @@ diopiError_t diopiProd(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     DiopiTensor output_tr(out);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
 
-    diopiDtype_t type = output_tr.dtype();
-
-    if (input_tr.dtype() != type) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, type));
-    }
-
     reduce_dim_impl(ctx, output_tr, index_tr, input_tr, {*dim}, false, CNNL_REDUCE_MUL);
     return diopiSuccess;
 }
@@ -231,11 +199,11 @@ diopiError_t diopiMin(diopiContextHandle_t ctx, diopiTensorHandle_t min, diopiTe
     DiopiTensor output_tr(min);
     DiopiTensor index_tr(min_indices);
     // Note: camb index out is int32 dtype
-    auto index_tr_t = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
+    auto index_tmp_tr = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
 
-    reduce_dim_impl(ctx, output_tr, index_tr_t, input_tr, {dim}, false, CNNL_REDUCE_MIN);
+    reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MIN);
 
-    DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tr_t));
+    DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tmp_tr));
     return diopiSuccess;
 }
 
@@ -253,11 +221,11 @@ diopiError_t diopiMax(diopiContextHandle_t ctx, diopiTensorHandle_t max, diopiTe
     DiopiTensor input_tr(input);
     DiopiTensor output_tr(max);
     DiopiTensor index_tr(max_indices);
-    auto index_tr_t = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
+    auto index_tmp_tr = requiresTensor(ctx, index_tr.shape(), diopi_dtype_int32);
 
-    reduce_dim_impl(ctx, output_tr, index_tr_t, input_tr, {dim}, false, CNNL_REDUCE_MAX);
+    reduce_dim_impl(ctx, output_tr, index_tmp_tr, input_tr, {dim}, false, CNNL_REDUCE_MAX);
 
-    DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tr_t));
+    DIOPI_CALL(dataTypeCast(ctx, index_tr, index_tmp_tr));
     return diopiSuccess;
 }
 
@@ -279,12 +247,6 @@ diopiError_t diopiNorm(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiC
     DiopiTensor input_tr(input);
     DiopiTensor output_tr(out);
     auto index_tr = requiresTensor(ctx, {1}, diopi_dtype_int32);
-
-    diopiDtype_t dtype = output_tr.dtype();
-
-    if (input_tr.dtype() != dtype) {
-        DIOPI_CALL(dataTypeCast(ctx, input_tr, dtype));
-    }
 
     std::vector<int64_t> dim_vec(dim.data, dim.data + dim.len);
     reduce_dim_impl(ctx, output_tr, index_tr, input_tr, dim_vec, false, norm == 1.0 ? CNNL_REDUCE_NORM1 : CNNL_REDUCE_NORM2);
