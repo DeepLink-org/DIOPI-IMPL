@@ -197,9 +197,9 @@ diopiError_t cnnl_transpose(diopiContextHandle_t& ctx, cnnlHandle_t& handle, Dio
 
 struct HashCnnlCastDType {
     size_t operator()(const std::vector<diopiDtype_t>& vec) const {
-        size_t ret = vec.size();
+        size_t ret = 0;
         for (auto it : vec) {
-            ret ^= static_cast<size_t>(it) + 0x9e3779b9 + (ret << 6) + (ret >> 2);
+            ret = (ret ^ static_cast<size_t>(it)) + 0x9e3779b9 + (ret << 6) + (ret >> 2);
         }
         return ret;
     }

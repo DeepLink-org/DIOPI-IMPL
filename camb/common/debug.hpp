@@ -3,6 +3,8 @@
  * @author DeepLink
  * @copyright  (c) 2023, DeepLink.
  */
+#ifndef IMPL_CAMB_COMMON_DEBUG_HPP_
+#define IMPL_CAMB_COMMON_DEBUG_HPP_
 
 #include <cxxabi.h>
 #include <execinfo.h>
@@ -27,7 +29,7 @@ void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, int64_t max
     cnrtMemcpyAsync(ptr, data, bytes, getStream(ctx), cnrtMemcpyDevToHost);
     syncStreamInCtx(ctx);
     for (int i = 0; i < len && i < max_len; ++i) {
-        std::cout << ((T*)ptr)[i] << " ";
+        std::cout << reinterpret_cast<T*>(ptr)[i] << " ";
     }
     std::cout << std::endl;
 }
@@ -60,3 +62,5 @@ static void print_backtrace() {
 
 }  // namespace camb
 }  // namespace impl
+
+#endif  // IMPL_CAMB_COMMON_DEBUG_HPP_
