@@ -19,8 +19,7 @@ namespace camb {
 // print the data on dev
 // T is the dtype such as  float, int64_t, double.
 template <typename T>
-void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, T) {
-    int64_t max_len = 10;
+void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, int64_t max_len, T) {
     int bytes = sizeof(T) * len;
     void* ptr = malloc(bytes);
     std::cout << "data:" << data << std::endl;
@@ -32,12 +31,12 @@ void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, T) {
     std::cout << std::endl;
 }
 
-void print_backtrace() {
+static void print_backtrace() {
     const int MAX_STACK_FRAMES = 64;
     void* stack_traces[MAX_STACK_FRAMES];
     int stack_frames = backtrace(stack_traces, MAX_STACK_FRAMES);
 
-    char** stack_strings = backtrace_symbols(stack_traces, stack_frames);
+    char** stack_strings = backtrace_symbols(stack_traces, stack_frames);  // do not forget to free stack_strings
     for (int i = 0; i < stack_frames; i++) {
         printf("%s\n", stack_strings[i]);
 
