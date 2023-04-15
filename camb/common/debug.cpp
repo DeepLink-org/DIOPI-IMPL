@@ -10,8 +10,27 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <iostream>
+
+#include "../diopi_helper.hpp"
 namespace impl {
 namespace camb {
+
+// print the data on dev
+// T is the dtype such as  float, int64_t, double.
+template <typename T>
+void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, T) {
+    int64_t max_len = 10;
+    int bytes = sizeof(T) * len;
+    void* ptr = malloc(bytes);
+    std::cout << "data:" << data << std::endl;
+    cnrtMemcpyAsync(ptr, data, bytes, getStream(ctx), cnrtMemcpyDevToHost);
+    syncStreamInCtx(ctx);
+    for (int i = 0; i < len && i < max_len; ++i) {
+        std::cout << ((T*)ptr)[i] << " ";
+    }
+    std::cout << std::endl;
+}
 
 void print_backtrace() {
     const int MAX_STACK_FRAMES = 64;
