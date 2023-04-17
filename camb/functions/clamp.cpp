@@ -41,8 +41,8 @@ diopiError_t clampCommon(diopiContextHandle_t ctx, diopiConstTensorHandle_t inpu
 
     void* min_ptr = nullptr;
     void* max_ptr = nullptr;
-    getClampBoundPtr(ctx, min, input_tensor.dtype(), &min_ptr);
-    getClampBoundPtr(ctx, max, input_tensor.dtype(), &max_ptr);
+    DIOPI_CALL(getClampBoundPtr(ctx, min, input_tensor.dtype(), &min_ptr));
+    DIOPI_CALL(getClampBoundPtr(ctx, max, input_tensor.dtype(), &max_ptr));
 
     DIOPI_CALLCNNL(
         cnnlClip_v2(handle, CNNL_POINTER_MODE_DEVICE, inputDesc.get(), input_tensor.data(), min_ptr, max_ptr, output32Desc.get(), output32_tensor.data()));
