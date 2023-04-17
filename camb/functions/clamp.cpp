@@ -47,7 +47,12 @@ diopiError_t clampCommon(diopiContextHandle_t ctx, diopiConstTensorHandle_t inpu
     DIOPI_CALLCNNL(
         cnnlClip_v2(handle, CNNL_POINTER_MODE_DEVICE, inputDesc.get(), input_tensor.data(), min_ptr, max_ptr, output32Desc.get(), output32_tensor.data()));
     if (output_tensor.dtype() != output32_tensor.dtype()) {
-        DIOPI_CALL(dataTypeCast(ctx, output_tensor, output32_tensor));
+        if (output_tensor.dtype() != diopi_dtype_uint8) {
+            DIOPI_CALL(dataTypeCast(ctx, output_tensor, output32_tensor));
+        } else {
+            DIOPI_CALL(dataTypeCast(ctx, output32_tensor, diopi_dtype_float32));
+            DIOPI_CALL(dataTypeCast(ctx, output_tensor, output32_tensor));
+        }
     }
     return diopiSuccess;
 }
