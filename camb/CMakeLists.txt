@@ -23,14 +23,14 @@ else()
     message(FATAL_ERROR "No Cambricon Neuware toolkit found.")
 endif()
 
-file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions/*.cpp common/*.cpp)
+file(GLOB_RECURSE IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions/*.cpp functions/*.mlu common/*.cpp)
 list(APPEND IMPL_SRC cnnl_helper.cpp)
 
 if (RUNTIME)
     list(APPEND IMPL_SRC conform_test.cpp)
 endif()
 
-add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
+bang_add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
 
 # third_party include
 set(THIRD_PARTY_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/half/include)
