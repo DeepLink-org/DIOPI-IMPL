@@ -9,7 +9,7 @@ namespace impl {
 namespace camb {
 
 extern "C" {
-std::vector<int> getPerm(DiopiTensor tensor, int64_t dim0, int64_t dim1) {
+static std::vector<int> getPerm(DiopiTensor tensor, int64_t dim0, int64_t dim1) {
     int input_size = tensor.shape().size();
     if (dim0 < 0) {
         dim0 = dim0 + input_size;
@@ -25,7 +25,7 @@ std::vector<int> getPerm(DiopiTensor tensor, int64_t dim0, int64_t dim1) {
     return perms;
 }
 
-std::vector<int64_t> inferSize(std::vector<int64_t> batch_tensor1, std::vector<int64_t> batch_tensor2) {
+static std::vector<int64_t> inferSize(std::vector<int64_t> batch_tensor1, std::vector<int64_t> batch_tensor2) {
     if (batch_tensor1.size() < batch_tensor2.size()) {
         batch_tensor1.insert(batch_tensor1.begin(), batch_tensor2.size() - batch_tensor1.size(), 1);
     } else if (batch_tensor1.size() > batch_tensor2.size()) {
@@ -42,7 +42,7 @@ std::vector<int64_t> inferSize(std::vector<int64_t> batch_tensor1, std::vector<i
     return res;
 }
 
-int64_t multiplyIntegers(std::vector<int64_t> tensor) {
+static int64_t multiplyIntegers(std::vector<int64_t> tensor) {
     int64_t out = 1;
     for (int i = 0; i < tensor.size(); i++) {
         out = out * tensor[i];
@@ -51,7 +51,7 @@ int64_t multiplyIntegers(std::vector<int64_t> tensor) {
     return out;
 }
 
-diopiError_t vectorMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor vector1_tensor, DiopiTensor vector2_tensor) {
+static diopiError_t vectorMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor vector1_tensor, DiopiTensor vector2_tensor) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     if (vector1_tensor.dtype() != diopi_dtype_float32 && vector1_tensor.dtype() != diopi_dtype_float16) {
@@ -87,7 +87,7 @@ diopiError_t vectorMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, D
     return diopiSuccess;
 }
 
-diopiError_t matMulMat(diopiContextHandle_t ctx, DiopiTensor out, DiopiTensor input, DiopiTensor other) {
+static diopiError_t matMulMat(diopiContextHandle_t ctx, DiopiTensor out, DiopiTensor input, DiopiTensor other) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     if (input.dtype() == diopi_dtype_float64) {
@@ -160,7 +160,7 @@ diopiError_t matMulMat(diopiContextHandle_t ctx, DiopiTensor out, DiopiTensor in
     return diopiSuccess;
 }
 
-diopiError_t matMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor vector_tensor) {
+static diopiError_t matMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor vector_tensor) {
     if (input_tensor.shape()[1] != vector_tensor.shape()[0]) {
         vector_tensor.reshape({1, vector_tensor.shape()[0]});
         out_tensor.reshape({vector_tensor.shape()[0], 1});
@@ -173,7 +173,7 @@ diopiError_t matMulVector(diopiContextHandle_t ctx, DiopiTensor out_tensor, Diop
     return diopiSuccess;
 }
 
-diopiError_t transpose(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input, int64_t dim0, int64_t dim1) {
+static diopiError_t transpose(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input, int64_t dim0, int64_t dim1) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     diopiTensorHandle_t out = (diopiTensorHandle_t)out_tensor;
 
@@ -196,7 +196,7 @@ diopiError_t transpose(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTe
     return diopiSuccess;
 }
 
-diopiError_t batchMatmul(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor other_tensor) {
+static diopiError_t batchMatmul(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor other_tensor) {
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
 
     if (input_tensor.dtype() == diopi_dtype_float64) {
@@ -261,7 +261,7 @@ diopiError_t batchMatmul(diopiContextHandle_t ctx, DiopiTensor out_tensor, Diopi
     return diopiSuccess;
 }
 
-diopiError_t tensorMatmulTensor(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor other_tensor) {
+static diopiError_t tensorMatmulTensor(diopiContextHandle_t ctx, DiopiTensor out_tensor, DiopiTensor input_tensor, DiopiTensor other_tensor) {
     if (input_tensor.dim() == 1 && other_tensor.dim() == 1) {
         DIOPI_CALL(vectorMulVector(ctx, out_tensor, input_tensor, other_tensor));
         return diopiSuccess;
