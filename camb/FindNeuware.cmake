@@ -17,6 +17,7 @@ find_program(NEUWARE_CNCC_EXECUTABLE
           /usr/local/neuware/bin
 )
 
+
 if(NOT NEUWARE_ROOT_DIR)
     message(FATAL_ERROR "Cannot find NEUWARE SDK for cambricon, set ENV 'NEUWARE_ROOT' correctly")
 endif()
@@ -24,10 +25,10 @@ endif()
 set(CMAKE_MODULE_PATH ${NEUWARE_ROOT_DIR}/cmake/modules)
 
 find_package(BANG)
-if(NOT BANG_FOUND)
-  message(FATAL_ERROR "Have not found BANG.")
+if(BANG_FOUND)
+    message(STATUS "BANG have been found.")
 else()
-  message(STATUS "BANG have been found.")
+    message(FATAL_ERROR "Have not found BANG.")
 endif()
 
 set(TARGET_CPU_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
