@@ -1,8 +1,8 @@
-#include "../common/cnnl_scalar.hpp"
-#include "../common/common.hpp"
-#include "../common/float16.hpp"
-#include "../diopi_helper.hpp"
 #include "adam.hpp"
+
+#include <cmath>
+
+#include "../common/common.hpp"
 
 namespace impl {
 namespace camb {
@@ -32,9 +32,9 @@ extern "C" diopiError_t diopiAdam(diopiContextHandle_t ctx, diopiTensorHandle_t 
     beta2_correction_recip = 1 / (1 - std::pow(beta2, step));
     float epsilon_correction = eps / std::sqrt(beta2_correction_recip);
     float learning_rate_correction = lr * beta1_correction_recip / std::sqrt(beta2_correction_recip);
-    
+
     int adamw_mode = 0;
-    float decay_correction = 1 - lr * weight_decay ; 
+    float decay_correction = 1 - lr * weight_decay;
     cnrtDim3_t k_dim;
     int cluster_count = 0;
     int core_per_cluster = 0;
@@ -45,33 +45,31 @@ extern "C" diopiError_t diopiAdam(diopiContextHandle_t ctx, diopiTensorHandle_t 
     k_dim.z = 1;
     cnrtFunctionType_t k_type = CNRT_FUNC_TYPE_UNION1;
     cnrtDataType_t cnrt_type;
-    if(input_casted.dtype() == diopi_dtype_float32){
+    if (input_casted.dtype() == diopi_dtype_float32) {
         cnrt_type = cnrtFloat32;
-    }else{
+    } else {
         cnrt_type = cnrtFloat16;
     }
-    
-    bang_fused_adam_internal(
-        grad_casted.data(),
-        exp_avg_casted.data(),
-        exp_avg_sq_casted.data(),
-        max_exp_avg_sq_casted.data(),
-        input_casted.data(),
-        input_casted.numel(),
-        1,
-        beta1,
-        beta2,
-        epsilon_correction,
-        learning_rate_correction,
-        adamw_mode,
-        weight_decay,
-        decay_correction,
-        k_dim,
-        k_type,
-        queue,
-        cnrt_type,
-        amsgrad
-    );
+
+    bang_fused_adam_internal(grad_casted.data(),
+                             exp_avg_casted.data(),
+                             exp_avg_sq_casted.data(),
+                             max_exp_avg_sq_casted.data(),
+                             input_casted.data(),
+                             input_casted.numel(),
+                             1,
+                             beta1,
+                             beta2,
+                             epsilon_correction,
+                             learning_rate_correction,
+                             adamw_mode,
+                             weight_decay,
+                             decay_correction,
+                             k_dim,
+                             k_type,
+                             queue,
+                             cnrt_type,
+                             amsgrad);
     DIOPI_CALL(dataTypeCast(ctx, grad_tensor, grad_casted));
     DIOPI_CALL(dataTypeCast(ctx, input_tensor, input_casted));
     DIOPI_CALL(dataTypeCast(ctx, exp_avg_tensor, exp_avg_casted));
