@@ -77,11 +77,16 @@ __mlu_func__ inline void ComputeInternalStage2(
                                  float learning_rate_correction,
                                  float epsilon_correction,
                                  int adam_mode,
-                                 float decay_correction) {
+                                 float decay_correction,
+                                 bool amsgrad = false) {
   // mt = mt / (1 - beta1 ^ t) && vt = vt / (1 - beta2 ^ t)
   // var = var - learning_rate * mt / (sqrt(vt) + epsilon) 
   // use grad_nram as temp buffer
-  Rsqrt(grad_nram, v_nram, num_align, epsilon_correction);
+  if(amsgrad){
+    Rsqrt(grad_nram, v_nram_max, num_align, epsilon_correction);
+  }else{
+    Rsqrt(grad_nram, v_nram, num_align, epsilon_correction);
+  }
   __bang_mul(grad_nram, m_nram, grad_nram, num_align);
   __bang_mul_scalar(grad_nram, grad_nram, learning_rate_correction, num_align);
   if (adam_mode == 1) {
@@ -140,9 +145,10 @@ __mlu_func__ inline void ComputeStage2(int num_align,
                                        float learning_rate_correction,
                                        float epsilon_correction,
                                        int adam_mode,
-                                       float decay_correction) {
+                                       float decay_correction,
+                                       bool amsgrad) {
   ComputeInternalStage2(num_align, grad_nram, m_nram, v_nram, v_nram_max, variable_nram,
-                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction);
+                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction, amsgrad);
 }
 
 template <>
@@ -155,10 +161,11 @@ __mlu_func__ inline void ComputeStage2(int num_align,
                                        float learning_rate_correction,
                                        float epsilon_correction,
                                        int adam_mode,
-                                       float decay_correction) {
+                                       float decay_correction,
+                                       bool amsgrad) {
   ComputeInternalStage2(num_align, (float*)grad_nram, (float*)m_nram,
                         (float*)v_nram, (float*)v_nram_max, (float*)variable_nram,
-                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction);
+                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction, amsgrad);
   __bang_float2half_rd(m_nram, (float*)m_nram, num_align);
   __bang_float2half_rd(v_nram, (float*)v_nram, num_align);
   __bang_float2half_rd(v_nram_max, (float*)v_nram_max, num_align);
@@ -166,12 +173,12 @@ __mlu_func__ inline void ComputeStage2(int num_align,
 }
 
 template <typename T>
-__mlu_func__ void ApplyAdam(AddressList& grad,
-                            AddressList& m,
-                            AddressList& v,
-                            AddressList& v_max,
-                            AddressList& variable,
-                            SizeList& sizes,
+__mlu_func__ void ApplyAdam(void* grad,
+                            void* m,
+                            void* v,
+                            void* v_max,
+                            void* variable,
+                            size_t& sizes,
                             int tensor_num,
                             float beta1,
                             float beta2,
@@ -199,19 +206,14 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
   int tensor_size, chunck_num, last_chunck_size;
   int repeat_per_task, last_loop_chunck_num;
   int chunck_id; // chunck_id maybe minus
-  // int element_num;
   int count = 0;
-  int last_id        = 0; // tensor ids
-  int current_id     = 0; 
-  int next_id        = 0; 
   int last_offset    = 0; // address offset 
   int current_offset = 0; 
   int next_offset    = 0; 
   int last_num       = 0; // element number
   int current_num    = 0; 
   int next_num       = 0;
-  for (int tensor_id = 0; tensor_id < tensor_num; ++tensor_id) {
-    tensor_size = sizes.sizes[tensor_id];
+    tensor_size = sizes;
 
     chunck_num = ALIGN_UP_DIV(tensor_size, num_per_region);
     last_chunck_size = (tensor_size - 1) % num_per_region + 1;
@@ -224,9 +226,6 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
 
       if (chunck_id > -1 && chunck_id < chunck_num) {
         // get address id and offset
-        last_id = current_id;
-        current_id = next_id;
-        next_id = tensor_id;
         last_offset = current_offset;
         current_offset = next_offset;
         next_offset = chunck_id * num_per_region; 
@@ -248,25 +247,30 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
                         beta1_correction_v2, beta2, beta1_minus, beta2_minus, adam_mode, decay, amsgrad);
 
           // Save
-          __memcpy_async((T*)m.addresses[last_id] + last_offset,
+          __memcpy_async((T*)m + last_offset,
                          m_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T), last_num * sizeof(T), NRAM2GDRAM);
-          __memcpy_async((T*)v.addresses[last_id] + last_offset,
+          __memcpy_async((T*)v + last_offset,
                          v_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T), last_num * sizeof(T), NRAM2GDRAM);
-          __memcpy_async((T*)variable.addresses[last_id] + last_offset,
+          __memcpy_async((T*)v + last_offset,
+                         v_nram_max + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T), last_num * sizeof(T), NRAM2GDRAM);
+          __memcpy_async((T*)variable + last_offset,
                         variable_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T), last_num * sizeof(T), NRAM2GDRAM);
 
           // Load
           __memcpy_async(grad_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)grad.addresses[next_id] + next_offset,
+                         (T*)grad + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(m_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)m.addresses[next_id] + next_offset,
+                         (T*)m + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(v_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)v.addresses[next_id] + next_offset,
+                         (T*)v + next_offset,
+                         next_num * sizeof(T), GDRAM2NRAM);
+          __memcpy_async(v_nram_max + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
+                         (T*)v_max + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(variable_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)variable.addresses[next_id] + next_offset,
+                         (T*)variable + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
 
           ComputeStage2(num_align,
@@ -275,7 +279,7 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
                         v_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                         v_nram_max + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                         variable_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
-                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction);
+                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction, amsgrad);
         } else if (current_num > 0) {
           ComputeStage1(num_align,
                         grad_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
@@ -287,16 +291,19 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
 
           // Load
           __memcpy_async(grad_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)grad.addresses[next_id] + next_offset,
+                         (T*)grad + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(m_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)m.addresses[next_id] + next_offset,
+                         (T*)m + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(v_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)v.addresses[next_id] + next_offset,
+                         (T*)v + next_offset,
+                         next_num * sizeof(T), GDRAM2NRAM);
+          __memcpy_async(v_nram_max + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
+                         (T*)v_max + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(variable_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)variable.addresses[next_id] + next_offset,
+                         (T*)variable + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
 
           ComputeStage2(num_align,
@@ -305,20 +312,23 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
                         v_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                         v_nram_max + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                         variable_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
-                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction);
+                        learning_rate_correction, epsilon_correction, adam_mode, decay_correction, amsgrad);
         } else {
           // Load
           __memcpy_async(grad_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)grad.addresses[next_id] + next_offset,
+                         (T*)grad + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(m_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)m.addresses[next_id] + next_offset,
+                         (T*)m + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(v_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)v.addresses[next_id] + next_offset,
+                         (T*)v + next_offset,
+                         next_num * sizeof(T), GDRAM2NRAM);
+          __memcpy_async(v_nram_max + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
+                         (T*)v_max + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
           __memcpy_async(variable_nram + ((count + 1 ) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T) + load_offset,
-                         (T*)variable.addresses[next_id] + next_offset,
+                         (T*)variable + next_offset,
                          next_num * sizeof(T), GDRAM2NRAM);
         }
         
@@ -327,17 +337,20 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
       }
     }
     remains_chunck_num = (remains_chunck_num + last_loop_chunck_num) % taskDim;
-  }
+ 
 
   if (current_num > 0) {
     // save
-    __memcpy_async((T*)m.addresses[current_id] + current_offset,
+    __memcpy_async((T*)m + current_offset,
                    m_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    current_num * sizeof(T), NRAM2GDRAM);
-    __memcpy_async((T*)v.addresses[current_id] + current_offset,
+    __memcpy_async((T*)v + current_offset,
                    v_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    current_num * sizeof(T), NRAM2GDRAM);
-    __memcpy_async((T*)variable.addresses[current_id] + current_offset,
+    __memcpy_async((T*)v_max + current_offset,
+                   v_nram_max + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
+                   current_num * sizeof(T), NRAM2GDRAM);
+    __memcpy_async((T*)variable + current_offset,
                    variable_nram + ((count + 1) & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    current_num * sizeof(T), NRAM2GDRAM);
   } 
@@ -357,30 +370,33 @@ __mlu_func__ void ApplyAdam(AddressList& grad,
                   v_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                   v_nram_max + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                   variable_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
-                  learning_rate_correction, epsilon_correction, adam_mode, decay_correction);
+                  learning_rate_correction, epsilon_correction, adam_mode, decay_correction, amsgrad);
     __asm__ volatile("sync;");
   }
 
   if (next_num > 0) {
     // save
-    __memcpy_async((T*)m.addresses[next_id] + next_offset,
+    __memcpy_async((T*)m + next_offset,
                    m_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    next_num * sizeof(T), NRAM2GDRAM);
-    __memcpy_async((T*)v.addresses[next_id] + next_offset,
+    __memcpy_async((T*)v + next_offset,
                    v_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    next_num * sizeof(T), NRAM2GDRAM);
-    __memcpy_async((T*)variable.addresses[next_id] + next_offset,
+    __memcpy_async((T*)v_max + next_offset,
+                   v_nram_max + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
+                   next_num * sizeof(T), NRAM2GDRAM);
+    __memcpy_async((T*)variable + next_offset,
                    variable_nram + (count & 0x1) * SIZE_PER_REGION_ADAM / sizeof(T),
                    next_num * sizeof(T), NRAM2GDRAM);
   } 
 } 
 
-__mlu_global__ void MLUMultiTensorAdam(AddressList grad,
-                                       AddressList m,
-                                       AddressList v,
-                                       AddressList v_max,
-                                       AddressList variable,
-                                       SizeList sizes,
+__mlu_global__ void MLUMultiTensorAdam(void* grad,
+                                       void* m,
+                                       void* v,
+                                       void* v_max,
+                                       void* variable,
+                                       size_t sizes,
                                        int tensor_num,
                                        float beta1,
                                        float beta2,
@@ -408,12 +424,12 @@ __mlu_global__ void MLUMultiTensorAdam(AddressList grad,
 }
 
 void bang_fused_adam_internal(
-    AddressList grad,
-    AddressList m,
-    AddressList v,
-    AddressList v_max,
-    AddressList variable,
-    SizeList sizes,
+    void* grad,
+    void* m,
+    void* v,
+    void* v_max,
+    void* variable,
+    size_t sizes,
     int tensor_num,
     float beta1,
     float beta2,
