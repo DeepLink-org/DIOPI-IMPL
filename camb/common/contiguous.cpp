@@ -63,6 +63,7 @@ diopiError_t contiguous_(diopiContextHandle_t& ctx, DiopiTensor& src, MemoryForm
 
     DiopiTensor dest = requiresTensor(ctx, src.shape(), src.dtype(), memory_format);
     DIOPI_CALL(transpose(ctx, src, dest, layout_in, layout_out, order));
+    // DIOPI_CALL(diopiCopyInp(ctx, src.tensorHandle(), dest.tensorHandle()));
     src = dest;
     return diopiSuccess;
 }
