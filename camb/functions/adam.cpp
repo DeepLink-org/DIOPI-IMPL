@@ -1,6 +1,8 @@
-#include <cmath>
-
 #include "adam.hpp"
+
+#include <cmath>
+#include <vector>
+
 #include "../common/common.hpp"
 
 namespace impl {
