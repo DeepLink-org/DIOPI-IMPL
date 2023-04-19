@@ -28,7 +28,7 @@ extern "C" diopiError_t diopiConvTranspose2d(diopiContextHandle_t ctx, diopiTens
     std::vector<int> padding_vec{padding.data, padding.data + padding.len};
     std::vector<int> dilation_vec{dilation.data, dilation.data + dilation.len};
 
-    int padding_[4] = {padding_vec[0], padding_vec[1], padding_vec[0], padding_vec[1]};
+    int padding_[4] = {padding_vec[0], padding_vec[0], padding_vec[1], padding_vec[1]};
     int stride_[2] = {stride_vec[0], stride_vec[1]};
     int dilation_[2] = {dilation_vec[0], dilation_vec[1]};
 
