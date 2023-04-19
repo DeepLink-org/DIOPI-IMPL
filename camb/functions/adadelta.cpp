@@ -1,5 +1,5 @@
-#include "../common/common.hpp"
 #include "../common/cnnl_scalar.hpp"
+#include "../common/common.hpp"
 #include "../common/float16.hpp"
 #include "../diopi_helper.hpp"
 
@@ -19,7 +19,7 @@ extern "C" diopiError_t diopiAdadelta(diopiContextHandle_t ctx, diopiTensorHandl
     DiopiTensor square_avg_casted = square_avg_tensor;
     DiopiTensor acc_delta_casted = acc_delta_tensor;
 
-    std::vector<DiopiTensor*> tensors{&input_casted, &grad_casted, &square_avg_casted, &acc_delta_casted};
+    std::vector<DiopiTensor *> tensors{&input_casted, &grad_casted, &square_avg_casted, &acc_delta_casted};
     DIOPI_CALL(autoCastTensorType(ctx, tensors, {diopi_dtype_float16, diopi_dtype_float32}));
 
     // a = a * scale_a + b * scale_b;
@@ -42,8 +42,7 @@ extern "C" diopiError_t diopiAdadelta(diopiContextHandle_t ctx, diopiTensorHandl
         return diopiSuccess;
     };
 
-
-    if(weight_decay != 0){
+    if (weight_decay != 0) {
         DIOPI_CALL(add_mul_func(grad_casted, 1.0, input_casted, weight_decay));
     }
 

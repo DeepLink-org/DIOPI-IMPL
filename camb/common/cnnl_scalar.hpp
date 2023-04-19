@@ -1,3 +1,6 @@
+#ifndef IMPL_CAMB_COMMON_CNNL_SCALAR_HPP_
+#define IMPL_CAMB_COMMON_CNNL_SCALAR_HPP_
+
 #include "common.hpp"
 
 namespace impl {
@@ -5,9 +8,9 @@ namespace camb {
 
 class CnnlScalar {
 public:
-    CnnlScalar() { data_mlu_ = nullptr; };
+    CnnlScalar() { data_mlu_ = nullptr; }
     template <typename T>
-    CnnlScalar(T data) {
+    explicit CnnlScalar(T data) {
         DIOPI_CHECK_ABORT(set(data) == diopiSuccess, "%s", "failed to set data");
     }
     template <typename T>
@@ -36,3 +39,5 @@ private:
 
 }  // namespace camb
 }  // namespace impl
+
+#endif  // IMPL_CAMB_COMMON_CNNL_SCALAR_HPP_
