@@ -110,6 +110,6 @@ DIOPI_API diopiError_t diopiDivInpScalar(diopiContextHandle_t ctx,
   return diopiSuccess;
 }
 
-} // extern "C"
-} // namespace camb
-} // namespace impl
+}  // extern "C"
+}  // namespace camb
+}  // namespace impl
