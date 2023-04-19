@@ -93,7 +93,7 @@ extern "C" diopiError_t diopiBmm(diopiContextHandle_t ctx, diopiTensorHandle_t o
     DiopiTensor input_tensor = DiopiTensor(input);
     DiopiTensor mat2_tensor = DiopiTensor(mat2);
     DiopiTensor output_tensor = DiopiTensor(out);
-    
+
     DiopiTensor input_casted = input_tensor;
     DiopiTensor mat2_casted = mat2_tensor;
     DiopiTensor output_casted = output_tensor;
