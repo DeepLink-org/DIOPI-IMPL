@@ -77,7 +77,7 @@ extern "C" diopiError_t diopiConvolution2d(diopiContextHandle_t ctx, diopiTensor
 
     CnnlResourceGuard<cnnlConvolutionDescriptor_t, cnnlCreateConvolutionDescriptor, cnnlDestroyConvolutionDescriptor> conv_desc;
 
-    int padding_[4] = {padding_vec[0], padding_vec[1], padding_vec[0], padding_vec[1]};
+    int padding_[4] = {padding_vec[0], padding_vec[0], padding_vec[1], padding_vec[1]};
     int stride_[2] = {stride_vec[0], stride_vec[1]};
     int dilation_[2] = {dilation_vec[0], dilation_vec[1]};
 
