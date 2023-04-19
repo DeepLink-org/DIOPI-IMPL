@@ -1,13 +1,15 @@
-#include "adam.hpp"
-
 #include <cmath>
 
 #include "../common/common.hpp"
 
 namespace impl {
 namespace camb {
-namespace {
 
+extern "C" void bang_fused_adam_internal(void* grad, void* m, void* v, void* v_max, void* variable, size_t sizes, int tensor_num, float beta1, float beta2,
+                                         float epsilon_correction, float learning_rate_correction, int adam_mode, float decay, float decay_correction,
+                                         cnrtDim3_t k_dim, cnrtFunctionType_t k_type, cnrtQueue_t queue, cnrtDataType_t cnrt_type, bool amsgrad);
+
+namespace {
 diopiError_t cnnl_adam(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiTensorHandle_t grad, diopiTensorHandle_t exp_avg,
                        diopiTensorHandle_t exp_avg_sq, diopiTensorHandle_t max_exp_avg_sq, float lr, float beta1, float beta2, float eps, float weight_decay,
                        int64_t step, bool amsgrad, int adam_mode = 0) {
@@ -24,7 +26,7 @@ diopiError_t cnnl_adam(diopiContextHandle_t ctx, diopiTensorHandle_t input, diop
     DiopiTensor exp_avg_sq_casted = exp_avg_sq_tensor;
     DiopiTensor max_exp_avg_sq_casted = max_exp_avg_sq_tensor;
 
-    std::vector<DiopiTensor *> tensors{&input_casted, &grad_casted, &exp_avg_casted, &exp_avg_sq_casted, &max_exp_avg_sq_casted};
+    std::vector<DiopiTensor*> tensors{&input_casted, &grad_casted, &exp_avg_casted, &exp_avg_sq_casted, &max_exp_avg_sq_casted};
     DIOPI_CALL(autoCastTensorType(ctx, tensors, {diopi_dtype_float16, diopi_dtype_float32}));
 
     float beta1_correction_recip = 1;
