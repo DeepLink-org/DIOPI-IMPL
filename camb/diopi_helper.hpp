@@ -162,25 +162,34 @@ public:
         if (format == MemoryFormat::Contiguous) {
             for (size_t i = dim; i > 0; --i) {
                 strides[i - 1] = stride;
-                if (shape_[i - 1] == 0) continue;
-                if (shape_[i - 1] == -1) stride = -1;
-                if (stride != -1) stride *= shape_[i - 1];
+                if (shape_[i - 1] == 0) {
+                    continue;
+                }
+                if (stride != -1) {
+                    stride *= shape_[i - 1];
+                }
             }
         } else if (format == MemoryFormat::ChannelsLast) {
             DIOPI_CHECK_ABORT(this->shape().size() == 4, "%s", "tensor size should be 4");
             for (auto k : {1, 3, 2, 0}) {
                 strides[k] = stride;
-                if (shape_[k] == 0) continue;
-                if (shape_[k] == -1) stride = -1;
-                if (stride != -1) stride *= shape_[k];
+                if (shape_[k] == 0) {
+                    continue;
+                }
+                if (stride != -1) {
+                    stride *= shape_[k];
+                }
             }
         } else if (format == MemoryFormat::ChannelsLast3d) {
             DIOPI_CHECK_ABORT(this->shape().size() == 5, "%s", "tensor size should be 5");
             for (auto k : {1, 4, 3, 2, 0}) {
                 strides[k] = stride;
-                if (shape_[k] == 0) continue;
-                if (shape_[k] == -1) stride = -1;
-                if (stride != -1) stride *= shape_[k];
+                if (shape_[k] == 0) {
+                    continue;
+                }
+                if (stride != -1) {
+                    stride *= shape_[k];
+                }
             }
         }
         diopiSize_t stride_diopi(strides.data(), static_cast<int64_t>(strides.size()));
@@ -241,6 +250,16 @@ public:
         return p;
     }
 
+    MemoryFormat suggest_memory_format() {
+        if (this->is_contiguous(MemoryFormat::Contiguous)) {
+            return MemoryFormat::Contiguous;
+        } else if (this->is_contiguous(MemoryFormat::ChannelsLast)) {
+            return MemoryFormat::ChannelsLast;
+        } else {
+            return MemoryFormat::ChannelsLast3d;
+        }
+    }
+
     diopiTensorHandle_t tensorHandle() { return tensor_; }
 
     diopiConstTensorHandle_t tensorHandle() const { return tensor_; }
@@ -297,27 +316,36 @@ inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const std::vector<in
     if (memory_format == MemoryFormat::Contiguous) {
         for (size_t i = dim; i > 0; --i) {
             strides[i - 1] = stride;
-            if (size[i - 1] == 0) continue;
-            if (size[i - 1] == -1) stride = -1;
-            if (stride != -1) stride *= size[i - 1];
+            if (size[i - 1] == 0) {
+                continue;
+            }
+            if (stride != -1) {
+                stride *= size[i - 1];
+            }
         }
     } else if (memory_format == MemoryFormat::ChannelsLast) {
         /* NCHW -> NHWC */
         DIOPI_CHECK_ABORT(size.size() == 4, "%s", "tensor size should be 4");
         for (auto k : {1, 3, 2, 0}) {
             strides[k] = stride;
-            if (size[k] == 0) continue;
-            if (size[k] == -1) stride = -1;
-            if (stride != -1) stride *= size[k];
+            if (size[k] == 0) {
+                continue;
+            }
+            if (stride != -1) {
+                stride *= size[k];
+            }
         }
     } else if (memory_format == MemoryFormat::ChannelsLast3d) {
         /* NCDHW -> NDHWC */
         DIOPI_CHECK_ABORT(size.size() == 5, "%s", "tensor size should be 5");
         for (auto k : {1, 4, 3, 2, 0}) {
             strides[k] = stride;
-            if (size[k] == 0) continue;
-            if (size[k] == -1) stride = -1;
-            if (stride != -1) stride *= size[k];
+            if (size[k] == 0) {
+                continue;
+            }
+            if (stride != -1) {
+                stride *= size[k];
+            }
         }
     }
     return requiresTensor(ctx, size, strides, dtype);
