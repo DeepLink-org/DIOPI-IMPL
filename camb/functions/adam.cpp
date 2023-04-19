@@ -1,14 +1,10 @@
 #include <cmath>
 
+#include "adam.hpp"
 #include "../common/common.hpp"
 
 namespace impl {
 namespace camb {
-
-extern "C" void bang_fused_adam_internal(void* grad, void* m, void* v, void* v_max, void* variable, size_t sizes, int tensor_num, float beta1, float beta2,
-                                         float epsilon_correction, float learning_rate_correction, int adam_mode, float decay, float decay_correction,
-                                         cnrtDim3_t k_dim, cnrtFunctionType_t k_type, cnrtQueue_t queue, cnrtDataType_t cnrt_type, bool amsgrad);
-
 namespace {
 diopiError_t cnnl_adam(diopiContextHandle_t ctx, diopiTensorHandle_t input, diopiTensorHandle_t grad, diopiTensorHandle_t exp_avg,
                        diopiTensorHandle_t exp_avg_sq, diopiTensorHandle_t max_exp_avg_sq, float lr, float beta1, float beta2, float eps, float weight_decay,

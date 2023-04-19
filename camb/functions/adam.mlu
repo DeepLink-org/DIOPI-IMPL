@@ -1,5 +1,7 @@
 #include <bang.h>
 
+#include "adam.hpp"
+
 #define ALIGN_UP(x, n) ((((x) + (n) - 1) / (n)) * (n))
 #define ALIGN_UP_DIV(x, n) (((x) + (n) - 1) / (n))
 
@@ -422,7 +424,7 @@ __mlu_global__ void MLUMultiTensorAdam(void* grad,
   }
 }
 
-extern "C" void bang_fused_adam_internal(
+void bang_fused_adam_internal(
     void* grad,
     void* m,
     void* v,
