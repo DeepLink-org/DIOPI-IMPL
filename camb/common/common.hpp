@@ -16,20 +16,27 @@ namespace impl {
 namespace camb {
 
 
-DiopiTensor dataTypeCast(diopiContextHandle_t& ctx, const DiopiTensor& src, diopiDtype_t destDtype);
+diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& src, diopiDtype_t destDtype);
 
-DiopiTensor makeTensorFromScalar(diopiContextHandle_t ctx, const diopiScalar_t* scalar);
+diopiError_t dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src);
 
-void dataTypeCast(diopiContextHandle_t ctx, DiopiTensor& dest, const DiopiTensor& src);
+diopiError_t makeTensorFromScalar(diopiContextHandle_t ctx, const diopiScalar_t* scalar, DiopiTensor& out);
 
-diopiDtype_t choiceDtype(const std::set<diopiDtype_t>& opSupportedDtypes);
-
-void autoCastTensorType(diopiContextHandle_t ctx, const std::vector<DiopiTensor*>& pTensors, const std::set<diopiDtype_t>& opSupportedDtype);
+diopiError_t autoCastTensorType(diopiContextHandle_t ctx, const std::vector<DiopiTensor*>& pTensors, const std::set<diopiDtype_t>& opSupportedDtype);
 
 diopiError_t broadcast(diopiContextHandle_t ctx, DiopiTensor& out, const DiopiTensor& input);
 
-DiopiTensor broadcastHelper(diopiContextHandle_t ctx, DiopiTensor input_tensor, DiopiTensor target_tensor);
+diopiError_t broadcastHelper(diopiContextHandle_t ctx, DiopiTensor input_tensor, DiopiTensor target_tensor, DiopiTensor* out_tensor);
 
+void print_backtrace();
+
+diopiError_t contiguous_(diopiContextHandle_t& ctx, DiopiTensor& src, MemoryFormat memory_format);
+
+diopiError_t contiguous_(diopiContextHandle_t& ctx, DiopiTensor& src, MemoryFormat memory_format, cnnlTensorLayout_t layout_in, cnnlTensorLayout_t layout_out);
+
+template<typename T1 = double, typename T2 = double, typename T3 = double>
+diopiError_t cnnl_op_tensor(diopiContextHandle_t ctx, DiopiTensor input, DiopiTensor other, DiopiTensor out, cnnlOpTensorDesc_t op_type, T1 alpha1 = 1.0,
+                            T2 alpha2 = 1.0, T3 beta = 0.0);
 
 }  // namespace camb
 }  // namespace impl

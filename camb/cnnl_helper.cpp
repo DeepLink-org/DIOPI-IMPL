@@ -54,7 +54,7 @@ diopiError_t CnnlDataType::convertToCnnlType(cnnlDataType_t* cnnlType, diopiDtyp
     }
     return diopiSuccess;
 }
-bool CnnlDataType::isFloat(cnnlDataType_t cnnlDT) {
+bool CnnlDataType::isFloatPoint(cnnlDataType_t cnnlDT) {
     return cnnlDT == CNNL_DTYPE_HALF || cnnlDT == CNNL_DTYPE_FLOAT || cnnlDT == CNNL_DTYPE_DOUBLE || cnnlDT == CNNL_DTYPE_COMPLEX_HALF ||
            cnnlDT == CNNL_DTYPE_COMPLEX_FLOAT;
 }
@@ -64,7 +64,8 @@ bool CnnlDataType::isInteger(cnnlDataType_t cnnlDT) {
 }
 bool CnnlDataType::isBool(cnnlDataType_t cnnlDT) { return cnnlDT == CNNL_DTYPE_BOOL; }
 
-const std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeMapping{
+const std::unordered_map<std::vector<diopiDtype_t>, cnnlCastDataType_t, HashCnnlCastDType> gCnnlCastDataTypeMapping{
+    {{diopi_dtype_bool, diopi_dtype_int32}, CNNL_CAST_BOOL_TO_INT32},
     {{diopi_dtype_bool, diopi_dtype_float16}, CNNL_CAST_BOOL_TO_HALF},
     {{diopi_dtype_bool, diopi_dtype_float32}, CNNL_CAST_BOOL_TO_FLOAT},
 
@@ -108,7 +109,6 @@ const std::map<std::vector<diopiDtype_t>, cnnlCastDataType_t> gCnnlCastDataTypeM
     {{diopi_dtype_float16, diopi_dtype_int32}, CNNL_CAST_HALF_TO_INT32},
     {{diopi_dtype_float16, diopi_dtype_int64}, CNNL_CAST_HALF_TO_INT64},
     {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
-    {{diopi_dtype_float16, diopi_dtype_float32}, CNNL_CAST_HALF_TO_FLOAT},
 
     // CNNL_CAST_FLOAT_TO_HALF_IEEE754 = 219, /*!< Converts float to half for ieee754. */
     {{diopi_dtype_float32, diopi_dtype_bool}, CNNL_CAST_FLOAT_TO_BOOL},
@@ -127,6 +127,9 @@ CnnlHandlePool cnnlHandlePool;
 
 diopiError_t cnnl_transpose(
     diopiContextHandle_t& ctx, cnnlHandle_t& handle, DiopiTensor& in, DiopiTensor& out, cnnlTensorLayout_t layoutIn, cnnlTensorLayout_t layoutOut) {
+    /* DEPRECATED AND WILL BE REMOVED */
+    DIOPI_CHECK(in.dtype() == out.dtype(), "the data type of input and output tensor should be the same.");
+
     std::vector<int> order;
     if (layoutIn == CNNL_LAYOUT_NHWC && layoutOut == CNNL_LAYOUT_HWCN) {
         order = {1, 2, 3, 0};
@@ -149,7 +152,7 @@ diopiError_t cnnl_transpose(
     CnnlTensorDesc outDesc(out, layoutOut);
     CnnlTransposeDescriptor transDesc(order.size(), order.data());
     size_t workspace_size = 0;
-    DIOPI_CHECKCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
+    DIOPI_CALLCNNL(cnnlGetTransposeWorkspaceSize(handle, inDesc.get(), transDesc.get(), &workspace_size));
 
     void* workspace_ptr = workspace_size == 0 ? requiresBuffer(ctx, workspace_size).data() : nullptr;
     DIOPI_CALLCNNL(cnnlTranspose_v2(handle, transDesc.get(), inDesc.get(), in.data(), outDesc.get(), out.data(), workspace_ptr, workspace_size));

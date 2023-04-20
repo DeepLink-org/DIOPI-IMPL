@@ -7,6 +7,8 @@
 #include <diopi/functions.h>
 
 #include "../cnnl_helper.hpp"
+#include "../common/common.hpp"
+
 namespace impl {
 namespace camb {
 
@@ -15,16 +17,25 @@ extern "C" {
 diopiError_t diopiAdaptiveAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input, diopiSize_t output_size) {
     /* Get handle and generate tensors */
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tr = DiopiTensor(input);
-    auto output_tr = DiopiTensor(out);
+    DiopiTensor input_tr(input);
+    DiopiTensor output_tr(out);
 
     /* Some basic check */
     DIOPI_CHECK(input_tr.dim() == 3 || input_tr.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
+    std::vector<DiopiTensor*> p_tensors{&input_tr};
+    std::set<diopiDtype_t> supported_dtypes{diopi_dtype_float16, diopi_dtype_float32};
+    DIOPI_CALL(autoCastTensorType(ctx, p_tensors, supported_dtypes));
+
+    DiopiTensor output_tmp_tr = output_tr;
+    if (input_tr.dtype() != output_tr.dtype()) {
+        output_tmp_tr = requiresTensor(ctx, output_tr.shape(), input_tr.dtype());
+    }
+
     auto memory_format = MemoryFormat::ChannelsLast;
     auto input_channel_last = input_tr.contiguous(ctx, memory_format);
-    cnnl_transpose(ctx, handle, input_tr, input_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
-    auto output_channel_last = output_tr.contiguous(ctx, memory_format);
+    DIOPI_CALL(cnnl_transpose(ctx, handle, input_tr, input_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC));
+    auto output_channel_last = output_tmp_tr.contiguous(ctx, memory_format);
 
     /* generate tensor desc */
     cnnlTensorLayout_t layout = CNNL_LAYOUT_NHWC;
@@ -42,28 +53,40 @@ diopiError_t diopiAdaptiveAvgPool2d(diopiContextHandle_t ctx, diopiTensorHandle_
                                               nullptr));
 
     // NHWC -> NCHW
-    cnnl_transpose(ctx, handle, output_channel_last, output_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW);
+    DIOPI_CALL(cnnl_transpose(ctx, handle, output_channel_last, output_tmp_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW));
+
+    if (output_tmp_tr.dtype() != output_tr.dtype()) {
+        DIOPI_CALL(dataTypeCast(ctx, output_tr, output_tmp_tr));
+    }
 
     return diopiSuccess;
 }
 
-diopiError_t diopiAdaptiveAvgPool2dBackward(diopiContextHandle_t ctx,
-                                            diopiTensorHandle_t grad_input,
-                                            diopiConstTensorHandle_t grad_output,
+diopiError_t diopiAdaptiveAvgPool2dBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_input, diopiConstTensorHandle_t grad_output,
                                             diopiConstTensorHandle_t input) {
     /* Get handle and generate tensors */
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
-    auto input_tr = DiopiTensor(input);
-    auto grad_output_tr = DiopiTensor(grad_output);
-    auto grad_input_tr = DiopiTensor(grad_input);
+    DiopiTensor input_tr(input);
+    DiopiTensor grad_output_tr(grad_output);
+    DiopiTensor grad_input_tr(grad_input);
 
     /* Some basic check */
     DIOPI_CHECK(input_tr.dim() == 3 || input_tr.dim() == 4, "non-empty 3D or 4D (batch mode) tensor expected for input");
 
+    std::vector<DiopiTensor*> p_tensors{&grad_output_tr, &input_tr};
+    std::set<diopiDtype_t> supported_dtypes{diopi_dtype_float16, diopi_dtype_float32};
+    DIOPI_CALL(autoCastTensorType(ctx, p_tensors, supported_dtypes));
+
     auto memory_format = MemoryFormat::ChannelsLast;
     auto grad_output_channel_last = grad_output_tr.contiguous(ctx, memory_format);
-    cnnl_transpose(ctx, handle, grad_output_tr, grad_output_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC);
-    auto grad_input_channel_last = grad_input_tr.contiguous(ctx, memory_format);
+    DIOPI_CALL(cnnl_transpose(ctx, handle, grad_output_tr, grad_output_channel_last, CNNL_LAYOUT_NCHW, CNNL_LAYOUT_NHWC));
+
+    DiopiTensor grad_input_tmp_tr = grad_input_tr;
+    if (grad_input_tr.dtype() != grad_output_tr.dtype()) {
+        grad_input_tmp_tr = requiresTensor(ctx, grad_input_tr.shape(), grad_output_tr.dtype());
+    }
+
+    auto grad_input_channel_last = grad_input_tmp_tr.contiguous(ctx, memory_format);
 
     /* generate tensor desc */
     cnnlTensorLayout_t layout = CNNL_LAYOUT_NHWC;
@@ -81,7 +104,11 @@ diopiError_t diopiAdaptiveAvgPool2dBackward(diopiContextHandle_t ctx,
                                                grad_input_channel_last.data()));
 
     // NHWC -> NCHW
-    cnnl_transpose(ctx, handle, grad_input_channel_last, grad_input_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW);
+    DIOPI_CALL(cnnl_transpose(ctx, handle, grad_input_channel_last, grad_input_tmp_tr, CNNL_LAYOUT_NHWC, CNNL_LAYOUT_NCHW));
+
+    if (grad_input_tmp_tr.dtype() != grad_input_tr.dtype()) {
+        DIOPI_CALL(dataTypeCast(ctx, grad_input_tr, grad_input_tmp_tr));
+    }
 
     return diopiSuccess;
 }

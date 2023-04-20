@@ -20,12 +20,12 @@ namespace impl {
 namespace camb {
 
 extern "C" DIOPI_API diopiError_t diopiFloor(diopiContextHandle_t ctx, diopiTensorHandle_t out, diopiConstTensorHandle_t input) {
-    auto trInput = DiopiTensor(input);
-    auto trOut = DiopiTensor(out);
+    DiopiTensor trInput(input);
+    DiopiTensor trOut(out);
     std::vector<DiopiTensor*> pTensors{&trInput};
     std::set<diopiDtype_t> supportedDtypes{diopi_dtype_float16, diopi_dtype_float32};
 
-    autoCastTensorType(ctx, pTensors, supportedDtypes);
+    DIOPI_CALL(autoCastTensorType(ctx, pTensors, supportedDtypes));
 
     cnnlHandle_t handle = cnnlHandlePool.get(ctx);
     cnnlTensorLayout_t layout = CNNL_LAYOUT_ARRAY;
@@ -45,7 +45,7 @@ extern "C" DIOPI_API diopiError_t diopiFloor(diopiContextHandle_t ctx, diopiTens
 
     DIOPI_CALLCNNL(cnnlFloor(handle, descInput.get(), trInput.data(), descOut.get(), trOutTmp.data()));
     if (trOutTmp.dtype() != trOut.dtype()) {
-        dataTypeCast(ctx, trOut, trOutTmp);
+        DIOPI_CALL(dataTypeCast(ctx, trOut, trOutTmp));
     }
     return diopiSuccess;
 }

@@ -5,6 +5,7 @@
  */
 
 #include "../error.hpp"
+
 #include <diopi/functions.h>
 
 namespace impl {
@@ -23,6 +24,39 @@ const char* camb_get_last_error_string() {
 }
 
 extern "C" DIOPI_RT_API const char* diopiGetLastErrorString() { return camb_get_last_error_string(); }
+
+const char* getDiopiErrorStr(diopiError_t err) {
+    switch (err) {
+        case diopiErrorOccurred:
+            return "diopiErrorOccurred";
+        case diopiNotInited:
+            return "diopiNotInited";
+        case diopiNoRegisteredStreamCreateFunction:
+            return "diopiNoRegisteredStreamCreateFunction";
+        case diopiNoRegisteredStreamDestoryFunction:
+            return "diopiNoRegisteredStreamDestoryFunction";
+        case diopiNoRegisteredStreamSyncFunction:
+            return "diopiNoRegisteredStreamSyncFunction";
+        case diopiNoRegisteredDeviceMemoryMallocFunction:
+            return "diopiNoRegisteredDeviceMemoryMallocFunction";
+        case diopiNoRegisteredDeviceMemoryFreeFunction:
+            return "diopiNoRegisteredDeviceMemoryFreeFunction";
+        case diopiNoRegisteredDevice2DdeviceMemoryCopyFunction:
+            return "diopiNoRegisteredDevice2DdeviceMemoryCopyFunction";
+        case diopiNoRegisteredDevice2HostMemoryCopyFunction:
+            return "diopiNoRegisteredDevice2HostMemoryCopyFunction";
+        case diopiNoRegisteredHost2DeviceMemoryCopyFunction:
+            return "diopiNoRegisteredHost2DeviceMemoryCopyFunction";
+        case diopiNoRegisteredGetLastErrorFunction:
+            return "diopiNoRegisteredGetLastErrorFunction";
+        case diopi5DNotSupported:
+            return "diopi5DNotSupported";
+        case diopiDtypeNotSupported:
+            return "diopiDtypeNotSupported";
+        default:
+            return "diopiUnexpectedError";
+    }
+}
 
 }  // namespace camb
 
