@@ -18,6 +18,8 @@ diopiError_t bitwiseCommon(
 
     DiopiTensor out_tensor(out);
     auto out32_tensor = out_tensor;
+    // Todo: cnnl op might have bug, when dtype of input is not int32, it might occasionally encounter unexpected result.
+    // Todo: so we cast the dtype of input to int32, when it is not int32.
     if (diopi_dtype_int32 != out_tensor.dtype()) {
         DIOPI_CALL(dataTypeCast(ctx, out32_tensor, diopi_dtype_int32));
     }
