@@ -47,13 +47,13 @@ namespace camb {
         }                                                        \
     } while (false);
 
-#define DIOPI_CALL(Expr)                                                                       \
-    do {                                                                                       \
-        diopiError_t ret = Expr;                                                               \
-        if (diopiSuccess != ret) {                                                             \
-            set_last_error_string("%s at %s:%d\n", getDiopiErrorStr(ret), __FILE__, __LINE__); \
-            return ret;                                                                        \
-        }                                                                                      \
+#define DIOPI_CALL(Expr)                                                                                                                                  \
+    do {                                                                                                                                                  \
+        diopiError_t ret = Expr;                                                                                                                          \
+        if (diopiSuccess != ret) {                                                                                                                        \
+            set_last_error_string("%s: %s called by `%s` at %s:%d\n", getDiopiErrorStr(ret), camb_get_last_error_string(), __func__, __FILE__, __LINE__); \
+            return ret;                                                                                                                                   \
+        }                                                                                                                                                 \
     } while (false);
 
 enum class MemoryFormat : size_t { Contiguous = 0, ChannelsLast = 1, ChannelsLast3d = 2, Preserve = 3 };
@@ -139,6 +139,20 @@ public:
         return stride_;
     }
 
+    void print_str(std::string name = "name") {
+        int dim = this->dim();
+        std::cout << "DiopiTensor[" << name << "]: dim " << dim << ", dtype: " << this->dtype() << ", shape: [";
+        for (size_t i = 0; i < dim; i++) {
+            std::cout << this->shape()[i] << ", ";
+        }
+        std::cout << "], stride: [";
+        for (size_t i = 0; i < dim; i++) {
+            std::cout << this->stride()[i] << ", ";
+        }
+        std::cout << "], is_contiguous: " << this->is_contiguous();
+        std::cout << ", is_contiguous(channelsLast): " << this->is_contiguous(MemoryFormat::ChannelsLast);
+        std::cout << ", pointer address: " << this->data() << std::endl;
+    }
     int64_t numel() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         int64_t numel;
@@ -206,25 +220,35 @@ public:
         auto shape = this->shape();
 
         if (format == MemoryFormat::Contiguous) {
-            for (int i = dim - 1; i >= 0; i--) {
-                if (strides[i] != stride) {
-                    return false;
+            for (int64_t i = dim - 1; i >= 0; i--) {
+                const auto& shape_d = shape[i];
+                if (shape_d != 1) {
+                    if (strides[i] != stride) {
+                        return false;
+                    }
                 }
-                stride *= shape[i];
+                stride *= shape_d;
             }
         } else if (format == MemoryFormat::ChannelsLast) {
             if (strides.size() != 4) return false;
-            for (auto i : {1, 3, 2, 0}) {
-                if (strides[i] != stride) {
-                    return false;
+            for (auto& i : {1, 3, 2, 0}) {
+                const auto& shape_d = shape[i];
+                if (shape_d != 1) {
+                    // shape_d != 1 help dealing with shape like [2, 2048, 1, 1]
+                    if (strides[i] != stride) {
+                        return false;
+                    }
                 }
-                stride *= shape[i];
+                stride *= shape_d;
             }
         } else if (format == MemoryFormat::ChannelsLast3d) {
             if (strides.size() != 5) return false;
-            for (auto i : {1, 4, 3, 2, 0}) {
-                if (strides[i] != stride) {
-                    return false;
+            for (auto& i : {1, 4, 3, 2, 0}) {
+                const auto& shape_d = shape[i];
+                if (shape_d != 1) {
+                    if (strides[i] != stride) {
+                        return false;
+                    }
                 }
                 stride *= shape[i];
             }
@@ -251,6 +275,7 @@ public:
     }
 
     MemoryFormat suggest_memory_format() {
+        // TODO(somebody): Performance can be improved by dividing is_contiguous into several funcs
         if (this->is_contiguous(MemoryFormat::Contiguous)) {
             return MemoryFormat::Contiguous;
         } else if (this->is_contiguous(MemoryFormat::ChannelsLast)) {
@@ -263,6 +288,10 @@ public:
     diopiTensorHandle_t tensorHandle() { return tensor_; }
 
     diopiConstTensorHandle_t tensorHandle() const { return tensor_; }
+
+    bool is_same(DiopiTensor t) {
+        return this->tensorHandle() == t.tensorHandle();
+    }
 
 protected:
     diopiTensorHandle_t tensor_ = 0;
@@ -324,9 +353,10 @@ inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const std::vector<in
             }
         }
     } else if (memory_format == MemoryFormat::ChannelsLast) {
-        /* NCHW -> NHWC */
         DIOPI_CHECK_ABORT(size.size() == 4, "%s", "tensor size should be 4");
-        for (auto k : {1, 3, 2, 0}) {
+        // constant array is used here to let
+        // compiler fully unroll the loop to get better performance
+        for (auto& k : {1, 3, 2, 0}) {
             strides[k] = stride;
             if (size[k] == 0) {
                 continue;
@@ -336,9 +366,8 @@ inline DiopiTensor requiresTensor(diopiContextHandle_t ctx, const std::vector<in
             }
         }
     } else if (memory_format == MemoryFormat::ChannelsLast3d) {
-        /* NCDHW -> NDHWC */
         DIOPI_CHECK_ABORT(size.size() == 5, "%s", "tensor size should be 5");
-        for (auto k : {1, 4, 3, 2, 0}) {
+        for (auto& k : {1, 4, 3, 2, 0}) {
             strides[k] = stride;
             if (size[k] == 0) {
                 continue;
