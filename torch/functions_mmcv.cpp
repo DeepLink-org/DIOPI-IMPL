@@ -4,6 +4,7 @@
  * @copyright  (c) 2023, DeepLink.
  */
 
+#include <iostream>
 #include <diopi/functions.h>
 #include <diopi/functions_mmcv.h>
 
@@ -23,6 +24,5 @@ diopiError_t diopiNmsMmcv(diopiContextHandle_t ctx, diopiTensorHandle_t *out,
   auto atOut = mmcv::ops::NMSCUDAKernelLauncher(atDets, atScores, iouThreshold, offset);
   impl::aten::buildDiopiTensor(ctx, atOut, out);
 }
-
 
 }  // extern "C"
