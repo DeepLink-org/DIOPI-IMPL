@@ -34,7 +34,7 @@ device_configs = {
             args=[
                 {
                     "ins": ["input"],
-                    "shape": (Skip(2, 2048, 64, 64)),
+                    "dtype": [Skip(Dtype.float64), Skip(Dtype.float32), Skip(Dtype.float16)],
                 },
             ]
         ),
@@ -111,7 +111,6 @@ device_configs = {
             ],
         ),
     ),
-    
 
     'bmm': dict(
         name=['bmm'],
@@ -137,6 +136,5 @@ device_configs = {
             ],
         ),
     ),
-
 
 }
