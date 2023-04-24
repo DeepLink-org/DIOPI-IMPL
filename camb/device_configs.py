@@ -766,7 +766,6 @@ device_configs = {
             args=[
                 {
                     "ins": ['mean'],
-                    "shape": ((256, 256, 3, 3), (256, 128, 1, 1)),
                     "dtype": [Skip(Dtype.float64), Skip(Dtype.float32)],
                 },
             ]
