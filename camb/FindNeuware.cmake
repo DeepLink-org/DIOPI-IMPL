@@ -22,6 +22,19 @@ if(NOT NEUWARE_ROOT_DIR)
     message(FATAL_ERROR "Cannot find NEUWARE SDK for cambricon, set ENV 'NEUWARE_ROOT' correctly")
 endif()
 
+set(CMAKE_MODULE_PATH ${NEUWARE_ROOT_DIR}/cmake/modules)
+
+find_package(BANG)
+if(BANG_FOUND)
+    message(STATUS "BANG have been found.")
+else()
+    message(FATAL_ERROR "Have not found BANG.")
+endif()
+
+set(TARGET_CPU_ARCH ${CMAKE_HOST_SYSTEM_PROCESSOR})
+set(BANG_CNCC_FLAGS "-fPIC -std=c++11 -pthread -Wall -Werror --target=${TARGET_CPU_ARCH}-linux-gnu")
+set(BANG_CNCC_FLAGS "${BANG_CNCC_FLAGS} --bang-mlu-arch=mtp_372")
+
 # get CNRT version
 file(READ ${NEUWARE_ROOT_DIR}/include/cnrt.h CNRT_FILE_CONTENTS)
 string(REGEX MATCH "define CNRT_MAJOR_VERSION * +([0-9]+)"
@@ -41,7 +54,7 @@ set(NEUWARE_VERSION "${CNRT_MAJOR_VERSION}.${CNRT_MINOR_VERSION}.${CNRT_PATCH_VE
 
 set(CNCC_TARGETS $ENV{CNCC_TARGETS})
 if ((NOT CNCC_TARGETS) OR "x${CNCC_TARGETS}" STREQUAL "x")
-    set(CNCC_TARGETS "MLU290")
+    set(CNCC_TARGETS "MLU370")
 endif()
 
 set(CMAKE_CNCC_FLAGS "-I${NEUWARE_ROOT_DIR}/include" "--std=c++11")
