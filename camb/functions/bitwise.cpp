@@ -18,7 +18,9 @@ diopiError_t bitwiseCommon(
 
     DiopiTensor out_tensor(out);
     auto out32_tensor = out_tensor;
-    if (diopi_dtype_int64 == out_tensor.dtype()) {
+    // Todo: cnnl op might have bug, when dtype of input is not int32, it might occasionally encounter unexpected result.
+    // Todo: so we cast the dtype of input to int32, when it is not int32.
+    if (diopi_dtype_int32 != out_tensor.dtype()) {
         DIOPI_CALL(dataTypeCast(ctx, out32_tensor, diopi_dtype_int32));
     }
     CnnlTensorDesc outDesc(out32_tensor, CNNL_LAYOUT_ARRAY);
@@ -53,7 +55,10 @@ diopiError_t bitwiseCommon(
 
     DIOPI_CALLCNNL(cnnlBitCompute_v2(
         handle, optype, input1Desc.get(), input1_tensor.data(), input2_desc, input2_ptr, outDesc.get(), out32_tensor.data(), workspace, workspace_size));
-    if (out_tensor.dtype() != out32_tensor.dtype()) {
+    if (out_tensor.dtype() != out32_tensor.dtype() && out_tensor.dtype() != diopi_dtype_uint8) {
+        DIOPI_CALL(dataTypeCast(ctx, out_tensor, out32_tensor));
+    } else if (out_tensor.dtype() == diopi_dtype_uint8) {
+        DIOPI_CALL(dataTypeCast(ctx, out32_tensor, diopi_dtype_float32));
         DIOPI_CALL(dataTypeCast(ctx, out_tensor, out32_tensor));
     }
 
