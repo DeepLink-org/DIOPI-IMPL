@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4)
 project(torch_cpp_impl)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR})
+set(REALIMPL diopi_real_impl)
 find_package(Neuware 4.6 REQUIRED)
 
 if (NEUWARE_FOUND)
@@ -28,6 +29,11 @@ endif()
 
 set(IMPL_SRC
     error.cpp
+    warp_func.cpp
+)
+
+set(REAL_IMPL_SRC
+    error.cpp
     functions.cpp
 )
 
@@ -40,12 +46,18 @@ link_directories(${NEUWARE_ROOT_DIR}/lib64)
 link_directories(${TORCH_INSTALL_PREFIX}/lib/)
 
 include_directories(${TORCH_INCLUDE_DIRS})
+add_library(${REALIMPL} SHARED ${REAL_IMPL_SRC})
 add_library(${DEVICEIMPL} SHARED ${IMPL_SRC})
+target_link_libraries(${DEVICEIMPL} -ldl cnrt cnnl cndev)
 set_target_properties(${DEVICEIMPL} PROPERTIES SUFFIX ".so")
+
 if (RUNTIME)
     target_link_libraries(${DEVICEIMPL} ${DIOPIRT})
+    # Change the name of so which has been loaded before by the main program to ensure that two so will be loaded
+    # For parrots on camb, you need change the name of libc10.so and libtorch.so
+    target_link_libraries(${REALIMPL} ${DIOPIRT} ${TORCH_LIBRARIES} ${TORCH_MLU_LIBRARIES})
+else()
+    target_link_libraries(${REALIMPL} ${TORCH_LIBRARIES} ${TORCH_MLU_LIBRARIES})
 endif()
-target_link_libraries(${DEVICEIMPL} ${TORCH_LIBRARIES} ${TORCH_MLU_LIBRARIES})
-
 
 message(STATUS ".so used: ${TORCH_MLU_LIBRARIES}")
