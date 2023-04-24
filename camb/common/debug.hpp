@@ -34,6 +34,19 @@ void printDevData(diopiContextHandle_t ctx, void* data, int64_t len, int64_t max
     std::cout << std::endl;
 }
 
+template <>
+void printDevData<uint8_t>(diopiContextHandle_t ctx, void* data, int64_t len, int64_t max_len, uint8_t) {
+    int bytes = sizeof(uint8_t) * len;
+    void* ptr = malloc(bytes);
+    std::cout << "data:" << data << std::endl;
+    cnrtMemcpyAsync(ptr, data, bytes, getStream(ctx), cnrtMemcpyDevToHost);
+    syncStreamInCtx(ctx);
+    for (int i = 0; i < len && i < max_len; ++i) {
+        std::cout << static_cast<int32_t>(reinterpret_cast<uint8_t*>(ptr)[i]) << " ";
+    }
+    std::cout << std::endl;
+}
+
 static void print_backtrace() {
     const int MAX_STACK_FRAMES = 64;
     void* stack_traces[MAX_STACK_FRAMES];
