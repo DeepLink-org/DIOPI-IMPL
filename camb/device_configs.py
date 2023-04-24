@@ -153,7 +153,7 @@ device_configs = {
         tensor_para=dict(
             args=[
                 {
-                    "requires_grad": [False],
+                    "ins": ['input'],
                     "dtype": [Skip(Dtype.float64), Skip(Dtype.float32)],
                 },
             ]
@@ -188,7 +188,6 @@ device_configs = {
 
     'sign_zero': dict(
         name=['sign'],
-        dtype=[Dtype.float16, Dtype.float32],
         tensor_para=dict(
             args=[
                 {
