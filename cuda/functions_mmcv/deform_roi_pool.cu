@@ -165,8 +165,15 @@ __global__ void deform_roi_pool_backward_cuda_kernel(const int nthreads, const v
 
 }  // namespace impl
 
-diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_, diopiTensorHandle_t rois_, diopiTensorHandle_t offset_,
-                                diopiTensorHandle_t output_, int64_t pooled_height, int64_t pooled_width, float spatial_scale, int64_t sampling_ratio,
+diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
+                                diopiTensorHandle_t output_,
+                                diopiTensorHandle_t input_,
+                                diopiTensorHandle_t rois_,
+                                diopiTensorHandle_t offset_,
+                                int64_t pooled_height,
+                                int64_t pooled_width,
+                                int64_t sampling_ratio,
+                                float spatial_scale,
                                 float gamma) {
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);
@@ -201,9 +208,18 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx, diopiTensorHandle_t in
     return diopiSuccess;
 }
 
-diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_output_, diopiTensorHandle_t input_, diopiTensorHandle_t rois_,
-                                        diopiTensorHandle_t offset_, diopiTensorHandle_t grad_input_, diopiTensorHandle_t grad_offset_, int64_t pooled_height,
-                                        int64_t pooled_width, float spatial_scale, int64_t sampling_ratio, float gamma) {
+diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
+                                        diopiTensorHandle_t grad_input_,
+                                        diopiTensorHandle_t grad_offset_,
+                                        diopiTensorHandle_t grad_output_,
+                                        diopiTensorHandle_t input_,
+                                        diopiTensorHandle_t rois_,
+                                        diopiTensorHandle_t offset_,
+                                        int64_t pooled_height,
+                                        int64_t pooled_width,
+                                        float spatial_scale,
+                                        int64_t sampling_ratio,
+                                        float gamma) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);

@@ -95,8 +95,13 @@ __global__ void bbox_overlaps_cuda_kernel(const void* bbox1_, const void* bbox2_
 
 }  // namespace impl
 
-diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx, diopiConstTensorHandle_t bboxes1_, diopiConstTensorHandle_t bboxes2_, diopiTensorHandle_t ious_,
-                               const int64_t mode, const bool aligned, const int64_t offset) {
+diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
+                               diopiTensorHandle_t ious_,
+                               diopiConstTensorHandle_t bboxes1_,
+                               diopiConstTensorHandle_t bboxes2_,
+                               const int64_t mode,
+                               const int64_t offset,
+                               const bool aligned) {
     auto bboxes1 = impl::cuda::makeTensor(bboxes1_);
     auto bboxes2 = impl::cuda::makeTensor(bboxes2_);
     auto ious = impl::cuda::makeTensor(ious_);

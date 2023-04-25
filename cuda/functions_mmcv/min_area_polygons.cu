@@ -304,7 +304,7 @@ __global__ void min_area_polygons_cuda_kernel(const int ex_n_boxes, const void *
 
 }  // namespace impl
 
-diopiError_t diopiMinAreaPolygons(diopiContextHandle_t ctx, diopiConstTensorHandle_t pointsets_, diopiTensorHandle_t polygons_) {
+diopiError_t diopiMinAreaPolygons(diopiContextHandle_t ctx, diopiTensorHandle_t polygons_, diopiConstTensorHandle_t pointsets_) {
     auto pointsets = impl::cuda::makeTensor(pointsets_);
     auto polygons = impl::cuda::makeTensor(polygons_);
     int num_pointsets = pointsets.size(0);

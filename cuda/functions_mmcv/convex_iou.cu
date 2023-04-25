@@ -792,7 +792,7 @@ __global__ void convex_iou_cuda_kernel(const int ex_n_boxes, const int gt_n_boxe
 
 }  // namespace impl
 
-diopiError_t diopiConvexIou(diopiContextHandle_t ctx, diopiConstTensorHandle_t pointsets_, diopiConstTensorHandle_t polygons_, diopiTensorHandle_t ious_) {
+diopiError_t diopiConvexIou(diopiContextHandle_t ctx, diopiTensorHandle_t ious_, diopiConstTensorHandle_t pointsets_, diopiConstTensorHandle_t polygons_) {
     auto pointsets = impl::cuda::makeTensor(pointsets_);
     auto polygons = impl::cuda::makeTensor(polygons_);
     auto ious = impl::cuda::makeTensor(ious_);
@@ -816,7 +816,7 @@ diopiError_t diopiConvexIou(diopiContextHandle_t ctx, diopiConstTensorHandle_t p
     return diopiSuccess;
 }
 
-diopiError_t diopiConvexGiou(diopiContextHandle_t ctx, diopiConstTensorHandle_t pointsets_, diopiConstTensorHandle_t polygons_, diopiTensorHandle_t output_) {
+diopiError_t diopiConvexGiou(diopiContextHandle_t ctx, diopiTensorHandle_t output_, diopiConstTensorHandle_t pointsets_, diopiConstTensorHandle_t polygons_) {
     auto pointsets = impl::cuda::makeTensor(pointsets_);
     auto polygons = impl::cuda::makeTensor(polygons_);
     auto output = impl::cuda::makeTensor(output_);

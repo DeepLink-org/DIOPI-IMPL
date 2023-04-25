@@ -191,8 +191,12 @@ __global__ void border_align_backward_cuda_kernel(const int nthreads, const void
 
 }  // namespace impl
 
-diopiError_t diopiBorderAlign(diopiContextHandle_t ctx, diopiConstTensorHandle_t input_, diopiConstTensorHandle_t boxes_, diopiTensorHandle_t output_,
-                              diopiTensorHandle_t argmax_idx_, const int64_t pool_size) {
+diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
+                              diopiTensorHandle_t output_,
+                              diopiTensorHandle_t argmax_idx_,
+                              diopiConstTensorHandle_t input_,
+                              diopiConstTensorHandle_t boxes_,
+                              const int64_t pool_size) {
     auto input = impl::cuda::makeTensor(input_);
     auto boxes = impl::cuda::makeTensor(boxes_);
     auto output = impl::cuda::makeTensor(output_);
@@ -232,8 +236,12 @@ diopiError_t diopiBorderAlign(diopiContextHandle_t ctx, diopiConstTensorHandle_t
     return diopiSuccess;
 }
 
-diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_output_, diopiConstTensorHandle_t boxes_,
-                                      diopiConstTensorHandle_t argmax_idx_, diopiTensorHandle_t grad_input_, const int64_t pool_size) {
+diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
+                                      diopiTensorHandle_t grad_input_,
+                                      diopiConstTensorHandle_t grad_output_,
+                                      diopiConstTensorHandle_t boxes_,
+                                      diopiConstTensorHandle_t argmax_idx_,
+                                      const int64_t pool_size) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto boxes = impl::cuda::makeTensor(boxes_);
     auto argmax_idx = impl::cuda::makeTensor(argmax_idx_);
