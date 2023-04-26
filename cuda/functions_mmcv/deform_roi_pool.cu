@@ -172,8 +172,8 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
                                 diopiTensorHandle_t offset_,
                                 int64_t pooled_height,
                                 int64_t pooled_width,
-                                int64_t sampling_ratio,
                                 float spatial_scale,
+                                int64_t sampling_ratio,
                                 float gamma) {
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);
@@ -217,8 +217,8 @@ diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
                                         diopiTensorHandle_t offset_,
                                         int64_t pooled_height,
                                         int64_t pooled_width,
-                                        float spatial_scale,
                                         int64_t sampling_ratio,
+                                        float spatial_scale,
                                         float gamma) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto input = impl::cuda::makeTensor(input_);
