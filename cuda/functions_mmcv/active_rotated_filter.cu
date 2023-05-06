@@ -66,8 +66,10 @@ __global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthre
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx, diopiConstTensorHandle_t input_, diopiConstTensorHandle_t indices_,
-                                                 diopiTensorHandle_t output_) {
+extern "C" diopiError_t diopiActiveRotatedFilterMmcv(diopiContextHandle_t ctx,
+                                                 diopiTensorHandle_t output_,
+                                                 diopiConstTensorHandle_t input_,
+                                                 diopiConstTensorHandle_t indices_) {
     auto input = impl::cuda::makeTensor(input_);
     auto indices = impl::cuda::makeTensor(indices_);
     auto output = impl::cuda::makeTensor(output_);
@@ -100,8 +102,10 @@ extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx, diopi
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_out_, diopiConstTensorHandle_t indices_,
-                                                         diopiTensorHandle_t grad_in_) {
+extern "C" diopiError_t diopiActiveRotatedFilterBackwardMmcv(diopiContextHandle_t ctx,
+                                                         diopiTensorHandle_t grad_in_,
+                                                         diopiConstTensorHandle_t grad_out_,
+                                                         diopiConstTensorHandle_t indices_) {
     auto grad_out = impl::cuda::makeTensor(grad_out_);
     auto indices = impl::cuda::makeTensor(indices_);
     auto grad_in = impl::cuda::makeTensor(grad_in_);

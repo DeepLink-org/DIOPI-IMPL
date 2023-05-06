@@ -120,9 +120,19 @@ __global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B
 
 }  // namespace impl
 
-diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx, diopiConstTensorHandle_t points_, diopiConstTensorHandle_t centers_,
-                                   diopiConstTensorHandle_t scores_, diopiConstTensorHandle_t knn_idx_, diopiTensorHandle_t output_, int64_t B, int64_t N0,
-                                   int64_t N1, int64_t M, int64_t K, int64_t O, int64_t aggregate) {
+diopiError_t diopiAssignScoreWithkMmcv(diopiContextHandle_t ctx,
+                                   diopiTensorHandle_t output_,
+                                   diopiConstTensorHandle_t points_,
+                                   diopiConstTensorHandle_t centers_,
+                                   diopiConstTensorHandle_t scores_,
+                                   diopiConstTensorHandle_t knn_idx_,
+                                   int64_t B,
+                                   int64_t N0,
+                                   int64_t N1,
+                                   int64_t M,
+                                   int64_t K,
+                                   int64_t O,
+                                   int64_t aggregate) {
     auto points = impl::cuda::makeTensor(points_);
     auto centers = impl::cuda::makeTensor(centers_);
     auto scores = impl::cuda::makeTensor(scores_);
@@ -155,10 +165,22 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx, diopiConstTensorHan
     return diopiSuccess;
 }
 
-diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t grad_out_, diopiConstTensorHandle_t points_,
-                                           diopiConstTensorHandle_t centers_, diopiConstTensorHandle_t scores_, diopiConstTensorHandle_t knn_idx_,
-                                           diopiTensorHandle_t grad_points_, diopiTensorHandle_t grad_centers_, diopiTensorHandle_t grad_scores_, int64_t B,
-                                           int64_t N0, int64_t N1, int64_t M, int64_t K, int64_t O, int64_t aggregate) {
+diopiError_t diopiAssignScoreWithkBackwardMmcv(diopiContextHandle_t ctx,
+                                           diopiTensorHandle_t grad_points_,
+                                           diopiTensorHandle_t grad_centers_,
+                                           diopiTensorHandle_t grad_scores_,
+                                           diopiConstTensorHandle_t grad_out_,
+                                           diopiConstTensorHandle_t points_,
+                                           diopiConstTensorHandle_t centers_,
+                                           diopiConstTensorHandle_t scores_,
+                                           diopiConstTensorHandle_t knn_idx_,
+                                           int64_t B,
+                                           int64_t N0,
+                                           int64_t N1,
+                                           int64_t M,
+                                           int64_t K,
+                                           int64_t O,
+                                           int64_t aggregate) {
     auto grad_out = impl::cuda::makeTensor(grad_out_);
     auto points = impl::cuda::makeTensor(points_);
     auto centers = impl::cuda::makeTensor(centers_);

@@ -112,9 +112,12 @@ __global__ void chamfer_distance_backward_cuda_kernel_diopi(int b, int n, const 
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in, diopiConstTensorHandle_t xyz2_in,
-                                             diopiTensorHandle_t dist1_out, diopiTensorHandle_t dist2_out, diopiTensorHandle_t idx1_out,
-                                             diopiTensorHandle_t idx2_out) {
+extern "C" diopiError_t diopiChamferDistanceMmcv(diopiContextHandle_t ctx,
+                                             diopiTensorHandle_t dist1_out,
+                                             diopiTensorHandle_t dist2_out,
+                                             diopiTensorHandle_t idx1_out,
+                                             diopiTensorHandle_t idx2_out,diopiConstTensorHandle_t xyz1_in,
+                                             diopiConstTensorHandle_t xyz2_in) {
     auto xyz1 = impl::cuda::makeTensor(xyz1_in);
     auto xyz2 = impl::cuda::makeTensor(xyz2_in);
     auto dist1 = impl::cuda::makeTensor(dist1_out);
@@ -153,10 +156,15 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx, diopiCons
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx, diopiConstTensorHandle_t xyz1_in, diopiConstTensorHandle_t xyz2_in,
-                                                     diopiConstTensorHandle_t idx1_in, diopiConstTensorHandle_t idx2_in, diopiConstTensorHandle_t grad_dist1_in,
-                                                     diopiConstTensorHandle_t grad_dist2_in, diopiTensorHandle_t grad_xyz1_out,
-                                                     diopiTensorHandle_t grad_xyz2_out) {
+extern "C" diopiError_t diopiChamferDistanceBackwardMmcv(diopiContextHandle_t ctx,
+                                                     diopiTensorHandle_t grad_xyz1_out,
+                                                     diopiTensorHandle_t grad_xyz2_out,
+                                                     diopiConstTensorHandle_t xyz1_in,
+                                                     diopiConstTensorHandle_t xyz2_in,
+                                                     diopiConstTensorHandle_t idx1_in,
+                                                     diopiConstTensorHandle_t idx2_in,
+                                                     diopiConstTensorHandle_t grad_dist1_in,
+                                                     diopiConstTensorHandle_t grad_dist2_in) {
     auto xyz1 = impl::cuda::makeTensor(xyz1_in);
     auto xyz2 = impl::cuda::makeTensor(xyz2_in);
     auto idx1 = impl::cuda::makeTensor(idx1_in);

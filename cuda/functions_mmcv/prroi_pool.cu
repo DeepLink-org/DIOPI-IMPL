@@ -351,7 +351,8 @@ __global__ void prroi_pool_coor_backward_cuda_kernel(const int nthreads, const v
 
 }  // namespace impl
 
-diopiError_t diopiPrroiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_, diopiTensorHandle_t rois_, diopiTensorHandle_t output_, int64_t pooled_height,
+diopiError_t diopiPrroiPoolMmcv(diopiContextHandle_t ctx, diopiTensorHandle_t output_,diopiTensorHandle_t input_,
+                            diopiTensorHandle_t rois_, int64_t pooled_height,
                             int64_t pooled_width, float spatial_scale) {
     auto input = impl::cuda::makeTensor(input_);
     auto rois = impl::cuda::makeTensor(rois_);
@@ -369,8 +370,12 @@ diopiError_t diopiPrroiPool(diopiContextHandle_t ctx, diopiTensorHandle_t input_
     return diopiSuccess;
 }
 
-diopiError_t diopiPrroiPoolbackward(diopiContextHandle_t ctx, diopiTensorHandle_t grad_output_, diopiTensorHandle_t rois_, diopiTensorHandle_t grad_input_,
-                                    int64_t pooled_height, int64_t pooled_width, float spatial_scale) {
+diopiError_t diopiPrroiPoolbackwardMmcv(diopiContextHandle_t ctx,
+                                    diopiTensorHandle_t grad_input_,
+                                    diopiTensorHandle_t grad_output_,
+                                    diopiTensorHandle_t rois_,
+                                    int64_t pooled_height, int64_t pooled_width,
+                                    float spatial_scale) {
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto rois = impl::cuda::makeTensor(rois_);
     auto grad_input = impl::cuda::makeTensor(grad_input_);
@@ -395,9 +400,11 @@ diopiError_t diopiPrroiPoolbackward(diopiContextHandle_t ctx, diopiTensorHandle_
     return diopiSuccess;
 }
 
-diopiError_t diopiPrroiPoolCoorBackward(diopiContextHandle_t ctx, diopiTensorHandle_t output_, diopiTensorHandle_t grad_output_, diopiTensorHandle_t input_,
-                                        diopiTensorHandle_t rois_, diopiTensorHandle_t grad_rois_, int64_t pooled_height, int64_t pooled_width,
-                                        float spatial_scale) {
+diopiError_t
+diopiPrroiPoolCoorBackwardMmcv(diopiContextHandle_t ctx, diopiTensorHandle_t grad_rois_,
+                           diopiTensorHandle_t output_, diopiTensorHandle_t grad_output_,
+                           diopiTensorHandle_t input_, diopiTensorHandle_t rois_,
+                          int64_t pooled_height, int64_t pooled_width, float spatial_scale) {
     auto output = impl::cuda::makeTensor(output_);
     auto grad_output = impl::cuda::makeTensor(grad_output_);
     auto input = impl::cuda::makeTensor(input_);
