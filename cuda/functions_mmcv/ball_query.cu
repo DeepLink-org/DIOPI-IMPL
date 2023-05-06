@@ -87,7 +87,7 @@ DIOPI_API diopiError_t diopiBallQueryMmcv(diopiContextHandle_t ctx, diopiTensorH
   dim3 threads(THREADS_PER_BLOCK);
 
 
-  dispatch_float_types_and_half(impl::cuda::ball_query_forward_cuda_kernel_diopi,
+  DISPATCH_FLOAT_TYPES(impl::cuda::ball_query_forward_cuda_kernel_diopi,
                                 new_xyz.dtype(),
                                 blocks,
                                 threads,
