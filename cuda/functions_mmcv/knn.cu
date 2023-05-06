@@ -100,7 +100,7 @@ __global__ void knn_forward_cuda_kernel(int b, int n, int m, int nsample, const 
 
 }  // namespace impl
 
-diopiError_t diopiKnn(diopiContextHandle_t ctx,
+diopiError_t diopiKnnMmcv(diopiContextHandle_t ctx,
                       diopiTensorHandle_t idx_,
                       diopiTensorHandle_t dist2_,
                       diopiTensorHandle_t xyz_,

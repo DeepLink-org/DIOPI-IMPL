@@ -120,7 +120,7 @@ __global__ void assign_score_withk_scores_backward_cuda_kernel_diopi(const int B
 
 }  // namespace impl
 
-diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
+diopiError_t diopiAssignScoreWithkMmcv(diopiContextHandle_t ctx,
                                    diopiTensorHandle_t output_,
                                    diopiConstTensorHandle_t points_,
                                    diopiConstTensorHandle_t centers_,
@@ -165,7 +165,7 @@ diopiError_t diopiAssignScoreWithk(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
-diopiError_t diopiAssignScoreWithkBackward(diopiContextHandle_t ctx,
+diopiError_t diopiAssignScoreWithkBackwardMmcv(diopiContextHandle_t ctx,
                                            diopiTensorHandle_t grad_points_,
                                            diopiTensorHandle_t grad_centers_,
                                            diopiTensorHandle_t grad_scores_,

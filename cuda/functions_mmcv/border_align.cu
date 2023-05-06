@@ -191,7 +191,7 @@ __global__ void border_align_backward_cuda_kernel(const int nthreads, const void
 
 }  // namespace impl
 
-diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
+diopiError_t diopiBorderAlignMmcv(diopiContextHandle_t ctx,
                               diopiTensorHandle_t output_,
                               diopiTensorHandle_t argmax_idx_,
                               diopiConstTensorHandle_t input_,
@@ -236,7 +236,7 @@ diopiError_t diopiBorderAlign(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
-diopiError_t diopiBorderAlignBackward(diopiContextHandle_t ctx,
+diopiError_t diopiBorderAlignBackwardMmcv(diopiContextHandle_t ctx,
                                       diopiTensorHandle_t grad_input_,
                                       diopiConstTensorHandle_t grad_output_,
                                       diopiConstTensorHandle_t boxes_,

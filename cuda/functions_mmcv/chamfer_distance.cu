@@ -112,7 +112,7 @@ __global__ void chamfer_distance_backward_cuda_kernel_diopi(int b, int n, const 
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
+extern "C" diopiError_t diopiChamferDistanceMmcv(diopiContextHandle_t ctx,
                                              diopiTensorHandle_t dist1_out,
                                              diopiTensorHandle_t dist2_out,
                                              diopiTensorHandle_t idx1_out,
@@ -156,7 +156,7 @@ extern "C" diopiError_t diopiChamferDistance(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiChamferDistanceBackward(diopiContextHandle_t ctx,
+extern "C" diopiError_t diopiChamferDistanceBackwardMmcv(diopiContextHandle_t ctx,
                                                      diopiTensorHandle_t grad_xyz1_out,
                                                      diopiTensorHandle_t grad_xyz2_out,
                                                      diopiConstTensorHandle_t xyz1_in,

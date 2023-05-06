@@ -66,7 +66,7 @@ __global__ void active_rotated_filter_backward_cuda_kernel_diopi(const int nthre
 
 }  // namespace impl
 
-extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
+extern "C" diopiError_t diopiActiveRotatedFilterMmcv(diopiContextHandle_t ctx,
                                                  diopiTensorHandle_t output_,
                                                  diopiConstTensorHandle_t input_,
                                                  diopiConstTensorHandle_t indices_) {
@@ -102,7 +102,7 @@ extern "C" diopiError_t diopiActiveRotatedFilter(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
-extern "C" diopiError_t diopiActiveRotatedFilterBackward(diopiContextHandle_t ctx,
+extern "C" diopiError_t diopiActiveRotatedFilterBackwardMmcv(diopiContextHandle_t ctx,
                                                          diopiTensorHandle_t grad_in_,
                                                          diopiConstTensorHandle_t grad_out_,
                                                          diopiConstTensorHandle_t indices_) {

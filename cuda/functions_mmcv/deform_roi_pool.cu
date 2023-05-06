@@ -165,7 +165,7 @@ __global__ void deform_roi_pool_backward_cuda_kernel(const int nthreads, const v
 
 }  // namespace impl
 
-diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
+diopiError_t diopiDeformRoiPoolMmcv(diopiContextHandle_t ctx,
                                 diopiTensorHandle_t output_,
                                 diopiTensorHandle_t input_,
                                 diopiTensorHandle_t rois_,
@@ -208,7 +208,7 @@ diopiError_t diopiDeformRoiPool(diopiContextHandle_t ctx,
     return diopiSuccess;
 }
 
-diopiError_t diopiDeformRoiPoolBackward(diopiContextHandle_t ctx,
+diopiError_t diopiDeformRoiPoolBackwardMmcv(diopiContextHandle_t ctx,
                                         diopiTensorHandle_t grad_input_,
                                         diopiTensorHandle_t grad_offset_,
                                         diopiTensorHandle_t grad_output_,

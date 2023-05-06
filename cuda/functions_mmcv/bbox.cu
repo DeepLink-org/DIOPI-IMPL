@@ -95,7 +95,7 @@ __global__ void bbox_overlaps_cuda_kernel(const void* bbox1_, const void* bbox2_
 
 }  // namespace impl
 
-diopiError_t diopiBboxOverlaps(diopiContextHandle_t ctx,
+diopiError_t diopiBboxOverlapsMmcv(diopiContextHandle_t ctx,
                                diopiTensorHandle_t ious_,
                                diopiConstTensorHandle_t bboxes1_,
                                diopiConstTensorHandle_t bboxes2_,

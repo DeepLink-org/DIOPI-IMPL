@@ -67,7 +67,7 @@ __global__ void ball_query_forward_cuda_kernel_diopi(int b, int n, int m,
 
 }  // namespace impl
 
-DIOPI_API diopiError_t diopiBallQuery(diopiContextHandle_t ctx, diopiTensorHandle_t idx_,
+DIOPI_API diopiError_t diopiBallQueryMmcv(diopiContextHandle_t ctx, diopiTensorHandle_t idx_,
                         diopiConstTensorHandle_t new_xyz_, diopiConstTensorHandle_t xyz_, 
                         int64_t b, int64_t n, int64_t m, int64_t nsample,
                         float min_radius, float max_radius) {
