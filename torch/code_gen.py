@@ -20,6 +20,7 @@ new_content.append('/**\n\
  * @copyright  (c) 2023, DeepLink.\n\
  */\n\
 #include <diopi/functions.h>\n\
+#include <diopi/functions_mmcv.h>\n\
 #include <stdio.h>\n\
 #include <dlfcn.h>\n\
 \n\
