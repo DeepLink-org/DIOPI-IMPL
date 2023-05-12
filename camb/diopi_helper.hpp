@@ -134,6 +134,11 @@ public:
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return shape_;
     }
+
+    int64_t size(int i) {
+        return shape()[i];
+    }
+
     const std::vector<int64_t>& stride() const {
         DIOPI_CHECK_NULLPTR_ABORT(tensor_);
         return stride_;
@@ -263,6 +268,11 @@ public:
     diopiTensorHandle_t tensorHandle() { return tensor_; }
 
     diopiConstTensorHandle_t tensorHandle() const { return tensor_; }
+
+    void Print() {
+        if (tensor_ == nullptr) std::cout << "null diopiTensorHandle_t, cannot print\n";
+        diopiPrintTensor(tensor_);
+    }
 
 protected:
     diopiTensorHandle_t tensor_ = 0;
