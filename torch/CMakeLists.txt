@@ -3,6 +3,8 @@ project(torch_cpp_impl)
 
 option(HIP "Whether to use HIP when available" OFF)
 
+set(Torch_DIR /home/dongkaixing/mmcv_dipu/pytorch1.10/torch/share/cmake/Torch)
+# set(Torch_DIR /nvme/share/lidonglei/pytorch1.10/torch/share/cmake/Torch)
 find_package(Torch 1.10 REQUIRED)
 if (Torch_FOUND)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -std=c++14 -fPIC")
@@ -27,12 +29,12 @@ if (DYLOAD)
     set(IMPL_SRC error.cpp wrap_func.cpp)
 endif()
 
-set(REAL_IMPL_SRC
-    error.cpp
-    functions.cpp
-    nms_kernel.cu
-    roi_align_kernel.cu
-)
+file(GLOB_RECURSE REAL_IMPL_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} functions_mmcv/*.cu)
+list(APPEND REAL_IMPL_SRC nms_kernel.cu)
+list(APPEND REAL_IMPL_SRC roi_align_kernel.cu)
+list(APPEND REAL_IMPL_SRC functions.cpp)
+list(APPEND REAL_IMPL_SRC functions_mmcv.cpp)
+list(APPEND REAL_IMPL_SRC error.cpp)
 
 if (RUNTIME)
     if (DYLOAD)
