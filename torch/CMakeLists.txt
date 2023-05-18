@@ -3,7 +3,7 @@ project(torch_cpp_impl)
 
 option(HIP "Whether to use HIP when available" OFF)
 
-set(Torch_DIR /nvme/dongkaixing/mmcv_dipu/pytorch/torch/share/cmake/Torch)
+set(Torch_DIR /home/dongkaixing/mmcv_dipu/pytorch1.10/torch/share/cmake/Torch)
 # set(Torch_DIR /nvme/share/lidonglei/pytorch1.10/torch/share/cmake/Torch)
 find_package(Torch 1.10 REQUIRED)
 if (Torch_FOUND)
