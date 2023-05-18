@@ -107,10 +107,9 @@ def gen_wrapper_func(content):
             if row.startswith("DIOPI_RT_API"):
                 new_content.append("    " + 'func = reinterpret_cast<decltype(func)>(dlsym(handle, "' + func_name + '"));\n')
                 new_content.append("    " + "if (func != NULL) {\n")
-                new_content.append("    " + "    printf(\" %s is implemented and into diopi_impl\\n\", \"" + func_name + "\");\n")
                 new_content.append("    " + "    return (*func)" + arg + ";\n")
                 new_content.append("    " + "} else {\n")
-                new_content.append("    " + "    printf(\" %s not implemented!\\n\", \"" + func_name + "\");\n")
+                new_content.append("    " + "    printf(\"[wrap_func] %s not implemented!\\n\", \"" + func_name + "\");\n")
                 new_content.append("    " + "    return \"" + func_name + " not implemented!\";\n")
                 new_content.append("    " + "}\n")
                 new_content.append("}\n")
@@ -118,10 +117,9 @@ def gen_wrapper_func(content):
             else:
                 new_content.append("    " + 'func = reinterpret_cast<decltype(func)>(dlsym(handle, "' + func_name + '"));\n')
                 new_content.append("    " + "if (func != NULL) {\n")
-                new_content.append("    " + "    printf(\" %s is implemented and into diopi_impl\\n\", \"" + func_name + "\");\n")
                 new_content.append("    " + "    return (*func)" + arg + ";\n")
                 new_content.append("    " + "} else {\n")
-                new_content.append("    " + "    printf(\" %s not implemented!\\n\", \"" + func_name + "\");\n")
+                new_content.append("    " + "    printf(\"[wrap_func] %s not implemented!\\n\", \"" + func_name + "\");\n")
                 new_content.append("    " + "    return diopiErrorOccurred;\n")
                 new_content.append("    " + "}\n")
                 new_content.append("}\n")

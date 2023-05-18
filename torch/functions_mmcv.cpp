@@ -29,7 +29,6 @@ diopiError_t diopiRoiAlignMmcv(diopiContextHandle_t ctx, diopiTensorHandle_t out
                                diopiTensorHandle_t argmax_x_, diopiConstTensorHandle_t input_, diopiConstTensorHandle_t rois_,
                                int64_t aligned_height, int64_t aligned_width, int64_t sampling_ratio, int64_t pool_mode,
                                float spatial_scale, bool aligned) {
-  std::cout << "Into diopi_real_impl diopiRoiAlignMmcv\n";
   auto input = impl::aten::buildATen(input_);
   auto rois = impl::aten::buildATen(rois_);
   auto output = impl::aten::buildATen(output_);
@@ -44,6 +43,7 @@ diopiError_t diopiRoiAlignBackwardMmcv(diopiContextHandle_t ctx, diopiTensorHand
                                        diopiConstTensorHandle_t rois_, diopiConstTensorHandle_t argmax_y_, diopiConstTensorHandle_t argmax_x_,
                                        int64_t aligned_height, int64_t aligned_width, int64_t sampling_ratio, int64_t pool_mode, float spatial_scale,
                                        bool aligned) {
+  return diopiErrorOccurred;
   auto grad_output = impl::aten::buildATen(grad_output_);
   auto rois = impl::aten::buildATen(rois_);
   auto argmax_y = impl::aten::buildATen(argmax_y_);
@@ -148,4 +148,33 @@ diopiError_t diopiDynamicVoxelizeMmcv(diopiContextHandle_t ctx,
       coors_range.data_ptr<float>() + coors_range.numel());
   mmcv::ops::DynamicVoxelizeForwardCUDAKernelLauncher(points, coors, voxel_size_v, coors_range_v, NDim);
 }
+
+diopiError_t diopiModulatedDeformConvMmcv(
+    diopiContextHandle_t ctx, diopiTensorHandle_t output,
+    diopiTensorHandle_t columns, diopiTensorHandle_t ones,
+    diopiConstTensorHandle_t input, diopiConstTensorHandle_t weight,
+    diopiConstTensorHandle_t bias, diopiConstTensorHandle_t offset,
+    diopiConstTensorHandle_t mask, int64_t kernel_h, int64_t kernel_w,
+    const int64_t stride_h, const int64_t stride_w, const int64_t pad_h,
+    const int64_t pad_w, const int64_t dilation_h, const int64_t dilation_w,
+    const int64_t group, const int64_t deformable_group, const bool with_bias) {
+    // stub here for nv
+    return diopiErrorOccurred;
+}
+
+diopiError_t diopiModulatedDeformConvBackwardMmcv(
+    diopiContextHandle_t ctx, diopiTensorHandle_t grad_input,
+    diopiTensorHandle_t grad_weight, diopiTensorHandle_t grad_bias,
+    diopiTensorHandle_t grad_offset, diopiTensorHandle_t grad_mask,
+    diopiConstTensorHandle_t input, diopiConstTensorHandle_t weight,
+    diopiConstTensorHandle_t bias, diopiConstTensorHandle_t ones,
+    diopiConstTensorHandle_t offset, diopiConstTensorHandle_t mask,
+    diopiConstTensorHandle_t columns, diopiConstTensorHandle_t grad_output,
+    int64_t kernel_h, int64_t kernel_w, int64_t stride_h, int64_t stride_w,
+    int64_t pad_h, int64_t pad_w, int64_t dilation_h, int64_t dilation_w,
+    int64_t group, int64_t deformable_group, const bool with_bias) {
+    // stub here for nv
+    return diopiErrorOccurred;
+}
+
 }  // extern "C"
